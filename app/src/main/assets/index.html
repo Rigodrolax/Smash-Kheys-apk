@@ -2,7 +2,20 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=1480,user-scalable=no,viewport-fit=cover">
+<script>
+  // Téléphone : le jeu est pensé pour un écran d'ordinateur (au moins ~1280 × 680). On affiche donc la page
+  // comme un écran d'ordinateur, réduit pour tenir sur le téléphone : tous les menus restent entiers.
+  (function () {
+    const m = document.querySelector('meta[name=viewport]');
+    const fit = () => {
+      const a = Math.max(screen.width, screen.height), b = Math.min(screen.width, screen.height) || 1;
+      const W = Math.round(Math.max(1280, 690 * a / b));
+      m.setAttribute('content', 'width=' + W + ',user-scalable=no,viewport-fit=cover');
+    };
+    fit(); addEventListener('orientationchange', () => setTimeout(fit, 250));
+  })();
+</script>
 <title>Super Smash Kheys</title>
 <style>
   html,body{margin:0;height:100%;background:#07081a;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -19,6 +32,20 @@
   #home .chg{position:fixed;right:12px;bottom:10px;font-size:13px;color:#9ca1d8;text-decoration:underline;cursor:pointer}
   #upd{display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483647;padding:10px 16px;border-radius:12px;border:3px solid #000;background:#ffcc33;color:#111;font:italic 900 15px sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer;white-space:nowrap}
   #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 18px sans-serif;color:#c9cdf5}
+  /* ---- appli : commandes tactiles à la bonne taille sur l'écran réduit, et jamais par-dessus les menus */
+  .sk-touch .stick{width:250px!important;height:250px!important;left:46px!important;bottom:40px!important}
+  .sk-touch .pad{width:330px!important;height:330px!important;right:40px!important;bottom:34px!important}
+  .sk-touch .b{font-size:32px!important}
+  .sk-touch .b small{font-size:17px!important}
+  .sk-touch .top{display:none!important}
+  .sk-touch.m-menu .stick,.sk-touch.m-menu .pad,
+  body[data-ssk="select"] .sk-touch .stick,body[data-ssk="select"] .sk-touch .pad,
+  body[data-ssk="stage"] .sk-touch .stick,body[data-ssk="stage"] .sk-touch .pad,
+  body[data-ssk="map"] .sk-touch .stick,body[data-ssk="map"] .sk-touch .pad,
+  body[data-ssk="over"] .sk-touch .stick,body[data-ssk="over"] .sk-touch .pad{display:none!important}
+  #home .logo{height:40vh}
+  #home label{font-size:26px}#home input{font-size:28px;width:420px;padding:16px}#home button{font-size:32px;padding:16px 34px}
+  #home .err{font-size:20px}#home .ver{font-size:18px}#home .chg{font-size:20px}#upd{font-size:22px}
   /* le bouton de lancement du script (prévu pour le forum) est remplacé par l'écran d'accueil */
   #sk-launch{display:none!important}
 </style>
@@ -71,6 +98,7 @@
   })();
 
   // bouton retour du téléphone
+  setInterval(() => { const md = window.__sskMode ? window.__sskMode() : null; const v = md || 'home'; if (document.body.dataset.ssk !== v) document.body.dataset.ssk = v; }, 200);
   window.sskBack = function () {
     const mode = window.__sskMode ? window.__sskMode() : null;
     if (!mode) return 'quit';

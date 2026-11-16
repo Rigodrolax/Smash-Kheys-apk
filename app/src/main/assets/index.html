@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Super Smash Kheys</title>
+<style>
+  html,body{margin:0;height:100%;background:#07081a;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  body{background:radial-gradient(ellipse at 50% 35%,#2a3170 0%,#0d0f24 60%,#05060f 100%)}
+  #home{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vh;padding:4vh 6vw;box-sizing:border-box;text-align:center}
+  #home .logo{height:34vh;max-width:80vw;object-fit:contain;filter:drop-shadow(0 6px 0 rgba(0,0,0,.6))}
+  #home .card{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+  #home label{font:italic 800 16px sans-serif;letter-spacing:.05em;color:#c9cdf5}
+  #home input{width:min(280px,60vw);padding:12px 14px;border-radius:12px;border:3px solid #000;box-shadow:0 0 0 2px #9ca1ad;background:#11142a;color:#fff;font:700 18px sans-serif;outline:none;text-align:center}
+  #home button{padding:13px 26px;border-radius:14px;border:3px solid #000;box-shadow:0 0 0 2px #fff,0 6px 20px rgba(0,0,0,.6);background:linear-gradient(180deg,#ff4a4a,#b81818);color:#fff;font:italic 900 22px sans-serif;letter-spacing:.06em;cursor:pointer}
+  #home button:active{transform:scale(.96)}
+  #home .err{min-height:18px;color:#ff8a8a;font-size:14px}
+  #home .ver{position:fixed;left:12px;bottom:10px;font-size:12px;color:#7a80b0}
+  #home .chg{position:fixed;right:12px;bottom:10px;font-size:13px;color:#9ca1d8;text-decoration:underline;cursor:pointer}
+  #upd{display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483647;padding:10px 16px;border-radius:12px;border:3px solid #000;background:#ffcc33;color:#111;font:italic 900 15px sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.6);cursor:pointer;white-space:nowrap}
+  #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 18px sans-serif;color:#c9cdf5}
+  /* le bouton de lancement du script (prévu pour le forum) est remplacé par l'écran d'accueil */
+  #sk-launch{display:none!important}
+</style>
+</head>
+<body>
+<div id="load">Chargement de Super Smash Kheys…</div>
+<div id="home" style="display:none">
+  <img class="logo" alt="Super Smash Kheys">
+  <div class="card">
+    <label for="pseudo">TON PSEUDO</label>
+    <input id="pseudo" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ton pseudo du forum">
+    <button id="play">JOUER</button>
+  </div>
+  <div class="err"></div>
+  <div class="ver"></div>
+  <div class="chg">changer de pseudo</div>
+</div>
+<div id="upd"></div>
+
+<script>
+  // ---------------- réglages de l'appli
+  const SSK_REPO = 'Rigodrolax/Smash-Kheys-apk';   // dépôt GitHub où sont publiées les APK (pour l'avis de mise à jour)
+  const APP_VER = (window.SSKApp && SSKApp.version && SSKApp.version()) || 'web';
+
+  // sur téléphone, les contrôles tactiles sont activés par défaut (modifiable dans Options)
+  try { if (localStorage.getItem('ssk-touch') === null) localStorage.setItem('ssk-touch', '1'); } catch (e) {}
+
+  // tout le son du jeu est suivi pour pouvoir le couper quand l'appli passe en arrière-plan
+  (function () {
+    const audios = new Set(), ctxs = new Set();
+    const A0 = window.Audio;
+    window.Audio = function (src) { const a = src === undefined ? new A0() : new A0(src); audios.add(a); return a; };
+    window.Audio.prototype = A0.prototype;
+    const C0 = window.AudioContext || window.webkitAudioContext;
+    if (C0) {
+      const W = function (o) { const c = new C0(o); ctxs.add(c); return c; };
+      W.prototype = C0.prototype;
+      window.AudioContext = W; window.webkitAudioContext = W;
+    }
+    let held = [];
+    window.sskPause = function (on) {
+      if (on) {
+        held = [...audios].filter(a => !a.paused); held.forEach(a => { try { a.pause(); } catch (e) {} });
+        ctxs.forEach(c => { try { c.suspend(); } catch (e) {} });
+      } else {
+        held.forEach(a => { try { a.play().catch(() => {}); } catch (e) {} }); held = [];
+        ctxs.forEach(c => { try { c.resume(); } catch (e) {} });
+      }
+    };
+  })();
+
+  // bouton retour du téléphone
+  window.sskBack = function () {
+    const mode = window.__sskMode ? window.__sskMode() : null;
+    if (!mode) return 'quit';
+    const press = (code) => { const o = { code, key: code, bubbles: true, cancelable: true }; window.dispatchEvent(new KeyboardEvent('keydown', o)); window.dispatchEvent(new KeyboardEvent('keyup', o)); };
+    press(mode === 'play' || mode === 'title' || mode === 'among' ? 'Escape' : 'Backspace');
+    return 'ok';
+  };
+</script>
+<script src="lib/three.min.js"></script>
+<script src="lib/firebase-app-compat.js"></script>
+<script src="lib/firebase-auth-compat.js"></script>
+<script src="lib/firebase-database-compat.js"></script>
+<script src="game/smash-kheys.user.js"></script>
+<script>
+  (function () {
+    const home = document.getElementById('home'), inp = document.getElementById('pseudo'), err = home.querySelector('.err');
+    const launch = () => { const b = document.getElementById('sk-launch'); if (b) b.click(); };
+    const getName = () => { try { return localStorage.getItem('ssk-app-pseudo') || ''; } catch (e) { return ''; } };
+    const setName = (n) => { try { localStorage.setItem('ssk-app-pseudo', n); localStorage.setItem('ssk-anon-name', n); } catch (e) {} };
+    const lb = document.querySelector('#sk-launch img'); if (lb) home.querySelector('.logo').src = lb.src;
+    home.querySelector('.ver').textContent = 'Appli ' + APP_VER;
+    document.getElementById('load').remove();
+    home.style.display = 'flex';
+    inp.value = getName();
+    const go = () => {
+      const n = inp.value.trim().replace(/\s+/g, ' ');
+      if (n.length < 2) { err.textContent = 'Choisis un pseudo (2 caractères minimum).'; return; }
+      err.textContent = ''; setName(n); inp.blur(); launch();
+    };
+    document.getElementById('play').onclick = go;
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); e.stopPropagation(); });
+    home.querySelector('.chg').onclick = () => { inp.focus(); inp.select(); };
+    if (getName()) launch();                                    // pseudo déjà choisi : on entre directement dans le jeu
+
+    // avis de mise à jour de l'appli (dernière version publiée sur GitHub)
+    if (SSK_REPO && APP_VER !== 'web') {
+      fetch('https://api.github.com/repos/' + SSK_REPO + '/releases/latest').then(r => r.ok ? r.json() : null).then((j) => {
+        if (!j || !j.tag_name) return;
+        const v = (s) => String(s).replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+        const a = v(j.tag_name), b = v(APP_VER); let newer = false;
+        for (let i = 0; i < Math.max(a.length, b.length); i++) { if ((a[i] || 0) !== (b[i] || 0)) { newer = (a[i] || 0) > (b[i] || 0); break; } }
+        if (!newer) return;
+        const u = document.getElementById('upd'); u.textContent = '⬆ Nouvelle version de l\'appli : ' + j.tag_name + ' (touche pour la télécharger)'; u.style.display = 'block';
+        const apk = (j.assets || []).find(x => /\.apk$/i.test(x.name));
+        u.onclick = () => { const url = apk ? apk.browser_download_url : j.html_url; if (window.SSKApp) SSKApp.open(url); else open(url); };
+        setTimeout(() => { u.style.display = 'none'; }, 20000);
+      }).catch(() => {});
+    }
+  })();
+</script>
+</body>
+</html>

@@ -103,7 +103,7 @@
     const mode = window.__sskMode ? window.__sskMode() : null;
     if (!mode) return 'quit';
     const press = (code) => { const o = { code, key: code, bubbles: true, cancelable: true }; window.dispatchEvent(new KeyboardEvent('keydown', o)); window.dispatchEvent(new KeyboardEvent('keyup', o)); };
-    press(mode === 'play' || mode === 'title' || mode === 'among' ? 'Escape' : 'Backspace');
+    press(mode === 'play' || mode === 'title' || mode === 'among' || mode === 'party' ? 'Escape' : 'Backspace');
     return 'ok';
   };
 </script>

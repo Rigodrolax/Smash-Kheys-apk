@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.94.0
+// @version      0.94.1
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -797,6 +797,10 @@
     // J2 « Nuit » : kimono indigo, liserés dorés, hakama noir, lunettes turquoise
     { robe: 0x2e3a66, robeDark: 0x1a2140, inner: 0xd9b25a, hakama: 0x16171f, obi: 0xc9a24a, sock: 0xf1eee6, sandal: 0x3a2616,
       skin: 0xf0c6a6, stubble: 0x8c6e5c, hair: 0x120d0a, beard: 0x2e221a, lip: 0xd98a80, straw: 0x8f6c42, lens: 0xf2fdff, glow: 0x3fd8ff },
+    // 3e tenue « LEADER SUPRÊME » : depuis qu'Isssoufle a déserté le topic pour GTA VI, le peuple du NNN a choisi son Grand Timonier.
+    // Costume Mao gris-vert, col à pattes rouges, quatre poches, casquette à étoile rouge dans le dos, petit livre rouge à la main
+    { mao: true, swatch: '#5f5c4a', suit: 0x625f4c, suitD: 0x44422f, tab: 0xd0202c, star: 0xe8262e, shoe: 0x16141a, book: 0xc4161f,
+      skin: 0xf0c6a6, stubble: 0x8c6e5c, hair: 0x120d0a, beard: 0x2e221a, lip: 0xd98a80, straw: 0x6f6c58, lens: 0xfff8ff, glow: 0xb45cff },
   ];
 
   function buildKorochiku(pal) {
@@ -824,35 +828,78 @@
     const mRobeD = M(pal.robeDark), mInner = M(pal.inner), mObi = M(pal.obi), mSkin = M(pal.skin), mStub = M(pal.stubble);
     const mHair = M(pal.hair), mBeard = M(pal.beard), mStraw = M(pal.straw), mFrame = M(0x1b1b1f);
 
-    // Bassin + hakama (pantalon large plissé)
-    add(hips, new T.CylinderGeometry(0.25, 0.27, 0.22, 10), mHak, 0, -0.08, 0);
     const legs = [];
-    for (const z of [0.15, -0.15]) {
-      const leg = new T.Group(); leg.position.set(0, 0, z); hips.add(leg);
-      add(leg, new T.CylinderGeometry(0.15, 0.2, 0.74, 10), mHak, 0, -0.37, 0);
-      for (const dz of [-0.07, 0.07]) add(leg, new T.BoxGeometry(0.012, 0.6, 0.012), mObi, 0.17, -0.42, dz, false); // plis
-      add(leg, new T.CylinderGeometry(0.07, 0.07, 0.12, 8), mSock, 0, -0.78, 0, false);
-      add(leg, new T.BoxGeometry(0.26, 0.1, 0.15), mSock, 0.06, -0.86, 0);          // tabi
-      add(leg, new T.BoxGeometry(0.3, 0.035, 0.17), mSandal, 0.06, -0.93, 0, false); // sandale
-      legs.push(leg);
+    let mSuit, mSuitD;
+    if (pal.mao) {
+      mSuit = M(pal.suit); mSuitD = M(pal.suitD);
+      add(hips, new T.CylinderGeometry(0.25, 0.26, 0.22, 10), mSuit, 0, -0.08, 0);
+      for (const z of [0.14, -0.14]) {
+        const leg = new T.Group(); leg.position.set(0, 0, z); hips.add(leg);
+        add(leg, new T.CylinderGeometry(0.13, 0.115, 0.8, 10), mSuit, 0, -0.42, 0);
+        add(leg, new T.BoxGeometry(0.005, 0.66, 0.012), mSuitD, 0.12, -0.44, 0, false);               // pli du pantalon
+        add(leg, new T.BoxGeometry(0.29, 0.11, 0.16), M(pal.shoe), 0.05, -0.87, 0);                     // chaussure de cuir
+        add(leg, new T.BoxGeometry(0.3, 0.03, 0.17), M(0x0a090c), 0.05, -0.93, 0, false);
+        legs.push(leg);
+      }
+    } else {
+      // Bassin + hakama (pantalon large plissé)
+      add(hips, new T.CylinderGeometry(0.25, 0.27, 0.22, 10), mHak, 0, -0.08, 0);
+      for (const z of [0.15, -0.15]) {
+        const leg = new T.Group(); leg.position.set(0, 0, z); hips.add(leg);
+        add(leg, new T.CylinderGeometry(0.15, 0.2, 0.74, 10), mHak, 0, -0.37, 0);
+        for (const dz of [-0.07, 0.07]) add(leg, new T.BoxGeometry(0.012, 0.6, 0.012), mObi, 0.17, -0.42, dz, false); // plis
+        add(leg, new T.CylinderGeometry(0.07, 0.07, 0.12, 8), mSock, 0, -0.78, 0, false);
+        add(leg, new T.BoxGeometry(0.26, 0.1, 0.15), mSock, 0.06, -0.86, 0);          // tabi
+        add(leg, new T.BoxGeometry(0.3, 0.035, 0.17), mSandal, 0.06, -0.93, 0, false); // sandale
+        legs.push(leg);
+      }
     }
 
     // Torse : kimono croisé
     const torso = new T.Group(); hips.add(torso);
-    const chest = add(torso, new T.CylinderGeometry(0.31, 0.26, 0.64, 12), mRobe, 0, 0.32, 0);
-    chest.scale.x = 0.8;
-    add(torso, new T.BoxGeometry(0.02, 0.22, 0.13), mInner, 0.24, 0.52, 0, false);   // sous-kimono sombre
-    const c1 = add(torso, new T.BoxGeometry(0.035, 0.38, 0.075), mRobeD, 0.245, 0.46, 0.055, false); c1.rotation.x = 0.42;
-    const c2 = add(torso, new T.BoxGeometry(0.035, 0.38, 0.075), mRobeD, 0.252, 0.46, -0.055, false); c2.rotation.x = -0.42;
-    const col = add(torso, new T.TorusGeometry(0.15, 0.045, 8, 18), mRobeD, -0.03, 0.64, 0, false); col.rotation.x = Math.PI / 2;
-    // Obi (ceinture) + nœud dans le dos
-    const obi = add(torso, new T.CylinderGeometry(0.265, 0.265, 0.12, 12), mObi, 0, 0.05, 0, false); obi.scale.x = 0.82;
-    add(torso, new T.BoxGeometry(0.08, 0.1, 0.22), mObi, -0.24, 0.05, 0);
-    // Chapeau de paille (kasa) accroché dans le dos
-    const hat = new T.Group(); hat.position.set(-0.36, 0.5, 0); hat.rotation.z = Math.PI / 2 + 0.25; torso.add(hat);
-    add(hat, new T.ConeGeometry(0.46, 0.17, 18), mStraw, 0, 0, 0);
-    for (let k = 1; k <= 2; k++) { const r = add(hat, new T.TorusGeometry(0.15 * k, 0.008, 4, 24), mRobeD, 0, 0.085 - 0.04 * k, 0, false); r.rotation.x = Math.PI / 2; }
-    const cord = add(torso, new T.BoxGeometry(0.02, 0.32, 0.02), mObi, -0.2, 0.55, 0.12, false); cord.rotation.x = 0.5;
+    let hat;
+    if (pal.mao) {
+      const chest = add(torso, new T.CylinderGeometry(0.31, 0.27, 0.66, 12), mSuit, 0, 0.31, 0); chest.scale.x = 0.8;
+      const hem = add(torso, new T.CylinderGeometry(0.275, 0.29, 0.2, 12), mSuit, 0, -0.06, 0); hem.scale.x = 0.82;   // bas de la vareuse sur les hanches
+      add(torso, new T.BoxGeometry(0.012, 0.78, 0.035), mSuitD, 0.25, 0.27, 0, false);                                 // patte de boutonnage
+      for (let k = 0; k < 5; k++) add(torso, new T.SphereGeometry(0.019, 8, 6), mSuitD, 0.258, 0.6 - k * 0.15, 0, false);
+      // col rabattu + pattes de col rouges
+      const col = add(torso, new T.CylinderGeometry(0.13, 0.16, 0.09, 14), mSuit, 0.0, 0.66, 0, true, 1.06);
+      for (const s of [1, -1]) {
+        const lap = add(torso, new T.BoxGeometry(0.03, 0.09, 0.11), mSuit, 0.16, 0.62, s * 0.07, true, 1.08); lap.rotation.x = s * 0.5; lap.rotation.z = -0.25;
+        const tab = add(torso, new T.BoxGeometry(0.016, 0.075, 0.075), M(pal.tab), 0.185, 0.615, s * 0.09, false); tab.rotation.x = s * 0.5; tab.rotation.z = -0.25;
+      }
+      // quatre poches plaquées à rabat (deux en haut, deux en bas)
+      for (const [y, z, w, h] of [[0.47, 0.13, 0.12, 0.13], [0.47, -0.13, 0.12, 0.13], [0.07, 0.15, 0.15, 0.16], [0.07, -0.15, 0.15, 0.16]]) {
+        const x = y > 0.3 ? 0.245 : 0.235;
+        add(torso, new T.BoxGeometry(0.012, h, w), mSuitD, x, y, z, false);
+        add(torso, new T.BoxGeometry(0.022, 0.04, w + 0.015), mSuit, x + 0.008, y + h / 2 - 0.01, z, false);
+        add(torso, new T.SphereGeometry(0.012, 6, 5), mSuitD, x + 0.02, y + h / 2 - 0.02, z, false);
+      }
+      // casquette à étoile rouge, accrochée dans le dos
+      hat = new T.Group(); hat.position.set(-0.3, 0.42, 0); hat.rotation.z = Math.PI / 2 + 0.15; torso.add(hat);
+      const crown = add(hat, new T.CylinderGeometry(0.2, 0.17, 0.13, 16), mSuit, 0, 0.06, 0);
+      add(hat, new T.CylinderGeometry(0.205, 0.205, 0.03, 16), mSuitD, 0, 0.0, 0, false);
+      const visor = add(hat, new T.CylinderGeometry(0.16, 0.16, 0.015, 16, 1, false, -0.9, 1.8), M(0x1a1a14), 0.08, -0.01, 0, false); visor.scale.set(1.1, 1, 1);
+      const st = new T.Shape(); for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 0.022 : 0.05; k ? st.lineTo(Math.cos(a) * r, Math.sin(a) * r) : st.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+      const star = add(hat, new T.ShapeGeometry(st), new T.MeshBasicMaterial({ color: pal.star, side: T.DoubleSide }), 0.202, 0.07, 0, false); star.rotation.y = Math.PI / 2;
+      crown.scale.x = 1.05;
+    } else {
+      const chest = add(torso, new T.CylinderGeometry(0.31, 0.26, 0.64, 12), mRobe, 0, 0.32, 0);
+      chest.scale.x = 0.8;
+      add(torso, new T.BoxGeometry(0.02, 0.22, 0.13), mInner, 0.24, 0.52, 0, false);   // sous-kimono sombre
+      const c1 = add(torso, new T.BoxGeometry(0.035, 0.38, 0.075), mRobeD, 0.245, 0.46, 0.055, false); c1.rotation.x = 0.42;
+      const c2 = add(torso, new T.BoxGeometry(0.035, 0.38, 0.075), mRobeD, 0.252, 0.46, -0.055, false); c2.rotation.x = -0.42;
+      const col = add(torso, new T.TorusGeometry(0.15, 0.045, 8, 18), mRobeD, -0.03, 0.64, 0, false); col.rotation.x = Math.PI / 2;
+      // Obi (ceinture) + nœud dans le dos
+      const obi = add(torso, new T.CylinderGeometry(0.265, 0.265, 0.12, 12), mObi, 0, 0.05, 0, false); obi.scale.x = 0.82;
+      add(torso, new T.BoxGeometry(0.08, 0.1, 0.22), mObi, -0.24, 0.05, 0);
+      // Chapeau de paille (kasa) accroché dans le dos
+      hat = new T.Group(); hat.position.set(-0.36, 0.5, 0); hat.rotation.z = Math.PI / 2 + 0.25; torso.add(hat);
+      add(hat, new T.ConeGeometry(0.46, 0.17, 18), mStraw, 0, 0, 0);
+      for (let k = 1; k <= 2; k++) { const r = add(hat, new T.TorusGeometry(0.15 * k, 0.008, 4, 24), mRobeD, 0, 0.085 - 0.04 * k, 0, false); r.rotation.x = Math.PI / 2; }
+      const cord = add(torso, new T.BoxGeometry(0.02, 0.32, 0.02), mObi, -0.2, 0.55, 0.12, false); cord.rotation.x = 0.5;
+    }
     const scarf = new T.Group(); torso.add(scarf);
     const scarf2 = new T.Group(); torso.add(scarf2);
 
@@ -922,9 +969,19 @@
     const arms = [];
     for (const z of [0.36, -0.36]) {
       const arm = new T.Group(); arm.position.set(0, 0.56, z); torso.add(arm);
-      add(arm, new T.SphereGeometry(0.13, 10, 8), mRobe, 0, 0, 0);
-      add(arm, new T.CylinderGeometry(0.12, 0.17, 0.44, 10, 1, true), mRobeS, 0, -0.22, 0);
-      add(arm, new T.CylinderGeometry(0.068, 0.06, 0.3, 8), mSkin, 0, -0.5, 0);
+      if (pal.mao) {
+        add(arm, new T.SphereGeometry(0.12, 10, 8), mSuit, 0, 0, 0);
+        add(arm, new T.CylinderGeometry(0.1, 0.085, 0.6, 10), mSuit, 0, -0.3, 0);
+        add(arm, new T.CylinderGeometry(0.088, 0.088, 0.05, 10), mSuitD, 0, -0.59, 0, false);                          // poignet de manche
+        if (z < 0) {                                                                                                     // le petit livre rouge
+          const bk = add(arm, new T.BoxGeometry(0.05, 0.17, 0.13), M(pal.book), 0.1, -0.7, 0); bk.rotation.z = 0.2;
+          add(arm, new T.BoxGeometry(0.052, 0.035, 0.035), M(0xf2c84a), 0.103, -0.66, 0, false).rotation.z = 0.2;
+        }
+      } else {
+        add(arm, new T.SphereGeometry(0.13, 10, 8), mRobe, 0, 0, 0);
+        add(arm, new T.CylinderGeometry(0.12, 0.17, 0.44, 10, 1, true), mRobeS, 0, -0.22, 0);
+        add(arm, new T.CylinderGeometry(0.068, 0.06, 0.3, 8), mSkin, 0, -0.5, 0);
+      }
       add(arm, new T.SphereGeometry(0.08, 10, 8), mSkin, 0, -0.67, 0);
       arms.push(arm);
     }
@@ -8103,6 +8160,7 @@
   }
   // couleur qui résume une tenue (pour les pastilles de l'écran de sélection)
   function palSwatch(p) {
+    if (p.swatch) return p.swatch;
     let best = null, bs = -1;
     for (const [k, v] of Object.entries(p)) {
       if (PAL_KEEP.test(k) || k === 'glow' || k === 'shield' || k === 'gold') continue;
@@ -18822,7 +18880,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.94.0';
+  const SSK_VER = '0.94.1';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {

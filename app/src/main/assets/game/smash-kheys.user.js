@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.94.1
+// @version      0.95.0
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -3477,6 +3477,7 @@
     const inner = new T.Group(); inner.position.y = -1.0; body.add(inner);
     const hips = new T.Group(); hips.position.y = 0.95; inner.add(hips);
     const mFur = M(pal.fur, { side: T.DoubleSide }), mFurD = M(pal.furD, { side: T.DoubleSide }), mFurHi = M(pal.furHi);
+    root.userData.fur = [mFur, mFurD, mFurHi];
     const mJk = M(pal.jacket, { side: T.DoubleSide }), mJkD = M(pal.jacketD), mSkin = M(pal.skin), mSkinD = M(pal.skinD), mHair = M(pal.hair);
     const mPants = M(0xffffff, { map: zebraTexture(pal.pants, pal.stripe) }), mFlat = M(pal.flat), mFlatD = M(pal.flatD);
     const furBall = new T.SphereGeometry(1, 8, 6);
@@ -8709,7 +8710,7 @@
       if (inp.y < -0.6 && Math.abs(inp.x) < 0.5) { this.state = 'crouch'; this.vx = approach(this.vx, 0, PHYS.friction * 2); return; }
       if (Math.abs(inp.x) > 0.25) {
         this.facing = Math.sign(inp.x);
-        this.vx += clamp(inp.x * PHYS.run * (this.def.run || 1) * (this.slimed > 0 ? 0.72 : 1) - this.vx, -PHYS.groundAcc, PHYS.groundAcc);
+        this.vx += clamp(inp.x * PHYS.run * (this.def.run || 1) * (this.slimed > 0 ? 0.72 : 1) * (this.kxSpd || 1) - this.vx, -PHYS.groundAcc, PHYS.groundAcc);
         this.state = 'move';
       } else {
         this.vx = approach(this.vx, 0, PHYS.friction);
@@ -9134,7 +9135,7 @@
       fx.ring(this.x, this.y + 1, o.pal.glow, 2.6, 22); fx.spark(this.x, this.y + 1.6, o.pal.glow, 18, 0.12); fx.spark(this.x, this.y + 1.6, 0xffffff, 10, 0.08);
       if (d.id === this.def.id || !d.moves || !this.model.setCopy) return;
       this.copyOf = d.id;
-      this.moves = { ...this.def.moves, nspec: d.moves.nspec };                        // son spécial neutre devient celui du khey avalé
+      this.moves = { ...d.moves, ...this.def.moves, nspec: d.moves.nspec };                        // son spécial neutre devient celui du khey avalé
       this.pal = { ...this.basePal, ...o.pal, ui: this.basePal.ui, shield: this.basePal.shield, name: this.basePal.name };
       this.model.setCopy(d.id);
     }
@@ -18880,7 +18881,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.94.1';
+  const SSK_VER = '0.95.0';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -23967,7 +23968,7 @@
         if (land !== null) { p.burning = true; p.y = land; p.life = 150; p.age = 0; p.halo.visible = false; p.core.visible = false; p.fl.forEach(c => c.visible = true); this.fx.ring(p.x, p.y + 0.1, 0xff8a2a, 1.2, 14); }
         for (const b of this.fighters) {
           if (b === p.owner || b.dead || b.intangible() || p.hitSet.has(b.id) || !hurtTest(b, p.x, p.y, p.r)) continue;
-          this.hit(null, b, p.h, p.x, p.y, Math.sign(p.vx) || 1, true); p.hitSet.add(b.id); p.life = 0;
+          this.hit(null, b, p.h, p.x, p.y, Math.sign(p.vx) || 1, true, p.owner); p.hitSet.add(b.id); p.life = 0;
         }
         if (p.y < BLAST.B) p.life = 0;
       } else {
@@ -24320,7 +24321,7 @@
         p.mesh.position.set(p.x, p.y, 0.2);
         if (p.kind === 'bullet' || p.kind === 'feather') p.mesh.rotation.z = Math.atan2(p.vy, p.vx);
         if (p.kind === 'crescent') p.mesh.scale.set(Math.sign(p.vx), 1 + Math.sin(p.life * 0.5) * 0.08, 1);
-        if (p.kind !== 'laser' && p.kind !== 'bullet' && p.kind !== 'smoke' && this.tick % 2 === 0) this.fx.spark(p.x - Math.sign(p.vx) * 0.3, p.y, p.sparkCol != null ? p.sparkCol : p.kind === 'hat' ? (p.owner.pal.hatSpark || 0xffa6c9) : p.owner.pal.glow, 1, 0.02);
+        if (p.kind !== 'laser' && p.kind !== 'bullet' && p.kind !== 'smoke' && !p.noSpark && this.tick % 2 === 0) this.fx.spark(p.x - Math.sign(p.vx) * 0.3, p.y, p.sparkCol != null ? p.sparkCol : p.kind === 'hat' ? (p.owner.pal.hatSpark || 0xffa6c9) : p.owner.pal.glow, 1, 0.02);
         for (const b of this.fighters) {
           if (b === p.owner || b.dead || b.intangible() || p.hitSet.has(b.id)) continue;
           if (!hurtTest(b, p.x, p.y, p.r)) continue;
@@ -24331,7 +24332,7 @@
             continue;
           }
           const blocked = b.state === 'shield' && b.grounded;
-          this.hit(null, b, p.h, p.x, p.y, Math.sign(p.vx) || 1, true);
+          this.hit(null, b, p.h, p.x, p.y, Math.sign(p.vx) || 1, true, p.owner);
           if (p.onHit) p.onHit(b, p, this, blocked);
           if (p.kind === 'heart' && !blocked) { b.charm = 55; b.charmBy = p.owner; this.fx.spark(b.x, b.y + 1.9, 0xff6aa8, 6, 0.05); }
           if (p.owner && p.owner.def.tempt && !blocked) this.addTempt(b, p.kind === 'heart' ? 24 : p.h.dmg * 2.4, p.owner);
@@ -28100,6 +28101,997 @@
         };
       } },
   };
+
+  // =====================================================================
+  //  v0.95 : GAMEPLAYS PERSONNALISÉS
+  //  Une jauge ou un passif par khey (affichés sous sa carte), et des spéciaux refaits pour
+  //  BrésilienDeter, RouteANuage, Kaaido, Kadode, Cinossonic, Isssoufle, Haut_de_Forme, Celestinoux,
+  //  Lemmancheur, XX_AUDD_XX, Chattemoustache, Basico, Itsukinakano, Leloupzeur, Your_usual_goat,
+  //  Thunder0301, Usoconders et le boss Smokey. Tout est déterministe (même simulation pour tous en ligne).
+  // =====================================================================
+  const KX = {};                                                    // id -> { meter, tick, post, deal, take, dealMul, takeMul, spd, save, respawn, dispose }
+  const kxS = (f) => f.kx || (f.kx = {});
+  const kxMeterMax = (f) => { const d = KX[f.def.id]; return d && d.meter && d.meter.max || 100; };
+  const kxAdd = (f, v) => { const s = kxS(f); s.m = clamp((s.m || 0) + v, 0, kxMeterMax(f)); return s.m; };
+  const kxRest = { lean: 0.05, armR: 0.45, armL: -0.15, legL: 0.1, legR: -0.1, head: 0, tilt: 0, spin: 0 };
+  const kxGroundY = (f) => (f.ground >= 0 ? PLATS[f.ground].y : STAGE.top);
+  const kxFoes = (f, G) => G.fighters.filter(b => b !== f && !b.dead && !b.intangible());
+  const kxNear = (f, G) => { let best = null, bd = 1e9; for (const b of kxFoes(f, G)) { const d = Math.hypot(b.x - f.x, b.y - f.y); if (d < bd) { bd = d; best = b; } } return best; };
+  const kxFreeze = (G, b, n, txt) => { if (!b || b.dead) return; v91Stun(b, n); if (txt) G.say(b, txt, false, Math.min(90, n)); };
+  // un « faux » fighter pour les bulles de BD d'un objet (belle-mère, Korochiku…)
+  const kxBubbleHost = (x, y, by = 2.75) => ({ x, y, dead: false, def: { bubbleY: by } });
+  // objet décoratif posé dans la scène (ne touche personne), retiré tout seul au bout de life images
+  function kxDecor(G, f, mesh, x, y, life, tick) {
+    return kitProj(G, f, { mesh, x, y, vx: 0, vy: 0, life, r: 0.01, pierce: true, keepGround: true, hitSet: new Set(G.fighters.map(o => o.id)), h: { dmg: 0, ang: 0, bkb: 0, kbg: 0 }, noSpark: true,
+      tick: (p, G2) => { p.vx = p.vy = 0; p.x = x; p.y = y; if (tick) tick(p, G2); for (const o of G2.fighters) p.hitSet.add(o.id); } });
+  }
+  function kxNum(G, f, txt, x, y, col = '#ffd23a', bg = 'rgba(0,0,0,0)', life = 50, s = 1.1) {
+    const m = kitLabel(txt, { bg, col, fs: 96, w: 512, h: 160, sx: s, stroke: '#000' });
+    return kxDecor(G, f, m, x, y, life, (p) => { p.y = y + Math.min(0.6, p.age * 0.02); p.mesh.position.y = p.y; p.mesh.material.opacity = Math.min(1, p.life / 15); p.mesh.scale.setScalar(Math.min(1, 0.4 + p.age * 0.12)); });
+  }
+  const kxStrikeH = (f, G, x, y, r, h) => { const s = new Set(); return kitStrike(f, G, x, y, r, h, s); };
+  const kxEdge = (f) => { if (!f.grounded) return; const [L, R] = f.groundSpan(); if ((f.vx > 0 && f.x + f.vx > R - 0.35) || (f.vx < 0 && f.x + f.vx < L + 0.35)) f.vx = 0; };   // les ruées au sol s'arrêtent au bord
+  const kxEnd = (f, m, fr, helpless = false) => { if (fr >= m.total) f.endSpecial(helpless); };
+
+  // ---------------------------------------------------------------- branchements moteur
+  {
+    const FP = Fighter.prototype, GP = Game.prototype;
+    const up0 = FP.update;
+    FP.update = function (inp) {
+      const G = this.game, d = KX[this.def.id];
+      if (this.kxMark > 0) { this.kxMark--; if (this.kxMark % 10 === 0 && !this.dead) G.fx.spark(this.x, this.y + 1.9, 0xe8f0d0, 2, 0.02); }
+      if (d) {
+        if (this._kxT == null || G.tick < this._kxT || this._kxG !== G) { if (d.dispose && this.kx) d.dispose(this, G); this.kx = {}; this._kxG = G; if (d.init) d.init(this, G); }
+        this._kxT = G.tick;
+        if (!this.dead && !(this.hitlag > 0) && d.tick) d.tick(this, G, inp);
+        this.kxSpd = d.spd ? d.spd(this) : 1;
+      } else this.kxSpd = 1;
+      const r = up0.call(this, inp);
+      if (d && d.post && !this.dead) d.post(this, G, inp);
+      return r;
+    };
+    const rsp0 = FP.respawn;
+    FP.respawn = function () { const r = rsp0.call(this); const d = KX[this.def.id]; if (d && d.respawn) d.respawn(this, this.game); return r; };
+    const dp0 = FP.dispose;
+    FP.dispose = function () { const d = KX[this.def.id]; if (d && d.dispose && this.kx) { try { d.dispose(this, this.game); } catch (e) {} } return dp0.call(this); };
+    // dégâts : bonus / malus des jauges, puis on prévient les deux kheys
+    const hit0 = GP.hit;
+    GP.hit = function (a, b, h, hx, hy, facing, proj, src) {
+      if (!b || !h) return hit0.apply(this, arguments);
+      const A = a || src || null;
+      const counter = !proj && b.state === 'special' && b.counterOn;
+      const shield = b.state === 'shield' && b.grounded;
+      let hh = h;
+      if (!counter && h.dmg > 0) {
+        const da = A && KX[A.def.id], db = KX[b.def.id];
+        let mul = 1;
+        if (da && da.dealMul) mul *= da.dealMul(A, b);
+        if (db && db.takeMul) mul *= db.takeMul(b, A);
+        if (b.kxMark > 0) mul *= 1.2;
+        if (mul !== 1) hh = { ...h, dmg: Math.max(1, Math.round(h.dmg * mul)), kbg: h.kbg * (1 + (mul - 1) * 0.6) };
+      }
+      const r = hit0.call(this, a, b, hh, hx, hy, facing, proj, src);
+      if (!counter && !shield && hh.dmg > 0) {
+        const da = A && KX[A.def.id], db = KX[b.def.id];
+        if (da && da.deal && A !== b) da.deal(A, b, hh, this);
+        if (db && db.take) db.take(b, A, hh, this);
+      }
+      return r;
+    };
+    // sauvetage avant la sortie d'écran (les 9 vies de Chattemoustache)
+    const ck0 = GP.checkKO;
+    GP.checkKO = function () {
+      for (const f of this.fighters) {
+        const d = KX[f.def.id];
+        if (f.dead || !d || !d.save) continue;
+        if (f.x < BLAST.L || f.x > BLAST.R || f.y < BLAST.B || (f.y > BLAST.T && f.state === 'hitstun') || f.y > BLAST.T + 6) d.save(f, this);
+      }
+      return ck0.call(this);
+    };
+  }
+
+  // ---------------------------------------------------------------- jauge sous la carte du HUD
+  {
+    const GP = Game.prototype, uh0 = GP.updateHUD;
+    const CSS = `.sk-kxm{position:absolute;left:100px;right:2px;top:-15px;z-index:3;display:flex;align-items:center;gap:5px;margin:0;font:900 9px "SSK Rodin","Arial Black",sans-serif;letter-spacing:.5px;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;white-space:nowrap}
+      .sk-kxm span{min-width:0;overflow:hidden;text-overflow:ellipsis}.sk-kxm span{flex:1}.sk-kxm i{position:relative;flex:0 0 54px;height:8px;border-radius:5px;background:rgba(0,0,0,.45);border:1px solid rgba(0,0,0,.7);overflow:hidden}
+      .sk-kxm i b{position:absolute;left:0;top:0;bottom:0;border-radius:4px;transition:width .12s}.sk-kxm.full i b{animation:skkxm .5s ease-in-out infinite alternate}.sk-kxm.nobar i{display:none}
+      @keyframes skkxm{from{filter:brightness(1)}to{filter:brightness(1.8)}}`;
+    GP.updateHUD = function () {
+      uh0.call(this);
+      if (!this.cards) return;
+      this.fighters.forEach((f, i) => {
+        const c = this.cards[i]; if (!c) return;
+        const d = KX[f.def.id], mt = d && d.meter;
+        if (c.kxId !== f.def.id) {
+          if (c.kxm) { c.kxm.remove(); c.kxm = null; }
+          c.kxId = f.def.id;
+          if (mt) {
+            if (!document.getElementById('sk-kxm-css')) { const s = document.createElement('style'); s.id = 'sk-kxm-css'; s.textContent = CSS; document.head.appendChild(s); }
+            const e = document.createElement('div'); e.className = 'sk-kxm'; e.innerHTML = '<span></span><i><b></b></i>'; c.el.appendChild(e);
+            c.kxm = e; c.kxmT = e.firstChild; c.kxmB = e.querySelector('b'); c.kxmS = '';
+          }
+        }
+        if (!c.kxm || !mt) return;
+        const s = f.kx || {}, max = mt.max || 100;
+        const v = mt.val ? mt.val(f) : (s.m || 0), w = clamp(Math.round(v / max * 100), 0, 100);
+        const lab = mt.label ? mt.label(f) : mt.n, col = mt.colf ? mt.colf(f) : mt.col, full = mt.full ? mt.full(f) : w >= 100, bar = mt.bar !== false;
+        const key = lab + '|' + w + '|' + col + '|' + full + '|' + bar + '|' + (mt.show ? mt.show(f) : 1);
+        if (key === c.kxmS) return; c.kxmS = key;
+        c.kxm.style.display = mt.show && !mt.show(f) ? 'none' : 'flex';
+        c.kxmT.textContent = lab; c.kxmB.style.width = w + '%'; c.kxmB.style.background = col;
+        c.kxm.classList.toggle('full', !!full); c.kxm.classList.toggle('nobar', !bar);
+      });
+    };
+  }
+
+  // =====================================================================
+  //  BRÉSILIENDETER — le fan absolu de Jenna Ortega
+  // =====================================================================
+  {
+    const PINK = 0xff4fa0, ON = 480;
+    const fanOn = (f, G) => { const s = kxS(f); s.on = ON; s.m = 100; G.say(f, 'JENNA, REGARDE-MOI !!', true, 90); G.fx.ring(f.x, f.y + 1.3, PINK, 3, 20); G.fx.spark(f.x, f.y + 1.4, PINK, 30, 0.2); };
+    const gain = (f, G, v) => { const s = kxS(f); if (s.on > 0) return; if (kxAdd(f, v) >= 100) fanOn(f, G); };
+    KX.bresil = {
+      meter: { n: 'FAN ABSOLU', col: '#ff4fa0', label: (f) => (f.kx && f.kx.on > 0 ? '★ FAN ABSOLU ★' : 'FAN DE JENNA'), full: (f) => f.kx && f.kx.on > 0 },
+      tick: (f, G) => { const s = kxS(f); if (s.on > 0) { s.on--; s.m = s.on / ON * 100; if (G.tick % 5 === 0) G.fx.spark(f.x + (Math.random() - 0.5) * 0.5, f.y + 1.3 + Math.random() * 0.5, Math.random() < 0.5 ? PINK : 0xffffff, 1, 0.03); if (!s.on) s.m = 0; } },
+      deal: (f, b, h, G) => gain(f, G, h.dmg * 1.6),
+      dealMul: (f) => (f.kx && f.kx.on > 0 ? 1.3 : 1),
+    };
+    const phone = () => { const g = new T.Group(); v91Ol(v91Box(0.05, 0.36, 0.2, 0x16161c, 0, 0, 0, g)); const sc = new T.Mesh(new T.PlaneGeometry(0.16, 0.3), new T.MeshBasicMaterial({ color: 0x9ad8ff })); sc.position.set(0.03, 0, 0); sc.rotation.y = Math.PI / 2; g.add(sc); return g; };
+    const pen = () => { const g = new T.Group(); v91Ol(v91Cyl(0.03, 0.03, 0.34, 0x101014, 0, 0, 0, g, 8)); v91Cyl(0.032, 0.032, 0.08, 0xf4f4f0, 0, 0.15, 0, g, 8); return g; };
+    const dance = []; for (let k = 0; k <= 12; k++) dance.push([6 + k * 5, k % 2 ? { armR: 2.5, armL: -0.7, head: 0.35, legL: 0.5, legR: -0.1, lean: -0.05 } : { armR: -0.6, armL: 2.5, head: -0.35, legL: 0.1, legR: -0.5, lean: 0.12 }]);
+    v91Put('bresil', {
+      // SELFIE : le flash du téléphone aveugle ceux qui sont devant lui
+      nspec: { total: 44, special: 'kit', cd: 150, hits: [],
+        pose: [[0, { armL: 0.3 }], [8, { armL: 2.75, armR: 0.3, head: -0.15, lean: -0.08 }], [30, { armL: 2.75, armR: 0.3, head: -0.15 }], [44, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.4, -0.05);
+          if (fr === 1) f._ph = kitAttach(f, phone());
+          if (f._ph) { f._ph.position.set(f.x + f.facing * 0.35, f.y + 2.35, 0.4); f._ph.rotation.y = f.facing > 0 ? 0 : Math.PI; }
+          if (fr === 6) kitSay(f, ['Selfie pour Jenna !', 'Dis « Mercredi » !', 'Souriez !'][Math.floor(Math.random() * 3)], false, 60);
+          if (fr === 16) {
+            const fx = f.x + f.facing * 1.4, fy = f.y + 1.6;
+            G.fx.ring(f.x + f.facing * 0.4, f.y + 2.3, 0xffffff, 3.8, 14); G.fx.spark(f.x + f.facing * 0.4, f.y + 2.3, 0xffffff, 24, 0.22); G.shake = Math.max(G.shake, 0.25);
+            for (const b of kxFoes(f, G)) {
+              const dx = (b.x - f.x) * f.facing;
+              if (dx < -0.3 || dx > 4.6 || Math.abs(b.y - f.y) > 2.6) continue;
+              G.hit(f, b, { dmg: 3, ang: 70, bkb: 8, kbg: 2, col: 0xffffff }, fx, fy, f.facing, false);
+              kxFreeze(G, b, 50, 'Aveuglé par le flash !');
+            }
+            gain(f, G, 12);
+          }
+          kxEnd(f, m, fr);
+        } },
+      // CHASSE À L'AUTOGRAPHE : il fonce sur sa « star », lui fait signer son t-shirt et la laisse sonnée
+      sspec: { total: 48, special: 'kit', cd: 70, hits: [],
+        pose: [[0, { armR: 0.4, lean: -0.1 }], [6, { armR: 1.9, armL: 1.6, lean: 0.35, legL: 0.6, legR: -0.5 }], [24, { armR: 1.9, armL: 1.6, lean: 0.35, legL: -0.5, legR: 0.6 }], [48, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr === 1) { f._pen = kitAttach(f, pen()); f._got = null; }
+          if (f._pen) { f._pen.position.set(f.x + f.facing * 0.75, f.y + 1.45, 0.4); f._pen.rotation.z = -f.facing * 1.2 + (f._got ? Math.sin(fr * 1.5) * 0.4 : 0); }
+          if (fr >= 6 && fr <= 24 && !f._got) {
+            f.vx = f.facing * 0.42; if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.4, -0.04); kxEdge(f);
+            if (fr % 2 === 0) G.fx.spark(f.x - f.facing * 0.4, f.y + 0.4, 0xffd23a, 1, 0.03);
+            for (const b of kxFoes(f, G)) {
+              if (!hurtTest(b, f.x + f.facing * 0.7, f.y + 1.2, 0.55)) continue;
+              f._got = b; f.vx = 0;
+              G.hit(f, b, { dmg: 6, ang: 75, bkb: 18, kbg: 6, col: 0xffd23a }, b.x, b.y + 1.2, f.facing, false);
+              kxFreeze(G, b, 70, 'Il m\'a fait signer son t-shirt…'); kitSay(f, 'MERCI JENNA !!', true, 60); gain(f, G, 20);
+              break;
+            }
+          } else kitBrake(f, inp);
+          kxEnd(f, m, fr);
+        } },
+      // LA DANSE VIRALE : la danse saccadée aux bras raides ; l'onde fige ceux qui regardent
+      dspec: { total: 74, special: 'kit', cd: 420, hits: [], pose: [[0, kxRest], ...dance, [74, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.3, -0.04);
+          if (fr === 1) { f._dz = new Set(); kitSay(f, 'La danse !', true, 50); }
+          if (fr === 18 || fr === 38 || fr === 58) {
+            G.fx.ring(f.x, f.y + 1.1, PINK, 2.8, 16); G.fx.ring(f.x, f.y + 1.1, 0x1a1a1e, 2.2, 12);
+            for (const b of kxFoes(f, G)) if (!f._dz.has(b.id) && Math.hypot(b.x - f.x, b.y - f.y) < 2.9) { f._dz.add(b.id); G.hit(f, b, { dmg: 3, ang: 80, bkb: 8, kbg: 2, col: PINK }, b.x, b.y + 1, f.facing, false); kxFreeze(G, b, 55, 'Hypnotisé par la danse…'); }
+          }
+          if (fr === 60) gain(f, G, 25);
+          kxEnd(f, m, fr);
+        } },
+    }, ['Selfie · le flash aveugle', 'Chasse à l\'autographe · attrape et étourdit', 'Meia lua · remontée', 'La danse virale · fige autour de lui', 'Passif · Fan absolu : jauge pleine = plus fort']);
+  }
+
+  // =====================================================================
+  //  ROUTEANUAGE — façon Harmonie et Luma : Nuagi, son petit nuage, se bat avec elle
+  // =====================================================================
+  {
+    const cloudMesh = (w = 1, face = true) => {
+      const g = new T.Group(), m = kitMat(0xffffff), mS = kitMat(0xe8eefc);
+      for (const [x, y, r] of [[0, 0, 0.32], [-0.3, -0.06, 0.24], [0.3, -0.05, 0.25], [-0.14, 0.14, 0.22], [0.16, 0.12, 0.2]]) { const s = new T.Mesh(new T.SphereGeometry(r, 14, 10), r > 0.3 ? m : mS); s.position.set(x * w, y, 0); s.scale.x = w > 1 ? 1.3 : 1; g.add(s); v91Ol(s, 1.06); }
+      if (face) { for (const z of [-0.1, 0.1]) { const e = new T.Mesh(new T.SphereGeometry(0.045, 8, 6), new T.MeshBasicMaterial({ color: 0x1a1a2a })); e.position.set(z, 0.04, 0.3); g.add(e); } const bl = new T.Mesh(new T.SphereGeometry(0.05, 8, 6), new T.MeshBasicMaterial({ color: 0xff9ac8 })); bl.position.set(0.2, -0.05, 0.27); g.add(bl); }
+      return g;
+    };
+    const ensure = (f, G) => {
+      const s = kxS(f);
+      if (!s.c) { s.c = { x: f.x - f.facing, y: f.y + 1.9, mode: 'f', t: 0, hs: new Set(), mv: null }; }
+      if (!s.c.mesh || s.c.g !== G) { if (s.c.mesh && s.c.mesh.parent) s.c.mesh.parent.remove(s.c.mesh); s.c.mesh = cloudMesh(); s.c.mesh.scale.setScalar(0.85); G.scene.add(s.c.mesh); s.c.g = G; }
+      return s.c;
+    };
+    KX.nuage = {
+      meter: { n: 'NUAGI', col: '#bfe2ff', bar: false, label: (f) => { const c = f.kx && f.kx.c; return c && c.mode !== 'f' ? 'NUAGI · EN MISSION' : 'NUAGI · À SES CÔTÉS'; } },
+      tick: (f, G) => {
+        const c = ensure(f, G);
+        c.t++;
+        if (c.mode === 'f') { const tx = f.x - f.facing * 0.95, ty = f.y + 1.95; c.x += (tx - c.x) * 0.14; c.y += (ty - c.y) * 0.14; }
+        else if (c.mode === 'out') {
+          const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy);
+          if (d < 0.2) { c.mode = 'hold'; c.t = 0; } else { c.x += dx / d * Math.min(d, 0.36); c.y += dy / d * Math.min(d, 0.36); }
+          kitStrike(f, G, c.x, c.y, 0.55, { dmg: 5, ang: 45, bkb: 26, kbg: 38, col: 0xbfe2ff }, c.hs);
+        } else if (c.mode === 'hold') { if (c.t > 170) c.mode = 'f'; c.y += Math.sin(c.t * 0.08) * 0.004; }
+        // Nuagi frappe en même temps qu'elle
+        if ((f.state === 'attack' || f.state === 'airattack') && f.move && f.frame === 6 && c.mv !== f.move) {
+          c.mv = f.move; c.punch = 8;
+          const n = kxStrikeH(f, G, c.x + f.facing * 0.45, c.y - 0.2, 0.6, { dmg: 3, ang: 50, bkb: 14, kbg: 22, col: 0xbfe2ff });
+          G.fx.spark(c.x + f.facing * 0.45, c.y - 0.2, n ? 0xffffff : 0xbfe2ff, n ? 6 : 2, 0.06);
+        }
+        if (f.state !== 'attack' && f.state !== 'airattack') c.mv = null;
+        if (c.punch > 0) c.punch--;
+        const ms = c.mesh; ms.visible = !f.dead; ms.position.set(c.x + (c.punch > 0 ? f.facing * Math.sin(c.punch / 8 * Math.PI) * 0.35 : 0), c.y + Math.sin(G.tick * 0.07) * 0.06, 0.3);
+        ms.rotation.y = f.facing > 0 ? 0.3 : -0.3;
+        // nuages-plateformes
+        if (s0(f).pl) for (const p of s0(f).pl) { p.life--; p.mesh.position.set(p.x, p.y - 0.12 + Math.sin(G.tick * 0.05 + p.x) * 0.02, 0.1); const k = p.life < 30 ? p.life / 30 : Math.min(1, p.age++ / 10); p.mesh.scale.set(k * 1.4, k, k); if (p.life <= 0 && p.mesh.parent) p.mesh.parent.remove(p.mesh); }
+        if (s0(f).pl) s0(f).pl = s0(f).pl.filter(p => p.life > 0);
+      },
+      post: (f, G, inp) => {
+        const pl = s0(f).pl; if (!pl || !pl.length || f.grounded || f.vy > 0.001 || (inp && inp.y < -0.6)) return;
+        if (f.state === 'hitstun' || f.state === 'helpless' || f.state === 'ledge') return;
+        for (const p of pl) if (Math.abs(f.x - p.x) < 1.15 && f.y <= p.y + 0.05 && f.y >= p.y - 0.4 && f.prevY >= p.y - 0.05) { f.y = p.y; f.vy = 0; f.fastfall = false; f.jumps = (f.def.jumps || 1); f.usedSide = false; break; }
+      },
+      respawn: (f) => { const c = f.kx && f.kx.c; if (c) { c.mode = 'f'; c.x = f.x; c.y = f.y + 2; } },
+      dispose: (f) => { const s = f.kx || {}; if (s.c && s.c.mesh && s.c.mesh.parent) s.c.mesh.parent.remove(s.c.mesh); for (const p of s.pl || []) if (p.mesh.parent) p.mesh.parent.remove(p.mesh); s.pl = []; if (s.c) s.c.mesh = null; },
+    };
+    function s0(f) { return kxS(f); }
+    v91Put('nuage', {
+      // NUAGI : elle envoie son petit nuage en avant ; il frappe en chemin puis reste sur place un moment (rappuyer = rappel)
+      nspec: { total: 24, special: 'kit', cd: 30, hits: [],
+        pose: [[0, { armR: 0.5 }], [6, { armR: 2.2, lean: -0.1 }], [10, { armR: 1.5, lean: 0.2 }], [24, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.06);
+          if (fr === 8) {
+            const c = ensure(f, G);
+            if (c.mode !== 'f') { c.mode = 'f'; kitSay(f, 'Reviens, Nuagi !', false, 45); }
+            else { c.mode = 'out'; c.tx = clamp(f.x + f.facing * 3.6, BLAST.L + 3, BLAST.R - 3); c.ty = f.y + 1.3; c.hs = new Set(); kitSay(f, 'Vas-y, Nuagi !', false, 45); }
+          }
+          kxEnd(f, m, fr);
+        } },
+      // NUAGE-PLATEFORME : un nuage moelleux apparaît sous ses pieds et la porte quelques secondes
+      dspec: { total: 22, special: 'kit', cd: 300, hits: [],
+        pose: [[0, { armR: 0.5, armL: 0.5 }], [8, { armR: -0.8, armL: -0.8, legL: 0.3, legR: -0.3 }], [22, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (f.grounded) f.vx = approach(f.vx, 0, PHYS.friction); else { f.vx *= 0.9; f.vy = Math.max(f.vy - PHYS.grav * 0.3, -0.03); }
+          if (fr === 6) {
+            const s = kxS(f); s.pl = s.pl || [];
+            for (const p of s.pl) p.life = Math.min(p.life, 20);
+            const y = f.grounded ? f.y + 2.3 : f.y - 0.05, px = f.grounded ? f.x + f.facing * 1.4 : f.x, mesh = cloudMesh(1, false); G.scene.add(mesh);
+            s.pl.push({ x: px, y, life: 330, age: 0, mesh });
+            G.fx.spark(px, y, 0xffffff, 14, 0.1); kitSay(f, 'Un petit nuage !', false, 45);
+          }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Nuagi · envoie son petit nuage (rappuyer = rappel)', 'Glissade sur nuage · ruée', 'Petit nuage · remontée', 'Nuage-plateforme · la porte en l\'air', 'Passif · Nuagi frappe en même temps qu\'elle']);
+  }
+
+  // =====================================================================
+  //  KAAIDO — façon Joker : jauge d'étiquette, puis le valet baroque se bat à ses côtés
+  // =====================================================================
+  {
+    const VT = 600;
+    const valetMesh = () => {
+      const g = new T.Group(), coat = kitMat(0x2a2a5a, { transparent: true, opacity: 0.88 }), gold = kitMat(0xe0b44a), wig = kitMat(0xf4f0e6), skin = kitMat(0xdccfe8, { transparent: true, opacity: 0.9 });
+      const b = v91Ol(new T.Mesh(new T.CylinderGeometry(0.28, 0.42, 1.3, 12), coat)); b.position.y = 1.0; g.add(b);
+      const h = v91Ol(new T.Mesh(new T.SphereGeometry(0.22, 14, 10), skin)); h.position.y = 1.85; g.add(h);
+      for (const [x, y, z, r] of [[-0.05, 2.0, 0, 0.2], [-0.1, 1.85, 0.18, 0.12], [-0.1, 1.85, -0.18, 0.12], [-0.12, 1.72, 0.2, 0.1], [-0.12, 1.72, -0.2, 0.1], [-0.3, 1.75, 0, 0.1]]) { const w = new T.Mesh(new T.SphereGeometry(r, 10, 8), wig); w.position.set(x, y, z); g.add(w); }
+      for (const z of [-0.14, 0.14]) { const e = new T.Mesh(new T.SphereGeometry(0.035, 8, 6), new T.MeshBasicMaterial({ color: 0xffd23a })); e.position.set(0.2, 1.88, z); g.add(e); }
+      const tr = new T.Mesh(new T.TorusGeometry(0.3, 0.03, 6, 16), gold); tr.rotation.x = Math.PI / 2; tr.position.y = 1.55; g.add(tr);
+      for (const z of [-0.36, 0.36]) { const a = v91Ol(new T.Mesh(new T.CylinderGeometry(0.08, 0.07, 0.8, 8), coat)); a.position.set(0.15, 1.2, z); a.rotation.z = 0.8; g.add(a); const sw = new T.Mesh(new T.BoxGeometry(1.1, 0.03, 0.03), kitMat(0xe8eef6)); sw.position.set(0.75, 1.45, z); sw.rotation.z = 0.25; if (z > 0) g.add(sw); }
+      g.add(new T.Mesh(new T.SphereGeometry(1.1, 14, 10), kitGlow(0x8a6aff, 0.12))).position.y = 1.2;
+      return g;
+    };
+    const summon = (f, G) => {
+      const s = kxS(f); s.v = VT; s.m = 100;
+      if (!s.vm || s.vg !== G) { if (s.vm && s.vm.parent) s.vm.parent.remove(s.vm); s.vm = valetMesh(); G.scene.add(s.vm); s.vg = G; }
+      s.vm.visible = true; s.vx = f.x - f.facing; s.vy = f.y;
+      G.say(f, 'Mon valet ! À votre service.', true, 80); G.fx.ring(f.x, f.y + 1.2, 0x8a6aff, 3, 20); G.fx.spark(f.x, f.y + 1.3, 0xe0b44a, 24, 0.18);
+    };
+    KX.kaaido = {
+      meter: { n: 'ÉTIQUETTE', col: '#e0b44a', label: (f) => (f.kx && f.kx.v > 0 ? '♛ LE VALET EST LÀ' : 'ÉTIQUETTE'), full: (f) => f.kx && f.kx.v > 0, colf: (f) => (f.kx && f.kx.v > 0 ? '#8a6aff' : '#e0b44a') },
+      deal: (f, b, h, G) => {
+        const s = kxS(f); if (s.v > 0) return;
+        const mv = f.moveName || '?'; kxAdd(f, mv !== s.last ? 16 : 4); s.last = mv;
+        if (s.m >= 100) summon(f, G);
+      },
+      tick: (f, G) => {
+        const s = kxS(f);
+        if (s.v > 0) {
+          s.v--; s.m = s.v / VT * 100;
+          const tx = f.x - f.facing * 1.15, ty = f.y + 0.15; s.vx += (tx - s.vx) * 0.12; s.vy += (ty - s.vy) * 0.12;
+          if (s.vm) { s.vm.position.set(s.vx, s.vy + Math.sin(G.tick * 0.06) * 0.08, -0.4); s.vm.rotation.y = f.facing > 0 ? -0.35 : Math.PI + 0.35; s.vm.visible = !f.dead; }
+          if ((f.state === 'attack' || f.state === 'airattack' || f.state === 'special') && f.move && f.frame === 7 && s.vmv !== f.move) {
+            s.vmv = f.move; s.vx = f.x + f.facing * 0.6;
+            const n = kxStrikeH(f, G, f.x + f.facing * 1.5, f.y + 1.2, 0.8, { dmg: 5, ang: 42, bkb: 24, kbg: 40, col: 0x8a6aff });
+            G.fx.spark(f.x + f.facing * 1.5, f.y + 1.2, 0x8a6aff, n ? 10 : 3, 0.1);
+          }
+          if (f.state !== 'attack' && f.state !== 'airattack' && f.state !== 'special') s.vmv = null;
+          if (!s.v) { if (s.vm) s.vm.visible = false; s.m = 0; s.last = null; G.say(f, 'Merci, mon brave.', false, 60); }
+        }
+      },
+      dealMul: (f) => (f.kx && f.kx.v > 0 ? 1.15 : 1),
+      takeMul: (f) => (f.kx && f.kx.v > 0 ? 0.85 : 1),
+      dispose: (f) => { const s = f.kx || {}; if (s.vm && s.vm.parent) s.vm.parent.remove(s.vm); s.vm = null; },
+    };
+    const d = v91Def('kaaido'); if (d) d.specials = [...d.specials.slice(0, 4), 'Passif · Étiquette : enchaîne des coups variés, le valet baroque arrive'];
+  }
+
+  // =====================================================================
+  //  KADODE — façon Mr. Game & Watch : le tampon (1 à 9), et les heures sup
+  // =====================================================================
+  {
+    const ON = 360;
+    KX.kadode = {
+      meter: { n: 'HEURES SUP', col: '#3ad06a', label: (f) => (f.kx && f.kx.on > 0 ? '⏰ HEURES SUP !' : 'HEURES SUP'), full: (f) => f.kx && f.kx.on > 0 },
+      tick: (f, G) => {
+        const s = kxS(f);
+        if (s.on > 0) { s.on--; s.m = s.on / ON * 100; if (f.spCd) for (const k in f.spCd) if (f.spCd[k] > 0) f.spCd[k]--; if (G.tick % 6 === 0) G.fx.spark(f.x, f.y + 2.2, 0x3ad06a, 1, 0.03); if (!s.on) s.m = 0; return; }
+        if (G.tick % 9 === 0 && G.mode === 'play') kxAdd(f, 1);
+        if (s.m >= 100) { s.on = ON; G.say(f, 'HEURES SUP !', true, 70); G.fx.ring(f.x, f.y + 1.2, 0x3ad06a, 2.6, 18); }
+      },
+      deal: (f, b, h) => { if (!(f.kx && f.kx.on > 0)) kxAdd(f, h.dmg * 0.9); },
+      spd: (f) => (f.kx && f.kx.on > 0 ? 1.3 : 1),
+    };
+    const stamp = () => { const g = new T.Group(); v91Ol(v91Cyl(0.05, 0.06, 0.34, 0x5a3a22, 0, 0.3, 0, g)); v91Ol(v91Sph(0.08, 0x5a3a22, 0, 0.5, 0, g)); v91Ol(v91Box(0.4, 0.12, 0.3, 0x2a2a30, 0, 0.08, 0, g)); v91Box(0.38, 0.04, 0.28, 0xc8202a, 0, 0, 0, g); return g; };
+    v91Put('kadode', {
+      // TAMPON : chiffre au hasard de 1 à 9. 7 = « PAYÉE » (se soigne), 9 = « VALIDÉ » (énorme éjection)
+      nspec: { total: 40, special: 'kit', cd: 50, hits: [],
+        pose: [[0, { armR: 0.5 }], [8, { armR: 2.9, lean: -0.15 }], [14, { armR: 1.3, lean: 0.4 }], [26, { armR: 1.3, lean: 0.4 }], [40, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.4, -0.05);
+          if (fr === 1) f._st = kitAttach(f, stamp());
+          if (f._st) { const up = fr < 8 ? fr / 8 : fr < 14 ? 1 - (fr - 8) / 6 : 0; f._st.position.set(f.x + f.facing * 1.05, f.y + 0.95 + up * 1.4, 0.35); }
+          if (fr === 14) {
+            const n = 1 + Math.floor(Math.random() * 9), x = f.x + f.facing * 1.05, y = f.y + 0.9;
+            const h = n === 9 ? { dmg: 19, ang: 42, bkb: 50, kbg: 105, col: 0xffd23a } : { dmg: 1 + n * 1.6, ang: 45, bkb: 20 + n * 2, kbg: 28 + n * 6, col: 0xc8202a };
+            kxStrikeH(f, G, x, y, 0.8, h);
+            G.fx.ring(x, y - 0.4, n === 9 ? 0xffd23a : 0xc8202a, n === 9 ? 2.8 : 1.4, 14); G.shake = Math.max(G.shake, n === 9 ? 0.5 : 0.15);
+            kxNum(G, f, String(n), x, f.y + 2.2, n === 9 ? '#ffd23a' : n === 7 ? '#3ad06a' : '#ffffff');
+            if (n === 9) kitSay(f, 'VALIDÉ !', true, 60);
+            else if (n === 7) { v91Heal(f, 8); kitSay(f, 'PAYÉE ! (−8 %)', false, 60); G.fx.spark(f.x, f.y + 1.2, 0x3ad06a, 12, 0.08); }
+            else if (n === 1) kitSay(f, 'Refusé…', false, 50);
+          }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Tampon · chiffre de 1 à 9 (7 = soin, 9 = VALIDÉ)', 'Tourbillon de tresse · coups multiples', 'Promotion express · remontée', 'Imprimante · tire des feuilles', 'Passif · Heures sup : plus rapide et spéciaux rechargés vite']);
+  }
+
+  // =====================================================================
+  //  CINOSSONIC — façon Sonic et Little Mac : spin dash, et le COUP KO quand la jauge est pleine
+  // =====================================================================
+  {
+    KX.cinossonic = {
+      meter: { n: 'COUP KO', col: '#ffd23a', label: (f) => (f.kx && f.kx.m >= 100 ? '★ COUP KO PRÊT' : 'COUP KO') },
+      deal: (f, b, h, G) => { const was = (f.kx && f.kx.m) || 0; if (kxAdd(f, h.dmg * 1.1) >= 100 && was < 100) { G.say(f, 'Coup KO prêt !', false, 60); G.fx.ring(f.x, f.y + 1.2, 0xffd23a, 2, 14); } },
+      take: (f, a, h, G) => { const was = (f.kx && f.kx.m) || 0; if (kxAdd(f, h.dmg * 0.9) >= 100 && was < 100) G.say(f, 'Coup KO prêt !', false, 60); },
+      tick: (f, G) => { if (f.kx && f.kx.m >= 100 && G.tick % 7 === 0) G.fx.spark(f.x + f.facing * 0.4, f.y + 1.3, 0xffd23a, 1, 0.03); },
+    };
+    const d = v91Def('cinossonic'), paint = d && d.moves.nspec;
+    const roll = []; for (let k = 0; k <= 10; k++) roll.push([10 + k * 3, { armR: 2.4, armL: 2.4, legL: 1.6, legR: 1.6, head: 0.6, lean: 0.6, tilt: -k * 1.4 }]);
+    v91Put('cinossonic', {
+      ...(paint ? { paint0: paint } : {}),
+      nspec: { total: 2, special: 'kit', hits: [], pose: [[0, kxRest]],
+        kit: (f, fr) => { if (fr >= 1) { if (f.kx && f.kx.m >= 100) f.startMove('kopunch', 'special'); else if (paint) f.startMove('paint0', 'special'); else f.endSpecial(false); } } },
+      // COUP KO : gros uppercut de boxe, une fois la jauge pleine
+      kopunch: { total: 56, special: 'kit', hits: [],
+        pose: [[0, { armR: 0.5 }], [10, { armR: -0.6, armL: 1.2, lean: -0.3, legL: 0.6, legR: -0.4 }], [18, { armR: 3.0, armL: 0.6, lean: 0.35, head: -0.3, legL: -0.2, legR: 0.4 }], [34, { armR: 3.0, lean: 0.3 }], [56, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr === 1) { kitSay(f, 'K.O. !!', true, 50); kxS(f).m = 0; }
+          if (fr < 16) { kitBrake(f, inp, 0.3, -0.03); if (fr % 2 === 0) G.fx.spark(f.x + f.facing * 0.2, f.y + 0.9, 0xffd23a, 2, 0.05); }
+          else if (fr <= 22) { f.vx = f.facing * 0.16; if (!f.grounded) f.vy = Math.max(f.vy, 0.06); }
+          else kitBrake(f, inp);
+          if (fr >= 17 && fr <= 21) if (kitStrike(f, G, f.x + f.facing * 0.95, f.y + 1.5, 0.75, { dmg: 22, ang: 70, bkb: 55, kbg: 108, col: 0xffd23a }, f.hitList)) { G.fx.ring(f.x + f.facing, f.y + 1.6, 0xffd23a, 3, 18); G.shake = Math.max(G.shake, 0.7); }
+          kxEnd(f, m, fr);
+        } },
+      // SPIN DASH : il se met en boule, charge sur place puis roule à toute vitesse
+      sspec: { total: 50, special: 'kit', cd: 40, hits: [], pose: [[0, kxRest], [6, { armR: 2.4, armL: 2.4, legL: 1.6, legR: 1.6, head: 0.6, lean: 0.6, tilt: 0 }], ...roll, [50, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr <= 12) { kitBrake(f, inp, 0.3, -0.03); if (fr % 2 === 0) G.fx.spark(f.x - f.facing * 0.5, f.y + 0.2, 0x5aa8ff, 3, 0.08); }
+          else if (fr <= 36) {
+            f.vx = f.facing * (f.grounded ? 0.4 : 0.3); if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.6, -0.08);
+            if (f.grounded) { const [L, R] = f.groundSpan(); if ((f.facing > 0 && f.x + f.vx > R - 0.35) || (f.facing < 0 && f.x + f.vx < L + 0.35)) f.vx = 0; }
+            if (fr % 5 === 0) f.hitList.clear();
+            kitStrike(f, G, f.x, f.y + 0.7, 0.7, fr < 34 ? { dmg: 2, ang: 60, bkb: 18, kbg: 8, col: 0x5aa8ff } : { dmg: 7, ang: 40, bkb: 34, kbg: 72, col: 0x5aa8ff }, f.hitList);
+            if (fr % 2 === 0) G.fx.spark(f.x - f.facing * 0.5, f.y + 0.4, 0x5aa8ff, 1, 0.03);
+          } else kitBrake(f, inp);
+          kxEnd(f, m, fr);
+        } },
+    }, ['Giclée de peinture · (jauge pleine : COUP KO)', 'Spin dash · roule en boule', 'Décollage · remontée', 'Ébrouement · onde', 'Passif · Jauge KO : donner et prendre des coups la remplit']);
+  }
+
+  // =====================================================================
+  //  ISSSOUFLE — façon Dresseur Pokémon : trois tenues. Et le running gag : il déserte pour GTA VI,
+  //  Korochiku, nommé Leader Suprême du topic par le peuple, prend sa place le temps d'une partie
+  // =====================================================================
+  {
+    const TEN = [
+      { n: 'FOURRURE', col: '#ff8ad0', c: null },
+      { n: 'VESTE', col: '#f4f4f0', c: [0xf4f4f0, 0xd8d8de, 0xffffff] },
+      { n: 'LUNETTES', col: '#ff4fd0', c: [0x22202c, 0x141220, 0x3a3048] },
+    ];
+    const wear = (f) => {
+      const fur = f.model && f.model.root.userData.fur; if (!fur) return;
+      const s = kxS(f); if (!s.c0) s.c0 = fur.map(m => m.color.getHex());
+      const t = TEN[s.t || 0], cols = t.c || s.c0;
+      fur.forEach((m, i) => m.color.setHex(cols[i]));
+    };
+    KX.isss = {
+      meter: { n: 'TENUE', bar: false, label: (f) => (f.kx && f.kx.away > 0 ? '🎮 SUR GTA VI…' : 'TENUE : ' + TEN[(f.kx && f.kx.t) || 0].n), colf: (f) => TEN[(f.kx && f.kx.t) || 0].col },
+      init: (f) => { kxS(f).t = 0; wear(f); },
+      tick: (f, G) => { const s = kxS(f); if (s.away > 0) s.away--; if ((s.t || 0) === 2 && G.tick % 12 === 0) G.fx.spark(f.x + f.facing * 0.25, f.y + 2.05, 0xff4fd0, 1, 0.02); },
+      dealMul: (f) => [1.15, 0.92, 1][(f.kx && f.kx.t) || 0],
+      takeMul: (f) => [0.85, 1, 1][(f.kx && f.kx.t) || 0],
+      spd: (f) => [0.88, 1.28, 1][(f.kx && f.kx.t) || 0],
+      respawn: (f) => wear(f),
+      dispose: (f) => { const s = f.kx || {}; if (s.sub) { if (s.sub.root.parent) s.sub.root.parent.remove(s.sub.root); s.sub = null; } },
+    };
+    const d = v91Def('isss'), glit = d && d.moves.nspec;
+    const korochikuMao = () => { const kd = v91Def('korochiku'); const m = kd.build(palFor(kd, 0, 2)); return m; };
+    const SAY = ['Le peuple m\'a choisi !', 'Sous ma direction !', 'NNN POUR TOUJOURS !', 'Discipline ! Pureté !', 'Fin à l\'addiction à GTA VI !'];
+    v91Put('isss', {
+      ...(glit ? { glit0: glit } : {}),
+      nspec: { total: 2, special: 'kit', hits: [], pose: [[0, kxRest]],
+        kit: (f, fr) => { if (fr >= 1) { if (((f.kx && f.kx.t) || 0) === 2) f.startMove('pinkray', 'special'); else if (glit) f.startMove('glit0', 'special'); else f.endSpecial(false); } } },
+      // tenue LUNETTES : rayon rose tiré par les lunettes
+      pinkray: { total: 30, special: 'kit', hits: [],
+        pose: [[0, { head: 0 }], [6, { head: -0.15, armR: 1.2, lean: -0.05 }], [22, { head: -0.15, armR: 1.2 }], [30, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.05);
+          if (fr === 9 || fr === 15) {
+            const g = new T.Group(); const c = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 0.9, 8), new T.MeshBasicMaterial({ color: 0xffd0f0 })); c.rotation.z = Math.PI / 2; g.add(c); const gl = new T.Mesh(new T.CylinderGeometry(0.16, 0.16, 1.0, 8), kitGlow(0xff4fd0, 0.6)); gl.rotation.z = Math.PI / 2; g.add(gl);
+            kitProj(G, f, { mesh: g, x: f.x + f.facing * 0.6, y: f.y + 2.02, vx: f.facing * 0.6, vy: 0, life: 32, r: 0.24, sparkCol: 0xff4fd0, h: { dmg: 5, ang: 30, bkb: 18, kbg: 30, col: 0xff4fd0 } });
+          }
+          kxEnd(f, m, fr);
+        } },
+      // DÉFILÉ : il défile sous les flashs, puis change de tenue (fourrure → veste → lunettes)
+      sspec: { total: 44, special: 'kit', cd: 70, hits: [],
+        pose: [[0, kxRest], [8, { armR: 2.9, armL: -0.4, lean: -0.1, legL: 0.4, legR: -0.3 }], [16, { armR: 0.3, armL: 2.0, legL: -0.3, legR: 0.4 }], [24, { armR: 2.9, armL: -0.4, legL: 0.4, legR: -0.3 }], [32, { armR: 2.9, armL: 1.2, head: 0.2, spin: TAU }], [44, { ...kxRest, spin: TAU }]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr >= 4 && fr <= 26) { f.vx = f.facing * 0.2; kxEdge(f); if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.5, -0.04); } else kitBrake(f, inp);
+          if (fr === 8 || fr === 16 || fr === 24) { G.fx.ring(f.x + f.facing * 0.9, f.y + 1.6, 0xffffff, 1.3, 10); G.fx.spark(f.x + f.facing * 0.9, f.y + 1.6, 0xffffff, 8, 0.12); f.hitList.clear(); kitStrike(f, G, f.x + f.facing * 0.9, f.y + 1.3, 0.75, { dmg: 3, ang: 50, bkb: 18, kbg: 14, col: 0xffffff }, f.hitList); }
+          if (fr === 32) {
+            const s = kxS(f); s.t = ((s.t || 0) + 1) % 3; wear(f);
+            G.fx.ring(f.x, f.y + 1.2, parseInt(TEN[s.t].col.slice(1), 16), 2.4, 16); G.fx.spark(f.x, f.y + 1.3, 0xffffff, 18, 0.15);
+            kitSay(f, ['La FOURRURE. Lourde, mais divine.', 'La VESTE. Légère, rapide.', 'Les LUNETTES. Regarde-moi bien.'][s.t], false, 70);
+          }
+          kxEnd(f, m, fr);
+        } },
+      // DÉSERTION : il part jouer à GTA VI ; Korochiku, Leader Suprême du topic, débarque et cogne à sa place
+      dspec: { total: 214, special: 'kit', cd: 900, hits: [],
+        pose: [[0, kxRest], [10, { armR: 1.0, armL: 1.0, head: 0.3, lean: 0.2 }], [214, { armR: 1.0, armL: 1.0, head: 0.3, lean: 0.2 }]],
+        kit: (f, fr, inp, m, G) => {
+          const s = kxS(f);
+          f.vx = 0; if (!f.grounded) f.vy = 0;
+          f.invuln = Math.max(f.invuln, 3);
+          if (fr === 1) { kitSay(f, 'Bon… GTA VI est sorti. Salut.', true, 70); }
+          if (fr === 12) {
+            kitAttach(f, new T.Group(), null, () => { f.kitHide = false; if (s.sub) { if (s.sub.root.parent) s.sub.root.parent.remove(s.sub.root); s.sub = null; } });
+            f.kitHide = true; s.away = 200;
+            G.fx.spark(f.x, f.y + 1.2, 0xffffff, 18, 0.15); G.fx.ring(f.x, f.y + 1.2, 0xc8202a, 2.4, 16);
+            const tag = kitLabel('🎮 GTA VI…', { bg: 'rgba(10,10,14,.9)', col: '#ff8ad0', fs: 64, w: 512, h: 128, sx: 1.3 }); kitAttach(f, tag); tag.position.set(f.x, f.y + 1.2, 0.3); f._tag = tag;
+            const km = korochikuMao(); G.scene.add(km.root); s.sub = { root: km.root, m: km, x: f.x + f.facing * 0.6, y: kxGroundY(f), dir: f.facing, host: kxBubbleHost(f.x, f.y), hs: new Set(), sw: 0 };
+            G.say(s.sub.host, 'Le peuple m\'a nommé Leader Suprême !', true, 90);
+            G.fx.ring(s.sub.x, s.sub.y + 1.2, 0xc8202a, 3, 20); G.fx.spark(s.sub.x, s.sub.y + 1.4, 0xffd23a, 20, 0.2);
+          }
+          const k = s.sub;
+          if (k && fr > 12) {
+            if (f._tag) { f._tag.position.set(f.x, f.y + 1.2 + Math.sin(fr * 0.1) * 0.06, 0.3); }
+            const tg = kxNear(f, G);
+            if (tg && k.sw <= 0) { const dx = tg.x - k.x; if (Math.abs(dx) > 0.9) { k.dir = Math.sign(dx); k.x += k.dir * 0.085; } }
+            k.x = clamp(k.x, STAGE.L + 0.4, STAGE.R - 0.4);
+            if ((fr - 12) % 38 === 30) { k.sw = 14; k.hs.clear(); G.say(k.host, SAY[Math.floor(((fr - 12) / 38)) % SAY.length], false, 70); }
+            if (k.sw > 0) {
+              k.sw--;
+              if (k.sw === 8) { const n = kitStrike(f, G, k.x + k.dir * 0.95, k.y + 1.3, 0.8, { dmg: 8, ang: 45, bkb: 34, kbg: 62, col: 0xc8202a }, k.hs); G.fx.spark(k.x + k.dir * 0.95, k.y + 1.3, n ? 0xc8202a : 0xffd23a, n ? 12 : 4, 0.1); if (n) G.shake = Math.max(G.shake, 0.3); }
+            }
+            const M = k.m, walk = k.sw > 0 ? 0 : Math.sin(fr * 0.3);
+            M.root.position.set(k.x, k.y, 0); M.body.rotation.y = k.dir > 0 ? -0.5 : Math.PI + 0.5;
+            M.legL.rotation.z = walk * 0.5; M.legR.rotation.z = -walk * 0.5;
+            M.armR.rotation.z = k.sw > 0 ? (k.sw > 8 ? 2.8 : 1.4) : 0.4 - walk * 0.4; M.armL.rotation.z = -0.2 + walk * 0.4;
+            M.head.rotation.z = 0.1; M.torso.rotation.z = k.sw > 0 && k.sw <= 8 ? 0.3 : 0.05;
+            k.host.x = k.x - 0.4; k.host.y = k.y;
+            if (fr === 200) { G.fx.spark(k.x, k.y + 1.2, 0xffd23a, 20, 0.2); G.say(k.host, 'Le topic est entre de bonnes mains.', false, 70); if (k.root.parent) k.root.parent.remove(k.root); s.sub = null; }
+          }
+          if (fr === 204) { f.kitHide = false; G.fx.ring(f.x, f.y + 1.2, 0xff8ad0, 2, 14); kitSay(f, 'J\'étais sur GTA VI, j\'ai raté quoi ?', true, 80); s.away = 0; }
+          if (fr >= m.total) { f.kitHide = false; f.endSpecial(false); }
+        } },
+    }, ['Paillettes · nuage (LUNETTES : rayon rose)', 'Défilé · change de tenue', 'Envolée de fourrure · remontée', 'Désertion · part sur GTA VI, Korochiku le remplace', 'Passif · Tenues : fourrure (lourd), veste (rapide), lunettes (tirs)']);
+  }
+
+  // =====================================================================
+  //  HAUT_DE_FORME — façon Snake : les gadgets du manteau (canne-épée, montre à gousset, parapluie)
+  // =====================================================================
+  {
+    const GAD = ['CANNE-ÉPÉE', 'MONTRE', 'PARAPLUIE'];
+    KX.hdf = { meter: { n: 'GADGET', bar: false, col: '#e0b44a', label: (f) => 'GADGET : ' + GAD[((f.kx && f.kx.g) || 0) % 3] } };
+    const cane = () => { const g = new T.Group(); v91Ol(v91Cyl(0.025, 0.025, 1.3, 0x1a1a1e, 0, 0, 0, g, 8)).rotation.z = Math.PI / 2; v91Sph(0.06, 0xe0b44a, -0.66, 0, 0, g); const bl = v91Box(0.9, 0.03, 0.02, 0xe8eef6, 0.5, 0, 0, g); bl.visible = true; return g; };
+    const watch = () => { const g = new T.Group(); const c = v91Ol(new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 0.06, 18), kitMat(0xe0b44a))); c.rotation.x = Math.PI / 2; g.add(c); const fc = new T.Mesh(new T.CircleGeometry(0.16, 18), new T.MeshBasicMaterial({ color: 0xf6efdc })); fc.position.z = 0.035; g.add(fc); const hd = new T.Mesh(new T.PlaneGeometry(0.02, 0.13), new T.MeshBasicMaterial({ color: 0x1a1a1e })); hd.position.set(0, 0.05, 0.04); g.add(hd); g.userData.hand = hd; return g; };
+    const umb = () => { const g = new T.Group(); const c = v91Ol(new T.Mesh(new T.ConeGeometry(0.9, 0.45, 12, 1, true), kitMat(0x16161c, { side: T.DoubleSide }))); c.rotation.z = -Math.PI / 2; g.add(c); v91Cyl(0.02, 0.02, 1.0, 0x5a3a22, -0.45, 0, 0, g, 6).rotation.z = Math.PI / 2; return g; };
+    v91Put('hdf', {
+      sspec: { total: 44, special: 'kit', cd: 45, hits: [],
+        pose: [[0, { armR: 0.6 }], [6, { armR: 1.0, armL: 0.9, lean: -0.1 }], [12, { armR: 1.65, lean: 0.35, legL: 0.8, legR: -0.6 }], [28, { armR: 1.65, lean: 0.35, legL: 0.8, legR: -0.6 }], [44, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          const s = kxS(f);
+          if (fr === 1) { f._gd = (s.g || 0) % 3; s.g = f._gd + 1; f._gm = kitAttach(f, [cane, watch, umb][f._gd]()); kitSay(f, ['La canne-épée.', 'Ma montre à gousset…', 'Un parapluie, voyons.'][f._gd], false, 50); }
+          const gd = f._gd, gm = f._gm;
+          if (gd === 0) {                                                       // CANNE-ÉPÉE : fente, la pointe fait très mal
+            if (fr >= 10 && fr <= 18) f.vx = f.facing * 0.3; else kitBrake(f, inp);
+            if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.5, -0.05);
+            if (gm) { gm.position.set(f.x + f.facing * (fr < 10 ? 0.5 : 1.25), f.y + 1.35, 0.35); gm.scale.x = f.facing; }
+            if (fr >= 11 && fr <= 17) { if (kitStrike(f, G, f.x + f.facing * 2.0, f.y + 1.35, 0.34, { dmg: 13, ang: 38, bkb: 40, kbg: 76 }, f.hitList)) G.fx.spark(f.x + f.facing * 2, f.y + 1.35, 0xffffff, 10, 0.12); kitStrike(f, G, f.x + f.facing * 1.2, f.y + 1.3, 0.45, { dmg: 6, ang: 45, bkb: 24, kbg: 40 }, f.hitList); }
+          } else if (gd === 1) {                                                // MONTRE À GOUSSET : elle hypnotise et ralentit le temps de l'adversaire
+            kitBrake(f, inp, 0.4, -0.05);
+            if (gm) { const sw = Math.sin(fr * 0.35) * 0.8; gm.position.set(f.x + f.facing * (0.9 + Math.sin(sw) * 0.3), f.y + 1.2 - Math.cos(sw) * 0.2, 0.4); gm.userData.hand.rotation.z = -fr * 0.3; }
+            if (fr >= 12 && fr <= 26) for (const b of kxFoes(f, G)) if (!f.hitList.has(b.id) && hurtTest(b, f.x + f.facing * 1.1, f.y + 1.2, 0.85)) { f.hitList.add(b.id); G.hit(f, b, { dmg: 4, ang: 60, bkb: 14, kbg: 6, col: 0xe0b44a }, b.x, b.y + 1.2, f.facing, false); b.kitSlow = 150; G.say(b, 'Le temps… ralentit…', false, 70); G.fx.ring(b.x, b.y + 1.2, 0xe0b44a, 1.6, 14); }
+          } else {                                                              // PARAPLUIE : renvoie les tirs, repousse
+            kitBrake(f, inp, 0.4, -0.04);
+            if (gm) { gm.position.set(f.x + f.facing * 0.85, f.y + 1.3, 0.35); gm.scale.x = f.facing; const o = Math.min(1, fr / 8); gm.scale.y = gm.scale.z = 0.3 + o * 0.7; }
+            if (fr >= 6 && fr <= 30) v91Reflect(G, f, f.x + f.facing * 0.9, f.y + 1.3, 1.1);
+            if (fr === 10) kitStrike(f, G, f.x + f.facing * 1.0, f.y + 1.2, 0.8, { dmg: 6, ang: 40, bkb: 34, kbg: 40 }, f.hitList);
+          }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Haut-de-forme boomerang', 'Gadget du manteau · canne-épée, montre, parapluie (à tour de rôle)', 'Envolée du manteau · remontée', 'L\'heure du thé · se soigne']);
+  }
+
+  // =====================================================================
+  //  CELESTINOUX — façon Mario : le bouquet qui renvoie, et la belle-maman en renfort
+  // =====================================================================
+  {
+    const bouquet = () => { const g = new T.Group(); v91Ol(v91Cyl(0.03, 0.06, 0.45, 0x3a8a3a, 0, -0.2, 0, g, 8)); const pap = v91Cyl(0.12, 0.04, 0.3, 0xf4f0e6, 0, -0.1, 0, g, 10); pap.material.side = T.DoubleSide; for (const [x, y, z, c] of [[0, 0.12, 0, 0xd8202e], [0.1, 0.08, 0.08, 0xff9ac8], [-0.1, 0.08, -0.06, 0xffd23a], [0.06, 0.1, -0.1, 0xd8202e], [-0.06, 0.1, 0.1, 0xffffff]]) v91Ol(v91Sph(0.08, c, x, y, z, g)); return g; };
+    const bm = () => {
+      const g = new T.Group(), dr = kitMat(0x6a3a8a), sk = kitMat(0xf0c8a8), hr = kitMat(0xc8c8d0);
+      const b = v91Ol(new T.Mesh(new T.CylinderGeometry(0.22, 0.42, 1.1, 12), dr)); b.position.y = 0.6; g.add(b);
+      const h = v91Ol(new T.Mesh(new T.SphereGeometry(0.22, 14, 10), sk)); h.position.y = 1.38; g.add(h);
+      const bun = v91Ol(new T.Mesh(new T.SphereGeometry(0.13, 12, 8), hr)); bun.position.set(-0.1, 1.6, 0); g.add(bun);
+      const cap = new T.Mesh(new T.SphereGeometry(0.23, 14, 10, 0, TAU, 0, 1.4), hr); cap.position.y = 1.4; g.add(cap);
+      for (const z of [-0.08, 0.08]) { const gl = new T.Mesh(new T.TorusGeometry(0.06, 0.012, 6, 14), kitMat(0x1a1a1e)); gl.position.set(0.2, 1.4, z); gl.rotation.y = Math.PI / 2; g.add(gl); }
+      const arm = new T.Group(); arm.position.set(0, 1.05, 0.28); g.add(arm); v91Ol(v91Cyl(0.05, 0.05, 0.5, 0x6a3a8a, 0, -0.25, 0, arm, 8));
+      const bag = v91Ol(v91Box(0.3, 0.24, 0.12, 0x8a1a2a, 0, -0.6, 0, arm)); v91Cyl(0.08, 0.08, 0.02, 0xe0b44a, 0, -0.5, 0, arm, 8);
+      g.userData.arm = arm;
+      return g;
+    };
+    v91Put('celes', {
+      // BELLE-MAMAN ! : elle surgit derrière l'adversaire et le renvoie vers son gendre d'un coup de sac à main
+      nspec: { total: 30, special: 'kit', cd: 540, hits: [],
+        pose: [[0, { armR: 0.5 }], [8, { armR: 2.9, armL: -0.2, head: -0.2 }], [30, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.06);
+          if (fr === 4) kitSay(f, 'Belle-maman, à l\'aide !', false, 60);
+          if (fr === 10) {
+            const b = kxNear(f, G) || null, dir = b ? (Math.sign(b.x - f.x) || f.facing) : f.facing;
+            const x = clamp(b ? b.x + dir * 1.25 : f.x + dir * 3, STAGE.L + 0.5, STAGE.R - 0.5), y = b && b.grounded ? b.y : STAGE.top, g = bm(), host = kxBubbleHost(x, y, 2.3);
+            g.rotation.y = dir > 0 ? Math.PI + 0.4 : -0.4;
+            let done = false;
+            kxDecor(G, f, g, x, y, 80, (p, G2) => {
+              const a = p.age, k = a < 10 ? a / 10 : p.life < 12 ? p.life / 12 : 1; g.scale.setScalar(Math.max(0.01, k));
+              if (a === 2) { G2.say(host, 'Laisse mon gendre tranquille !', false, 70); G2.fx.spark(x, y + 1, 0xffffff, 12, 0.1); }
+              const arm = g.userData.arm; arm.rotation.z = a < 22 ? Math.min(1, (a - 10) / 10) * 2.4 : a < 28 ? 2.4 - (a - 22) / 6 * 3.6 : -1.2 + Math.min(1, (a - 28) / 20) * 1.2;
+              if (a === 26 && !done) {
+                done = true;
+                for (const o of kxFoes(f, G2)) if (Math.abs(o.x - x) < 1.6 && Math.abs(o.y - y) < 2.2) { G2.hit(f, o, { dmg: 11, ang: 40, bkb: 38, kbg: 66, col: 0x8a1a2a }, o.x, o.y + 1.1, -dir, true); G2.fx.ring(o.x, o.y + 1.1, 0x8a1a2a, 1.6, 12); }
+              }
+            });
+          }
+          kxEnd(f, m, fr);
+        } },
+      // BOUQUET DE FLEURS : renvoie les tirs et fait faire demi-tour à l'adversaire (façon cape)
+      dspec: { total: 34, special: 'kit', cd: 60, hits: [],
+        pose: [[0, { armR: 0.5 }], [6, { armR: -0.5, lean: -0.1 }], [12, { armR: 2.2, lean: 0.25 }], [24, { armR: 2.2, lean: 0.25 }], [34, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.05);
+          if (fr === 1) f._bq = kitAttach(f, bouquet());
+          if (f._bq) { const sw = fr < 12 ? -0.6 : Math.min(1, (fr - 12) / 6); f._bq.position.set(f.x + f.facing * (0.5 + sw * 0.5), f.y + 1.3 + sw * 0.2, 0.4); f._bq.rotation.z = -f.facing * (0.4 + sw * 0.8); }
+          if (fr >= 8 && fr <= 24) {
+            if (v91Reflect(G, f, f.x + f.facing * 0.9, f.y + 1.2, 1.0)) kitSay(f, 'Avec mes compliments.', false, 40);
+            for (const b of kxFoes(f, G)) if (!f.hitList.has(b.id) && hurtTest(b, f.x + f.facing * 0.95, f.y + 1.2, 0.7)) {
+              f.hitList.add(b.id); G.hit(f, b, { dmg: 5, ang: 50, bkb: 20, kbg: 20, col: 0xff9ac8 }, b.x, b.y + 1.2, f.facing, false);
+              b.facing = -b.facing; b.charm = 22; b.charmBy = f; G.say(b, 'Oh… des fleurs…', false, 50);
+            }
+          }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Belle-maman ! · surgit et frappe au sac à main', 'Poignée de main · chope et projette', 'Envolée · remontée', 'Bouquet de fleurs · renvoie les tirs, fait faire demi-tour']);
+  }
+
+  // =====================================================================
+  //  LEMMANCHEUR — façon Wario : le fou rire se charge tout seul, puis explose
+  // =====================================================================
+  {
+    KX.lemmc = {
+      meter: { n: 'FOU RIRE', col: '#ffd23a', label: (f) => ((f.kx && f.kx.m) >= 100 ? '😂 FOU RIRE À BLOC' : 'FOU RIRE') },
+      tick: (f, G) => { if (G.mode === 'play' && G.tick % 8 === 0) { const was = (f.kx && f.kx.m) || 0; if (kxAdd(f, 1) >= 100 && was < 100) G.say(f, 'Hé… hé hé…', false, 60); } if (f.kx && f.kx.m >= 100 && G.tick % 9 === 0) G.fx.spark(f.x + 0.2, f.y + 2.0, 0xffd23a, 1, 0.03); },
+      take: (f, a, h) => kxAdd(f, h.dmg * 0.6),
+    };
+    v91Put('lemmc', {
+      // FOU RIRE : plus la jauge est chargée, plus l'explosion est grosse ; pleine, elle tétanise
+      dspec: { total: 54, special: 'kit', cd: 20, hits: [],
+        pose: [[0, kxRest], [6, { armR: 1.2, armL: 1.2, head: -0.5, lean: -0.25 }], [12, { armR: 0.9, armL: 0.9, head: -0.6, lean: -0.3 }], [16, { armR: 1.3, armL: 1.3, head: -0.4, lean: -0.2 }], [20, { armR: 0.9, armL: 0.9, head: -0.6, lean: -0.3 }], [40, { armR: 1.1, armL: 1.1, head: -0.5, lean: -0.2 }], [54, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.35, -0.04);
+          const s = kxS(f);
+          if (fr === 1) { f._pw = (s.m || 0) / 100; s.m = 0; }
+          const pw = f._pw;
+          if (fr === 6) kitSay(f, pw >= 1 ? 'AH AH AH AH AH !!' : pw >= 0.4 ? 'AH AH AH !' : 'Hé.', pw >= 0.4, 60);
+          if (fr === 14) {
+            const R = 1.3 + pw * 2.1;
+            G.fx.ring(f.x, f.y + 1.2, 0xffd23a, R, 18); if (pw > 0.4) { G.fx.ring(f.x, f.y + 1.2, 0xffffff, R * 0.7, 14); G.shake = Math.max(G.shake, 0.3 + pw * 0.4); }
+            for (const b of kxFoes(f, G)) {
+              if (Math.hypot(b.x - f.x, b.y + 1 - (f.y + 1.2)) > R) continue;
+              G.hit(f, b, { dmg: Math.round(3 + 15 * pw), ang: 70, bkb: 20 + 34 * pw, kbg: 30 + 70 * pw, col: 0xffd23a }, b.x, b.y + 1, Math.sign(b.x - f.x) || f.facing, false);
+              if (pw >= 1) kxFreeze(G, b, 75, 'Tétanisé de rire…');
+            }
+          }
+          if (fr > 14 && fr < 40 && fr % 6 === 0 && pw >= 0.4) kxNum(G, f, 'AH', f.x + (Math.random() - 0.5) * 2, f.y + 2 + Math.random(), '#ffd23a', 'rgba(0,0,0,0)', 30, 0.7);
+          kxEnd(f, m, fr);
+        } },
+    }, ['Rond de fumée · projectile', 'Fou rire · rafale de « AH »', 'Envolée · remontée', 'Explosion de rire · plus la jauge est pleine, plus ça fait mal', 'Passif · le fou rire se charge tout seul']);
+  }
+
+  // =====================================================================
+  //  XX_AUDD_XX — façon Rondoudou et King Dedede : la sieste qui soigne, puis somnambule
+  // =====================================================================
+  {
+    const SW = 420;
+    KX.audd = {
+      meter: { n: 'SOMNAMBULE', col: '#9ab8ff', show: (f) => f.kx && f.kx.sw > 0, label: () => '💤 SOMNAMBULE' },
+      tick: (f, G) => { const s = kxS(f); if (s.sw > 0) { s.sw--; s.m = s.sw / SW * 100; if (G.tick % 50 === 0) G.say(f, 'Zzz…', false, 40); } },
+      dealMul: (f) => (f.kx && f.kx.sw > 0 ? 1.2 : 1),
+      spd: (f) => (f.kx && f.kx.sw > 0 ? 0.92 : 1),
+    };
+    const flail = (pal) => { const g = new T.Group(); const c = v91Ol(new T.Mesh(new T.ConeGeometry(0.16, 0.9, 10), kitMat(0xd8202e))); c.rotation.z = -Math.PI / 2; c.position.x = 0.45; g.add(c); for (let i = 0; i < 3; i++) { const r = new T.Mesh(new T.TorusGeometry(0.13 - i * 0.03, 0.03, 6, 12), kitMat(0xffffff)); r.rotation.y = Math.PI / 2; r.position.x = 0.2 + i * 0.22; g.add(r); } v91Ol(v91Sph(0.15, 0xffffff, 0.95, 0, 0, g)); return g; };
+    v91Put('audd', {
+      // BONNET-FLÉAU : il fait tournoyer son long bonnet de nuit, le pompon frappe loin
+      nspec: { total: 36, special: 'kit', hits: [],
+        pose: [[0, { armR: 0.5 }], [8, { armR: 3.0, lean: -0.15 }], [14, { armR: 1.4, lean: 0.3 }], [24, { armR: 1.2, lean: 0.3 }], [36, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.05);
+          if (fr === 1) f._fl = kitAttach(f, flail());
+          if (f._fl) { const a = fr < 8 ? 1.5 : fr < 16 ? 1.5 - (fr - 8) / 8 * 1.9 : -0.4; f._fl.position.set(f.x + f.facing * 0.3, f.y + 1.5, 0.4); f._fl.rotation.z = f.facing > 0 ? a : Math.PI - a; }
+          if (fr >= 12 && fr <= 15) { kitStrike(f, G, f.x + f.facing * 1.45, f.y + 1.25, 0.5, { dmg: 11, ang: 40, bkb: 32, kbg: 70, col: 0xd8202e }, f.hitList); kitStrike(f, G, f.x + f.facing * 0.7, f.y + 1.35, 0.5, { dmg: 6, ang: 45, bkb: 22, kbg: 40 }, f.hitList); }
+          kxEnd(f, m, fr);
+        } },
+      // SIESTE : il s'allonge et se soigne ; un coup le réveille. Réveillé en douceur, il devient somnambule (et frappe plus fort)
+      dspec: { total: 210, special: 'kit', cd: 600, rest: true, hits: [],
+        pose: [[0, kxRest], [14, { armR: 2.9, armL: 2.6, legL: 0.3, legR: 0.1, tilt: 1.45, head: 0.25 }], [196, { armR: 2.9, armL: 2.6, legL: 0.3, legR: 0.1, tilt: 1.45, head: 0.25 }], [210, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (f.grounded) f.vx = approach(f.vx, 0, PHYS.friction * 2); else { f.vx *= 0.9; f.vy = Math.max(f.vy - PHYS.grav * 0.6, -0.12); }
+          if (fr === 2) kitSay(f, 'Petite sieste…', false, 50);
+          if (fr > 16 && fr < 196) { v91Heal(f, 0.17); if (fr % 40 === 20) { G.say(f, 'Zzz…', false, 40); G.fx.spark(f.x + 0.3, f.y + 1.0, 0x9ab8ff, 3, 0.02); } }
+          if (fr === 196) { const s = kxS(f); s.sw = SW; s.m = 100; kitSay(f, '…Zzz… (somnambule)', false, 70); G.fx.ring(f.x, f.y + 1, 0x9ab8ff, 2, 16); }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Bonnet-fléau · le pompon frappe loin', 'Somnambule · ruée', 'Réveil en sursaut · remontée', 'Sieste · se soigne, puis somnambule (+20 % de dégâts)']);
+  }
+
+  // =====================================================================
+  //  CHATTEMOUSTACHE — façon Pichu : petit, vif, et ses 9 vies
+  // =====================================================================
+  {
+    KX.moust = {
+      meter: { n: '9 VIES', bar: false, col: '#7dff6a', label: (f) => (f.kx && f.kx.saved ? '🐾 8 VIES RESTANTES' : '🐾 9 VIES') },
+      save: (f, G) => {
+        const s = kxS(f); if (s.saved || f.stocks <= 0) return;
+        s.saved = true;
+        Object.assign(f, { x: 0, y: 7.5, vx: 0, vy: 0, kbx: 0, kby: 0, hitstun: 0, grounded: false, fastfall: false, move: null, invuln: 120, jumps: (f.def.jumps || 1), usedSide: false });
+        f.setState('air');
+        G.fx.ring(0, 8.5, 0x7dff6a, 3, 24); G.fx.spark(0, 8.5, 0xffffff, 24, 0.2);
+        G.say(f, 'MIAOU ! Il me reste 8 vies…', true, 100);
+      },
+    };
+    v91Put('moust', {
+      // YEUX DE CHATON : ceux qui le regardent restent figés, attendris
+      dspec: { total: 42, special: 'kit', cd: 300, hits: [],
+        pose: [[0, kxRest], [8, { head: -0.35, armR: 1.2, armL: 1.2 }], [30, { head: -0.35, armR: 1.2, armL: 1.2 }], [42, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.4, -0.05);
+          if (fr === 6) kitSay(f, 'Mrrrow ? 🥺', false, 50);
+          if (fr === 14) {
+            G.fx.ring(f.x, f.y + 0.8, 0x7dff6a, 3.6, 16); G.fx.spark(f.x + f.facing * 0.3, f.y + 0.9, 0xffffff, 14, 0.1);
+            for (const b of kxFoes(f, G)) {
+              const d = Math.hypot(b.x - f.x, b.y - f.y), looking = (b.facing === Math.sign(f.x - b.x));
+              if (d < 3.8 && (looking || (b.x - f.x) * f.facing > 0)) kxFreeze(G, b, 55, 'Trop mignon…');
+            }
+          }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Boule de poils · rebondit', 'Griffes en furie · ruée', 'Bond félin · remontée', 'Yeux de chaton · fige ceux qui le regardent', 'Passif · 9 vies : sauvé une fois par partie d\'une sortie d\'écran']);
+  }
+
+  // =====================================================================
+  //  BASICO — façon Peach et Snake : la hotte de cadeaux, le crachat qui marque, les cadeaux piégés
+  // =====================================================================
+  {
+    const gift = (c = 0xd8202e, r = 0xffd23a, s = 0.4) => { const g = new T.Group(); v91Ol(v91Box(s, s, s, c, 0, 0, 0, g)); v91Box(s + 0.02, s * 0.2, s + 0.02, r, 0, 0, 0, g); v91Box(s * 0.2, s + 0.02, s + 0.02, r, 0, 0, 0, g); v91Sph(s * 0.18, r, 0, s * 0.55, 0, g); return g; };
+    const coal = () => { const g = new T.Group(); g.add(v91Ol(new T.Mesh(new T.DodecahedronGeometry(0.2, 0), kitMat(0x1a1a1e)))); return g; };
+    v91Put('basico', {
+      // HOTTE DE CADEAUX : charbon, cadeau-bombe ou cadeau pour lui (soin)
+      nspec: { total: 34, special: 'kit', cd: 70, hits: [],
+        pose: [[0, { armR: 0.5 }], [6, { armR: -0.4, head: -0.3 }], [12, { armR: 2.2, lean: 0.2 }], [34, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.06);
+          if (fr === 12) {
+            const r = Math.random(), x = f.x + f.facing * 0.8, y = f.y + 1.4;
+            if (r < 0.42) {
+              kitSay(f, 'Du charbon !', false, 45);
+              const g = coal(); kitProj(G, f, { mesh: g, x, y, vx: f.facing * 0.36, vy: 0.04, grav: 0.006, life: 60, r: 0.28, sparkCol: 0x3a3a3e, h: { dmg: 7, ang: 40, bkb: 24, kbg: 42, col: 0x3a3a3e }, tick: (p) => { g.rotation.z -= 0.3 * f.facing; } });
+            } else if (r < 0.8) {
+              kitSay(f, 'Un cadeau… piégé !', false, 50);
+              const g = gift(0x2a8a3a, 0xd8202e, 0.36);
+              const boom = (p, G2) => { if (p._b) return; p._b = 1; p.life = 0; G2.fx.ring(p.x, p.y, 0xff7a1a, 2.4, 16); G2.fx.spark(p.x, p.y, 0xff7a1a, 24, 0.2); G2.fx.spark(p.x, p.y, 0xffd23a, 12, 0.15); G2.shake = Math.max(G2.shake, 0.4); kxStrikeH(f, G2, p.x, p.y, 1.4, { dmg: 13, ang: 60, bkb: 40, kbg: 72, col: 0xff7a1a }); };
+              kitProj(G, f, { mesh: g, x, y: y + 0.3, vx: f.facing * 0.2, vy: 0.2, grav: 0.012, life: 90, r: 0.3, keepGround: true, sparkCol: 0xffd23a, h: { dmg: 2, ang: 60, bkb: 10, kbg: 10 },
+                tick: (p, G2) => { g.rotation.z -= 0.15 * f.facing; const gy = p.x > STAGE.L && p.x < STAGE.R ? STAGE.top : -99; let py = gy; for (const P of PLATS) if (p.x > P.x1 && p.x < P.x2 && p.y >= P.y - 0.1 && p.vy < 0 && P.y > py) py = P.y; if (p.y <= py + 0.2 && p.vy < 0) boom(p, G2); if (p.life <= 2) boom(p, G2); },
+                onHit: (b, p, G2) => boom(p, G2) });
+            } else {
+              v91Heal(f, 12); kitSay(f, 'Un cadeau pour moi ! (−12 %)', false, 60); G.fx.spark(f.x, f.y + 1.3, 0x3ad06a, 18, 0.12); G.fx.ring(f.x, f.y + 1.2, 0x3ad06a, 1.8, 14);
+              const g = gift(); kxDecor(G, f, g, f.x + f.facing * 0.7, f.y + 1.8, 30, (p) => { p.mesh.scale.setScalar(Math.min(1, p.life / 12)); p.mesh.rotation.y += 0.2; });
+            }
+          }
+          kxEnd(f, m, fr);
+        } },
+      // CRACHAT DE LAMA : un crachat bien droit ; l'adversaire touché est marqué (+20 % de dégâts reçus pendant 4 s)
+      sspec: { total: 32, special: 'kit', cd: 60, hits: [],
+        pose: [[0, { head: 0 }], [6, { head: 0.4, lean: -0.2 }], [12, { head: -0.3, lean: 0.25 }], [32, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.05);
+          if (fr === 12) {
+            const g = new T.Group(); const d = new T.Mesh(new T.SphereGeometry(0.14, 10, 8), new T.MeshBasicMaterial({ color: 0xe8f0d0, transparent: true, opacity: 0.9 })); d.scale.set(1.6, 0.8, 1); g.add(d);
+            kitProj(G, f, { mesh: g, x: f.x + f.facing * 0.9, y: f.y + 1.55, vx: f.facing * 0.42, vy: 0, life: 40, r: 0.26, sparkCol: 0xe8f0d0, h: { dmg: 4, ang: 40, bkb: 14, kbg: 18, col: 0xe8f0d0 },
+              onHit: (b, p, G2, blocked) => { if (blocked) return; b.kxMark = 240; G2.say(b, 'Beurk… je suis marqué !', false, 60); } });
+          }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Hotte de cadeaux · charbon, cadeau-bombe ou soin', 'Crachat de lama · marque (+20 % de dégâts reçus)', 'Saut du renne · remontée', 'Cadeau piégé · piège']);
+  }
+
+  // =====================================================================
+  //  ITSUKINAKANO — façon Sheik : la jauge d'agilité monte quand elle enchaîne
+  // =====================================================================
+  {
+    KX.itsuki = {
+      meter: { n: 'AGILITÉ', col: '#b06aff', label: (f) => ((f.kx && f.kx.m) >= 50 ? 'AGILITÉ · SAUT FÉLIN' : 'AGILITÉ') },
+      deal: (f, b, h, G) => { const s = kxS(f); kxAdd(f, G.tick - (s.lh || -999) < 90 ? 12 : 6); s.lh = G.tick; },
+      take: (f) => kxAdd(f, -35),
+      tick: (f, G) => {
+        const s = kxS(f);
+        if (G.tick - (s.lh || -999) > 180) kxAdd(f, -0.25);
+        if (f.grounded) f.jumps = Math.max(f.jumps, (f.def.jumps || 1) + ((s.m || 0) >= 50 ? 1 : 0));
+        if ((s.m || 0) >= 50 && G.tick % 8 === 0) G.fx.spark(f.x - f.facing * 0.3, f.y + 0.4, 0xb06aff, 1, 0.03);
+      },
+      spd: (f) => 1 + ((f.kx && f.kx.m) || 0) / 100 * 0.3,
+      dealMul: (f) => 1 + ((f.kx && f.kx.m) || 0) / 100 * 0.2,
+    };
+    const d = v91Def('itsuki'); if (d) d.specials = [...d.specials.slice(0, 4), 'Passif · Agilité : enchaîner la rend plus rapide et plus forte (saut en plus à 50 %)'];
+  }
+
+  // =====================================================================
+  //  LELOUPZEUR — façon Shulk : il change de morceau en plein combat
+  // =====================================================================
+  {
+    const TR = [
+      { n: 'LE RAGIX', col: '#ff5a5a', c: 0xff5a5a, say: '♪ LE RAGIX ! Plus vite !', spd: 1.3, deal: 1, take: 1.05 },
+      { n: 'LA BALLADE', col: '#6ec6ff', c: 0x6ec6ff, say: '♪ Une ballade… tout en douceur.', spd: 0.85, deal: 0.9, take: 0.7 },
+      { n: 'SON DE BOÎTE', col: '#ffd23a', c: 0xffd23a, say: '♪ Son de boîte ! On cogne !', spd: 1, deal: 1.3, take: 1.15 },
+    ];
+    const tr = (f) => TR[(f.kx && f.kx.t) || 0];
+    KX.leloup = {
+      meter: { n: 'MORCEAU', bar: false, label: (f) => '♪ ' + tr(f).n, colf: (f) => tr(f).col },
+      tick: (f, G) => { if (G.tick % 14 === 0) { const a = G.tick * 0.7; G.fx.spark(f.x + Math.cos(a) * 0.6, f.y + 1.6 + Math.sin(a) * 0.4, tr(f).c, 1, 0.025); } },
+      spd: (f) => tr(f).spd, dealMul: (f) => tr(f).deal, takeMul: (f) => tr(f).take,
+    };
+    v91Put('leloup', {
+      dspec: { total: 28, special: 'kit', cd: 90, hits: [],
+        pose: [[0, kxRest], [6, { armR: 2.6, armL: 0.9, head: -0.3 }], [14, { armR: 2.9, armL: 1.2, head: 0.2 }], [28, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.05);
+          if (fr === 8) { const s = kxS(f); s.t = ((s.t || 0) + 1) % 3; const t = TR[s.t]; kitSay(f, t.say, false, 70); G.fx.ring(f.x, f.y + 1.2, t.c, 2.4, 16); G.fx.spark(f.x, f.y + 1.5, t.c, 16, 0.12); kxStrikeH(f, G, f.x, f.y + 1.1, 1.2, { dmg: 4, ang: 70, bkb: 30, kbg: 20, col: t.c }); }
+          kxEnd(f, m, fr);
+        } },
+    }, ['Note du Ragix · ondule', 'Glissade à genoux · ruée', 'Contre-ut · remontée', 'Changer de morceau · Ragix (vitesse), Ballade (défense), Boîte (puissance)']);
+  }
+
+  // =====================================================================
+  //  YOUR_USUAL_GOAT — façon Félinferno : les chants de la tribune le portent
+  // =====================================================================
+  {
+    KX.goat = {
+      meter: { n: 'TRIBUNE', col: '#6ec6ff', label: (f) => (f.kx && f.kx.rdy ? '📣 ALLEZ LE GOAT !' : 'CHANTS DE TRIBUNE'), full: (f) => f.kx && f.kx.rdy },
+      take: (f, a, h, G) => { const s = kxS(f); if (s.rdy) return; if (kxAdd(f, h.dmg * 1.4) >= 100) { s.rdy = true; G.say(f, 'GOAT ! GOAT ! GOAT !', true, 80); G.fx.ring(f.x, f.y + 1.2, 0x6ec6ff, 2.6, 18); } },
+      deal: (f, b, h, G) => { const s = kxS(f); if (s.rdy && s.used) { s.rdy = false; s.used = false; s.m = 0; return; } if (!s.rdy && kxAdd(f, h.dmg * 0.5) >= 100) { s.rdy = true; G.say(f, 'GOAT ! GOAT ! GOAT !', true, 80); } },
+      dealMul: (f) => { const s = f.kx || {}; if (s.rdy) { s.used = true; return 1.6; } return 1; },
+      tick: (f, G) => { const s = kxS(f); if (s.rdy && G.tick % 6 === 0) G.fx.spark(f.x, f.y + 2.2, Math.random() < 0.5 ? 0x6ec6ff : 0xffffff, 1, 0.04); },
+    };
+    v91Put('goat', {
+      // COUP DE CORNE : tête baissée, il charge avec ses petites cornes
+      sspec: { total: 42, special: 'kit', cd: 45, hits: [],
+        pose: [[0, kxRest], [6, { head: 0.8, lean: 0.6, armR: -0.5, armL: -0.5, legL: 0.5, legR: -0.5 }], [22, { head: 0.8, lean: 0.6, armR: -0.5, armL: -0.5, legL: -0.5, legR: 0.5 }], [42, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr >= 8 && fr <= 24) { f.vx = f.facing * 0.42; if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.4, -0.04); kxEdge(f); if (fr % 2 === 0) G.fx.spark(f.x - f.facing * 0.4, f.y + 0.3, 0xd8d0c0, 2, 0.04); kitStrike(f, G, f.x + f.facing * 0.8, f.y + 1.4, 0.6, { dmg: 11, ang: 38, bkb: 36, kbg: 72, col: 0x6ec6ff }, f.hitList); }
+          else kitBrake(f, inp);
+          kxEnd(f, m, fr);
+        } },
+    }, ['Vuvuzela · souffle', 'Coup de corne · charge tête baissée', 'Coup de corne · remontée', 'C\'est le GOAT ! · onde de choc', 'Passif · Tribune : prendre des coups la remplit, pleine = coup suivant ×1,6']);
+  }
+
+  // =====================================================================
+  //  THUNDER0301 — façon Ike et Wario : la hache se charge, la moto fonce
+  // =====================================================================
+  {
+    const axe = () => { const g = new T.Group(); v91Ol(v91Cyl(0.04, 0.045, 1.2, 0x6a4222, 0, 0, 0, g, 8)); const b = v91Ol(v91Box(0.08, 0.42, 0.34, 0xc8ccd6, 0, 0.45, 0.16, g)); return g; };
+    const bike = () => {
+      const g = new T.Group(), blk = kitMat(0x16161c), chr = kitMat(0xc8ccd6), red = kitMat(0x8a1a1a);
+      for (const x of [-0.75, 0.75]) { const w = v91Ol(new T.Mesh(new T.TorusGeometry(0.32, 0.1, 8, 18), blk)); w.position.set(x, 0.38, 0); g.add(w); const h = new T.Mesh(new T.CylinderGeometry(0.12, 0.12, 0.2, 10), chr); h.rotation.x = Math.PI / 2; h.position.set(x, 0.38, 0); g.add(h); }
+      const tank = v91Ol(new T.Mesh(new T.SphereGeometry(0.3, 12, 8), red)); tank.scale.set(1.4, 0.7, 0.8); tank.position.set(0.15, 0.85, 0); g.add(tank);
+      const seat = v91Ol(new T.Mesh(new T.BoxGeometry(0.6, 0.12, 0.32), blk)); seat.position.set(-0.35, 0.86, 0); g.add(seat);
+      const fork = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.8, 6), chr); fork.position.set(0.62, 0.75, 0); fork.rotation.z = 0.4; g.add(fork);
+      const bar = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.8, 6), chr); bar.rotation.x = Math.PI / 2; bar.position.set(0.5, 1.15, 0); g.add(bar);
+      const ex = new T.Mesh(new T.CylinderGeometry(0.06, 0.08, 0.7, 8), chr); ex.rotation.z = Math.PI / 2; ex.position.set(-0.5, 0.45, 0.22); g.add(ex);
+      return g;
+    };
+    v91Put('thunder', {
+      // HACHE CHARGÉE : maintenir pour charger (jusqu'à 1 s), relâcher pour abattre la hache
+      nspec: { total: 99999, special: 'kit', hits: [],
+        pose: [[0, { armR: 0.5, armL: 0.5 }], [8, { armR: 2.9, armL: 2.6, lean: -0.2, head: -0.1 }]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.35, -0.05);
+          if (fr === 1) { f._ax = kitAttach(f, axe()); f._axC = 0; }
+          if (f._ax) { f._ax.position.set(f.x - f.facing * 0.1, f.y + 2.4, 0.35); f._ax.rotation.z = f.facing * 0.3; }
+          if (fr > 8) { f._axC = Math.min(1, (fr - 8) / 60); if (fr % 3 === 0) G.fx.spark(f.x, f.y + 2.6, f._axC >= 1 ? 0xffd23a : 0x9ad8ff, f._axC >= 1 ? 3 : 1, 0.05); if (fr === 68) { G.fx.ring(f.x, f.y + 2.5, 0xffd23a, 1.4, 12); kitSay(f, 'À BLOC !', false, 40); } }
+          if (fr > 8 && (!inp.special || fr >= 68 || (!f.grounded && fr >= 30))) { const c = f._axC; f.startMove('axeswing', 'special'); f._axC = c; }
+        } },
+      axeswing: { total: 38, special: 'kit', hits: [],
+        pose: [[0, { armR: 2.9, armL: 2.6, lean: -0.2 }], [6, { armR: 0.9, armL: 0.9, lean: 0.55, legL: 0.6, legR: -0.4 }], [24, { armR: 0.9, armL: 0.9, lean: 0.5, legL: 0.6, legR: -0.4 }], [38, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.35, -0.08);
+          if (fr === 1) f._ax2 = kitAttach(f, axe());
+          if (f._ax2) { const a = fr < 6 ? fr / 6 : 1; f._ax2.position.set(f.x + f.facing * (0.2 + a * 1.0), f.y + 2.3 - a * 1.3, 0.35); f._ax2.rotation.z = -f.facing * (a * 2.2 - 0.3); }
+          const c = f._axC || 0;
+          if (fr >= 5 && fr <= 9) if (kitStrike(f, G, f.x + f.facing * 1.35, f.y + 1.0, 0.85, { dmg: Math.round(8 + 17 * c), ang: 45, bkb: 30 + 25 * c, kbg: 50 + 62 * c, col: c >= 1 ? 0xffd23a : 0x9ad8ff }, f.hitList) && c >= 0.6) G.shake = Math.max(G.shake, 0.5);
+          if (fr === 7) { G.fx.ring(f.x + f.facing * 1.4, kxGroundY(f) + 0.1, 0xd8d0c0, 1 + c * 1.6, 12); if (c >= 1) G.fx.spark(f.x + f.facing * 1.4, f.y + 0.5, 0xffd23a, 16, 0.15); }
+          kxEnd(f, m, fr);
+        } },
+      // MOTO : il enfourche sa moto et fonce ; s'il se fait toucher, la moto part dans le décor
+      sspec: { total: 48, special: 'kit', cd: 120, hits: [],
+        pose: [[0, kxRest], [6, { legL: 1.3, legR: 1.3, armR: 1.5, armL: 1.5, lean: 0.3 }], [48, { legL: 1.3, legR: 1.3, armR: 1.5, armL: 1.5, lean: 0.3 }]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr === 1) { f._bkDone = false; f._bk = kitAttach(f, bike(), null, () => { if (f._bkDone) return; const g = bike(); const vx = -f.facing * 0.12; kitProj(G, f, { mesh: g, x: f.x, y: f.y + 0.4, vx, vy: 0.22, grav: 0.014, life: 70, r: 0.01, pierce: true, keepGround: true, noSpark: true, hitSet: new Set(G.fighters.map(o => o.id)), h: { dmg: 0, ang: 0, bkb: 0, kbg: 0 }, tick: (p) => { g.rotation.z += 0.2; for (const o of G.fighters) p.hitSet.add(o.id); } }); kitSay(f, 'MA BÉCANE !!', false, 60); }); kitSay(f, 'VROOOM !', true, 50); }
+          if (f._bk) { f._bk.position.set(f.x, f.y - 0.05, 0.2); f._bk.scale.x = f.facing; f._bk.rotation.z = fr < 8 ? 0 : -f.facing * 0.06 * Math.sin(fr * 0.5); }
+          if (fr >= 6 && fr <= 40) {
+            f.vx = f.grounded ? f.facing * 0.4 : approach(f.vx, 0, 0.012); if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.5, -0.12); kxEdge(f);
+            if (fr % 2 === 0) G.fx.spark(f.x - f.facing * 0.9, f.y + 0.4, 0x8a8f9c, 2, 0.05);
+            kitStrike(f, G, f.x + f.facing * 0.8, f.y + 0.7, 0.75, { dmg: 10, ang: 40, bkb: 36, kbg: 72, col: 0xff7a1a }, f.hitList);
+          } else kitBrake(f, inp);
+          if (fr >= m.total) { f._bkDone = true; f.endSpecial(false); }
+        } },
+    }, ['Hache chargée · maintenir puis relâcher', 'Moto · fonce (renversable)', 'Tornade de hache · remontée', 'Coup de tonnerre · foudre']);
+  }
+
+  // =====================================================================
+  //  USOCONDERS — façon Kazuya : la jauge HEAT débloque la Heat Action
+  // =====================================================================
+  {
+    KX.usocon = {
+      meter: { n: 'HEAT', col: '#ff5a1f', label: (f) => ((f.kx && f.kx.m) >= 100 ? '🔥 HEAT ACTION PRÊTE' : 'HEAT') },
+      deal: (f, b, h, G) => { const was = (f.kx && f.kx.m) || 0; if (kxAdd(f, h.dmg * 1.0) >= 100 && was < 100) { G.say(f, 'HEAT !', true, 50); G.fx.ring(f.x, f.y + 1.2, 0xff5a1f, 2.4, 16); } },
+      take: (f, a, h) => kxAdd(f, h.dmg * 0.8),
+      tick: (f, G) => { if (f.kx && f.kx.m >= 100 && G.tick % 3 === 0) G.fx.spark(f.x + (Math.random() - 0.5) * 0.7, f.y + 0.4 + Math.random() * 1.6, Math.random() < 0.5 ? 0xff5a1f : 0x5ab0ff, 1, 0.04); },
+    };
+    const d = v91Def('usocon'), card = d && d.moves.nspec;
+    v91Put('usocon', {
+      ...(card ? { card0: card } : {}),
+      nspec: { total: 2, special: 'kit', hits: [], pose: [[0, kxRest]],
+        kit: (f, fr) => { if (fr >= 1) { if (f.kx && f.kx.m >= 100) f.startMove('heat', 'special'); else if (card) f.startMove('card0', 'special'); else f.endSpecial(false); } } },
+      heat: { total: 74, special: 'kit', hits: [],
+        pose: [[0, kxRest], [6, { armR: 1.6, armL: 1.6, lean: 0.4 }], [16, { armR: 1.6, armL: 1.6, lean: 0.4 }], [22, { armR: -0.6, armL: 2.2, lean: -0.2 }], [30, { armR: 3.0, armL: 0.3, lean: 0.45, head: -0.2 }], [50, { armR: 3.0, lean: 0.4 }], [74, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr === 1) { f._hv = null; }
+          if (fr <= 16 && !f._hv) {
+            f.vx = f.facing * 0.32; if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.5, -0.04); kxEdge(f);
+            for (const b of kxFoes(f, G)) if (hurtTest(b, f.x + f.facing * 0.75, f.y + 1.2, 0.6)) {
+              f._hv = b; f._ht = fr; f.vx = 0; kxS(f).m = 0;
+              G.hit(f, b, { dmg: 5, ang: 85, bkb: 12, kbg: 0, col: 0xff5a1f }, b.x, b.y + 1.2, f.facing, false);
+              G.say(f, 'HEAT ACTION !', true, 60); G.shake = Math.max(G.shake, 0.35);
+              break;
+            }
+          } else kitBrake(f, inp);
+          if (f._hv && fr === f._ht + 14) {
+            const b = f._hv;
+            if (!b.dead && Math.abs(b.x - f.x) < 2.4 && Math.abs(b.y - f.y) < 2.4) {
+              b.invuln = 0; G.hit(f, b, { dmg: 21, ang: 40, bkb: 62, kbg: 104, col: 0xff5a1f }, b.x, b.y + 1.2, f.facing, false);
+              G.fx.ring(b.x, b.y + 1.2, 0xff5a1f, 3, 20); G.fx.spark(b.x, b.y + 1.2, 0x5ab0ff, 20, 0.2); G.shake = Math.max(G.shake, 0.8);
+            }
+          }
+          if (fr === 17 && !f._hv) kxS(f).m = 50;                               // raté : on garde la moitié
+          kxEnd(f, m, fr);
+        } },
+    }, ['Carte de visite · (HEAT plein : Heat Action)', 'Ruée du dragon · enchaînement', 'Uppercut du dragon · remontée', 'Accroupi du respect · contre', 'Passif · HEAT : se remplit en donnant et en prenant des coups']);
+  }
+
+  // =====================================================================
+  //  SMOKEY (boss) — le vieillard aigri, façon Shun Di (Virtua Fighter) et Oro (Street Fighter III)
+  // =====================================================================
+  {
+    const LINES = ['De mon temps, le forum…', 'On postait à la main, nous !', 'Les kheys d\'aujourd\'hui, pfff…', 'Et je te parle même pas du 18-25…', 'À l\'époque, on craquait pas !'];
+    const pills = (f) => (f.kx && f.kx.p) || 0;
+    KX.smokey = {
+      meter: { n: 'MÉDOCS', col: '#ffffff', max: 3, bar: false, val: (f) => pills(f), label: (f) => 'MÉDOCS ' + '●'.repeat(pills(f)) + '○'.repeat(3 - pills(f)) + (f.percent >= 60 ? ' · ÉNERVÉ' : ''), colf: (f) => (f.percent >= 60 ? '#ff5a3a' : '#e8e8ee') },
+      dealMul: (f) => (1 + Math.min(0.5, f.percent / 250)) * (1 + pills(f) * 0.08),
+      spd: (f) => 1 + pills(f) * 0.04,
+      respawn: (f) => { kxS(f).p = 0; },
+    };
+    const back = (f, G) => { if (f.grounded) { f.setLag(28, 'land'); G.say(f, 'Aïe… mon dos…', false, 50); } else f.endSpecial(false); };
+    const teeth = () => { const g = new T.Group(); const up = new T.Group(), lo = new T.Group(); g.add(up); g.add(lo); for (const [grp, s] of [[up, 1], [lo, -1]]) { const gum = v91Ol(new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 0.08, 14, 1, false, 0, Math.PI), kitMat(0xff8aa0))); gum.rotation.x = Math.PI / 2; gum.position.y = s * 0.06; grp.add(gum); for (let i = 0; i < 6; i++) { const a = i / 5 * Math.PI, t = new T.Mesh(new T.BoxGeometry(0.06, 0.07, 0.05), kitMat(0xfaf6ea)); t.position.set(Math.cos(a) * 0.17, s * 0.01, Math.sin(a) * 0.1); grp.add(t); } } g.userData.up = up; g.userData.lo = lo; return g; };
+    const sendTeeth = (f, G, dy, delay) => {
+      const g = teeth();
+      kitProj(G, f, { mesh: g, x: f.x + f.facing * 0.8, y: f.y + 1.45 + dy, vx: f.facing * 0.3, vy: 0, life: 56, r: 0.3, sparkCol: 0xfaf6ea, h: { dmg: 7, ang: 40, bkb: 22, kbg: 40, col: 0xfaf6ea },
+        tick: (p) => { const o = Math.abs(Math.sin(p.age * 0.45)) * 0.12; g.userData.up.position.y = o; g.userData.lo.position.y = -o; g.rotation.y = f.facing > 0 ? 0 : Math.PI; },
+        onHit: (b, p, G2, blocked) => { if (!blocked) G2.say(b, 'Il m\'a mordu !', false, 50); } });
+    };
+    v91Put('smokey', {
+      // DENTIER : il lance son dentier qui claque et mord (2 médocs : deux dentiers)
+      nspec: { total: 32, special: 'kit', cd: 45, hits: [],
+        pose: [[0, { armR: 0.5 }], [6, { armR: 1.0, head: -0.2 }], [12, { armR: 1.8, lean: 0.2 }], [32, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.45, -0.06);
+          if (fr === 12) { sendTeeth(f, G, 0); if (Math.random() < 0.5) kitSay(f, 'Tiens, morveux !', false, 45); }
+          if (fr === 20 && pills(f) >= 2) sendTeeth(f, G, 0.35);
+          kxEnd(f, m, fr);
+        } },
+      // CANNE-CROCHET : il crochète l'adversaire avec sa canne et le tire vers lui (puis son dos le lâche)
+      sspec: { total: 44, special: 'kit', cd: 50, hits: [],
+        pose: [[0, { armL: 0.5 }], [8, { armL: 2.4, lean: -0.1 }], [14, { armL: 1.6, lean: 0.35 }], [24, { armL: 0.6, lean: -0.15 }], [44, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr >= 8 && fr <= 14) f.vx = f.facing * 0.25; else kitBrake(f, inp);
+          if (!f.grounded) f.vy = Math.max(f.vy - PHYS.grav * 0.4, -0.05);
+          if (fr >= 12 && fr <= 16) for (const b of kxFoes(f, G)) if (!f.hitList.has(b.id) && hurtTest(b, f.x + f.facing * 1.4, f.y + 1.0, 0.6)) {
+            f.hitList.add(b.id);
+            G.hit(f, b, { dmg: 7 + (pills(f) >= 1 ? 2 : 0), ang: 80, bkb: 14, kbg: 6, col: 0xffb04a }, b.x, b.y + 1, f.facing, false);
+            b.kbx = -f.facing * 0.26; b.kby = 0.12; G.say(f, 'Viens ici, toi !', false, 50);
+          }
+          if (fr >= m.total) back(f, G);
+        } },
+      // MÉDOCS : il avale ses cachets en remontant ; jusqu'à 3 par vie, chaque prise le rend plus vicieux
+      uspec: { total: 44, special: 'kit', fxColor: 0xffffff, hits: [],
+        pose: [[0, { armR: 1.6, head: -0.4 }], [6, { armR: 2.8, armL: 2.8, legL: 0.4, legR: -0.3 }], [44, { armR: 2.6, armL: 2.6, legL: 0.5, legR: -0.4 }]],
+        kit: (f, fr, inp, m, G) => {
+          if (fr <= 4) { f.vx *= 0.5; f.vy = 0; if (Math.abs(inp.x) > 0.4) f.facing = Math.sign(inp.x); }
+          else if (fr <= 22) { f.vy = 0.3; f.vx = inp.x * 0.1; f.grounded = false; kitStrike(f, G, f.x, f.y + 1.9, 0.9, { dmg: 6, ang: 80, bkb: 36, kbg: 55 }, f.hitList); }
+          else f.airPhys(inp, 0.5);
+          if (fr === 5) { const s = kxS(f); if ((s.p || 0) < 3) { s.p = (s.p || 0) + 1; kitSay(f, ['Mes cachets !', 'Hop, un autre !', 'Le dernier… et gare à toi !'][s.p - 1], false, 60); G.fx.spark(f.x, f.y + 2.2, 0xffffff, 10, 0.08); } else kitSay(f, 'Plus de cachets…', false, 50); }
+          kxEnd(f, m, fr, true);
+        } },
+      // « DE MON TEMPS… » : un monologue interminable ; à force de l'écouter, l'adversaire s'endort
+      dspec: { total: 160, special: 'kit', cd: 600, hits: [],
+        pose: [[0, kxRest], [10, { armL: 1.2, armR: 0.3, head: 0.2, lean: -0.1 }], [40, { armL: 1.6, armR: 0.3, head: -0.1 }], [70, { armL: 1.0, armR: 0.6, head: 0.25 }], [100, { armL: 1.6, armR: 0.3, head: -0.1 }], [140, { armL: 1.2, armR: 0.3, head: 0.2 }], [160, kxRest]],
+        kit: (f, fr, inp, m, G) => {
+          kitBrake(f, inp, 0.3, -0.04);
+          if (fr === 1) f._dz = {};
+          if (fr % 30 === 2) G.say(f, LINES[Math.floor(fr / 30) % LINES.length], false, 34);
+          if (fr % 30 === 20) {
+            const R = pills(f) >= 3 ? 4.3 : 3.3;
+            G.fx.ring(f.x, f.y + 1.2, 0xc8c0b0, R, 14);
+            for (const b of kxFoes(f, G)) if (Math.hypot(b.x - f.x, b.y - f.y) < R) {
+              f._dz[b.id] = (f._dz[b.id] || 0) + 1;
+              if (f._dz[b.id] === 3) { kxFreeze(G, b, 110, 'Zzz… zzz…'); G.fx.spark(b.x, b.y + 2, 0x9ab8ff, 8, 0.05); }
+              else if (f._dz[b.id] < 3) G.fx.spark(b.x, b.y + 2, 0x9ab8ff, 2, 0.03);
+            }
+          }
+          if (fr >= m.total) back(f, G);
+        } },
+    }, ['Dentier · mord (2 médocs : deux dentiers)', 'Canne-crochet · tire l\'adversaire vers lui', 'Médocs · remontée, jusqu\'à 3 par vie', '« De mon temps… » · endort à force de l\'écouter', 'Passifs · Ça m\'énerve (plus il a de %, plus il cogne), mal de dos']);
+  }
 
   function hurtTest(b, hx, hy, r) {
     if (b.giant && b.giant.hurt) { const g = b.giant.hurt, gy = clamp(hy, b.y + g.y0, b.y + g.y1); return Math.hypot(hx - b.x, hy - gy) < r + g.r; }

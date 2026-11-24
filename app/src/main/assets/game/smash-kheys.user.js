@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.95.0
+// @version      0.95.1
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18881,7 +18881,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.95.0';
+  const SSK_VER = '0.95.1';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -28764,16 +28764,24 @@
           kxEnd(f, m, fr);
         } },
       // SIESTE : il s'allonge et se soigne ; un coup le réveille. Réveillé en douceur, il devient somnambule (et frappe plus fort)
-      dspec: { total: 210, special: 'kit', cd: 600, rest: true, hits: [],
-        pose: [[0, kxRest], [14, { armR: 2.9, armL: 2.6, legL: 0.3, legR: 0.1, tilt: 1.45, head: 0.25 }], [196, { armR: 2.9, armL: 2.6, legL: 0.3, legR: 0.1, tilt: 1.45, head: 0.25 }], [210, kxRest]],
+      dspec: { total: 240, special: 'kit', cd: 600, rest: true, hits: [],
+        pose: [[0, { armR: 1.2, armL: 1.2, head: -0.2 }], [2, { armR: 2.8, armL: 2.8, head: 0.2, lean: -0.2 }], [8, { armR: 2.4, armL: 2.4, lean: -0.1 }],
+          [18, { armR: 2.9, armL: 2.6, legL: 0.3, legR: 0.1, tilt: 1.45, head: 0.25 }], [226, { armR: 2.9, armL: 2.6, legL: 0.3, legR: 0.1, tilt: 1.45, head: 0.25 }], [240, kxRest]],
         kit: (f, fr, inp, m, G) => {
           if (f.grounded) f.vx = approach(f.vx, 0, PHYS.friction * 2); else { f.vx *= 0.9; f.vy = Math.max(f.vy - PHYS.grav * 0.6, -0.12); }
-          if (fr === 2) kitSay(f, 'Petite sieste…', false, 50);
-          if (fr > 16 && fr < 196) { v91Heal(f, 0.17); if (fr % 40 === 20) { G.say(f, 'Zzz…', false, 40); G.fx.spark(f.x + 0.3, f.y + 1.0, 0x9ab8ff, 3, 0.02); } }
-          if (fr === 196) { const s = kxS(f); s.sw = SW; s.m = 100; kitSay(f, '…Zzz… (somnambule)', false, 70); G.fx.ring(f.x, f.y + 1, 0x9ab8ff, 2, 16); }
+          if (fr === 1) f.hitList.clear();
+          if (fr === 2 || fr === 3) {                                          // ZZZ-BAM : l'explosion à bout portant au moment où il s'endort
+            const n = kitStrike(f, G, f.x + f.facing * 0.3, f.y + 1.0, 0.65, { dmg: 14, ang: 80, bkb: 42, kbg: 82, col: 0x9ab8ff }, f.hitList);
+            if (n) {
+              G.fx.ring(f.x, f.y + 1, 0x9ab8ff, 3.2, 20); G.fx.ring(f.x, f.y + 1, 0xffffff, 2, 14); G.fx.spark(f.x, f.y + 1.1, 0x9ab8ff, 34, 0.24); G.fx.spark(f.x, f.y + 1.1, 0xffffff, 14, 0.18);
+              G.shake = Math.max(G.shake, 0.7); SFX.ko(); kitSay(f, 'ZZZ-BAM !', true, 60);
+            } else if (fr === 3) { G.fx.spark(f.x, f.y + 1.1, 0x9ab8ff, 8, 0.06); kitSay(f, 'Petite sieste…', false, 50); }
+          }
+          if (fr > 18 && fr < 226) { v91Heal(f, 0.13); if (fr % 40 === 20) { G.say(f, 'Zzz…', false, 40); G.fx.spark(f.x + 0.3, f.y + 1.0, 0x9ab8ff, 3, 0.02); } }
+          if (fr === 226) { const s = kxS(f); s.sw = SW; s.m = 100; kitSay(f, '…Zzz… (somnambule)', false, 70); G.fx.ring(f.x, f.y + 1, 0x9ab8ff, 2, 16); }
           kxEnd(f, m, fr);
         } },
-    }, ['Bonnet-fléau · le pompon frappe loin', 'Somnambule · ruée', 'Réveil en sursaut · remontée', 'Sieste · se soigne, puis somnambule (+20 % de dégâts)']);
+    }, ['Bonnet-fléau · le pompon frappe loin', 'Somnambule · ruée', 'Réveil en sursaut · remontée', 'Sieste · explose à bout portant, se soigne, puis somnambule (+20 % de dégâts)']);
   }
 
   // =====================================================================

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.96.2
+// @version      0.97.0
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18951,7 +18951,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.96.2';
+  const SSK_VER = '0.97.0';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -29537,6 +29537,92 @@
         plane(4.5, 0.6, label('TOUT CE QUI SE PASSE ICI N\'EXISTE PAS', { col: '#ffd23a', bg: '#2a2e34' }), X(137), 4.6, 29.75, Math.PI);
       });
 
+      // ================================================================= PÉNITENCIER DU PEUPLE (u 130..176, v 34.5..47)
+      this.dxHall('prison', 130, 176, 34.5, 47, 6, 'n', 150, 3.0, lam(0x8a8478), lam(0x6a665e), () => {
+        const conc = lam(0x9a948a), dark = lam(0x2a2a2e), steelP = std(0x6a6e76, { metalness: 0.7, roughness: 0.4 }), orange = lam(0xe8701a);
+        // façade : enseigne, barbelés, miradors, projecteurs
+        plane(13, 1.4, label('PÉNITENCIER DU PEUPLE', { bg: '#2a2a2e', col: '#ffd23a', border: '#c8102e' }), X(150), 4.6, 34.28, Math.PI);
+        plane(10, 0.6, label('RÉÉDUCATION PAR L\'ABSTINENCE · SUR ORDRE DU GRAND TIMONIER', { col: '#e8e4d8', w: 1600 }), X(150), 3.6, 34.28, Math.PI);
+        plane(2.0, 1.6, koroM, X(141), 4.4, 34.27, Math.PI);
+        const wireM = lam(0x8a8a92);
+        for (let u = 130.6; u < 176; u += 0.9) { const w = new T.Mesh(new T.TorusGeometry(0.32, 0.03, 4, 10), wireM); w.position.set(X(u), 6.75, 34.5); w.rotation.y = 0.5; sc.add(w); }
+        D.spots = [];
+        for (const u of [129, 177]) {
+          for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl(0.12, 0.12, 8, dark, X(u) + sx * 0.9, 4, 33.6 + sz * 0.9, sc, 6);
+          box(2.6, 1.2, 2.6, conc, X(u), 8.6, 33.6); box(3.0, 0.2, 3.0, dark, X(u), 9.9, 33.6); box(2.2, 0.1, 2.2, dark, X(u), 8.0, 33.6);
+          wallC(X(u) - 1.0, 32.6, X(u) + 1.0, 34.5);
+          const sp = new T.SpotLight(0xfff4c8, 2.2, 40, 0.22, 0.5, 1.2); sp.position.set(X(u), 9.2, 33); this.lightGroup('street').add(sp); this.lightGroup('street').add(sp.target);
+          const beam = new T.Mesh(new T.ConeGeometry(2.6, 14, 16, 1, true), new T.MeshBasicMaterial({ color: 0xfff4c8, transparent: true, opacity: 0.08, depthWrite: false, side: T.DoubleSide })); beam.geometry.translate(0, -7, 0); beam.position.set(X(u), 9.2, 33); sc.add(beam);
+          D.spots.push({ sp, beam, u, ph: u * 0.1 });
+        }
+        // panneau dans la rue
+        cyl(0.06, 0.06, 2.6, lam(0x9aa0aa), X(148.5), 1.3, 7.2, sc, 6); plane(3.4, 0.8, label('PÉNITENCIER DU PEUPLE →', { bg: '#2a2a2e', col: '#ffd23a' }), X(148.5), 2.4, 7.26, Math.PI); wallC(X(148.5) - 0.12, 7.08, X(148.5) + 0.12, 7.32);
+        // dedans : couloir, 6 cellules à barreaux côté nord
+        const flr = hubCanvas(256, 256, (g, w, h) => { g.fillStyle = '#7a766c'; g.fillRect(0, 0, w, h); for (let i = 0; i < 3000; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.08})`; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); } g.strokeStyle = '#5a564e'; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }); flr.wrapS = flr.wrapT = T.RepeatWrapping; flr.repeat.set(12, 3);
+        plane(45.6, 12.1, lam(0xffffff, { map: flr }), X(153), 0.01, 40.75, 0, -Math.PI / 2);
+        plane(45, 0.25, lam(0xffd23a), X(153), 0.02, 40.0, 0, -Math.PI / 2);
+        const CW = 46 / 6, CV = 40.5;
+        D.cells = [];
+        const bars = new T.InstancedMesh(new T.CylinderGeometry(0.035, 0.035, 5.6, 6), steelP, 6 * 30), mt = new T.Matrix4(); let nb = 0;
+        for (let i = 0; i < 6; i++) {
+          const u0 = 130 + i * CW, u1 = u0 + CW, uc = (u0 + u1) / 2;
+          if (i) { box(0.3, 6, 47 - CV, conc, X(u0), 3, (CV + 47) / 2); }
+          for (let u = u0 + 0.25; u < u1 - 0.1; u += 0.26) { mt.makeTranslation(X(u), 2.8, CV); bars.setMatrixAt(nb++, mt); }
+          box(CW, 0.15, 0.12, steelP, X(uc), 5.6, CV); box(CW, 0.1, 0.1, steelP, X(uc), 1.0, CV);
+          wallC(X(u0), CV - 0.15, X(u1), CV + 0.15); wallC(X(u0) - 0.15, CV, X(u0) + 0.15, 47);
+          // couchette, toilettes
+          box(2.2, 0.5, 0.9, lam(0x5a5a60), X(u0 + 1.4), 0.25, 46.2); box(2.0, 0.12, 0.8, lam(0xd8d4c8), X(u0 + 1.4), 0.56, 46.2);
+          cyl(0.25, 0.2, 0.45, lam(0xe8e8ec), X(u1 - 0.7), 0.22, 46.4, sc, 10);
+          const cl = new T.PointLight(0xffe8c0, 0.7, 7, 1.6); cl.position.set(X(uc), 5.4, 44); this.lightGroup('street').add(cl);
+          D.cells.push({ i, u0, u1, uc });
+        }
+        bars.count = nb; sc.add(bars);
+        // les détenus et leur crime
+        const crimes = [
+          ['A dit « juste une fois »', 'perpétuité', { skin: 0xe0b08a, shirt: 0xe8701a, pants: 0xe8701a, hair: 0x3a2a1a }],
+          ['A craqué le 3 novembre', '28 jours', { skin: 0xc8946a, shirt: 0xe8701a, pants: 0xe8701a, hair: 0x1a1a1a, beard: true }],
+          ['A douté du Grand Timonier', 'rééducation', { skin: 0xf0c8a8, shirt: 0xe8701a, pants: 0xe8701a, hair: 0xd8b060 }],
+          null,
+          ['A ouvert un onglet suspect', '11 mois', { skin: 0x8a5a3a, shirt: 0xe8701a, pants: 0xe8701a, hair: 0x1a1a1a, bald: true }],
+          'free',
+        ];
+        D.inmates = [];
+        crimes.forEach((c, i) => {
+          const C = D.cells[i];
+          const tag = c === null ? ['ISSSOUFLE · DÉTENU N° 001', 'Désertion du topic pour GTA VI'] : c === 'free' ? ['CELLULE LIBRE', 'Réservée pour toi ?'] : ['DÉTENU N° ' + String(100 + i * 37), c[0] + ' · ' + c[1]];
+          plane(CW - 1.2, 0.8, label(tag[0] + ' — ' + tag[1], { bg: c === null ? '#c8102e' : '#2a2a2e', col: c === 'free' ? '#7dff6a' : '#ffd23a', w: 1600 }), X(C.uc), 5.0, CV - 0.12, Math.PI);
+          if (Array.isArray(c)) { const n = npcMan(c[2]); n.root.position.set(X(C.u0 + 1.4 + (i % 2) * 2.5), 0, 44 + (i % 2)); n.root.rotation.y = Math.PI / 2; sc.add(n.root); D.inmates.push({ n, ph: i * 1.7 }); }
+        });
+        // la cellule d'Isssoufle : poster du Grand Timonier imposé, compteur de jours au mur, télé confisquée
+        const IC = D.cells[3];
+        plane(2.0, 1.6, koroM, X(IC.uc), 3.4, 46.75, Math.PI);
+        plane(1.5, 0.35, label('IL TE REGARDE', { bg: '#c8102e', col: '#ffd23a' }), X(IC.uc), 2.4, 46.74, Math.PI);
+        plane(1.6, 1.2, K.txt(320, 240, (g, w, h) => { g.strokeStyle = '#2a2a2a'; g.lineWidth = 4; let n = 0; for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) { const x0 = 14 + k * 76, y0 = 14 + r * 56; for (let s = 0; s < 4; s++) { g.beginPath(); g.moveTo(x0 + s * 12, y0); g.lineTo(x0 + s * 12, y0 + 44); g.stroke(); } g.beginPath(); g.moveTo(x0 - 4, y0 + 36); g.lineTo(x0 + 44, y0 + 6); g.stroke(); n += 5; } }), X(IC.u1 - 0.17), 2.4, 44.6, -Math.PI / 2);
+        box(0.6, 0.8, 1.1, dark, X(IC.u0 + 0.6), 0.4, 42.6); box(0.2, 0.65, 1.0, dark, X(IC.u0 + 0.6), 1.15, 42.6); const tvS = plane(0.9, 0.55, new T.MeshBasicMaterial({ color: 0x0a0a0e }), X(IC.u0 + 0.6) + 0.11, 1.15, 42.6, Math.PI / 2); D.tvS = tvS;
+        D.tvOn = K.txt(256, 160, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#ff4fd0'); gr.addColorStop(0.5, '#ffa040'); gr.addColorStop(1, '#4fc3ff'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = '900 54px "SSK Rodin",sans-serif'; g.textAlign = 'center'; g.fillText('GTA VI', w / 2, 96); });
+        D.tvOff = tvS.material;
+        plane(0.9, 0.22, label('CONFISQUÉ', { bg: '#c8102e', col: '#fff' }), X(IC.u0 + 0.6) + 0.12, 1.6, 42.6, Math.PI / 2);
+        // Isssoufle lui-même : fourrure confisquée, combinaison orange, boulet au pied
+        const idf = findDef('isss');
+        if (idf) {
+          const m2 = idf.build(palFor(idf, 0)); const fur = m2.root.userData.fur; if (fur) fur.forEach((mm, k) => { mm.color.setHex([0xe8701a, 0xc0550e, 0xffa040][k] ?? 0xe8701a); });
+          m2.root.position.set(X(IC.uc), 0, 44); sc.add(m2.root);
+          const ball = new T.Mesh(new T.SphereGeometry(0.28, 12, 10), dark); ball.position.set(X(IC.uc) + 0.8, 0.28, 44.6); sc.add(ball);
+          const chain = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, 1, 4), steelP); sc.add(chain);
+          const pad = new T.Group(); const pb = new T.Mesh(new T.BoxGeometry(0.34, 0.06, 0.2), lam(0x1a1a1e)); pad.add(pb); for (const s of [-1, 1]) { const st2 = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), lam(0x1a1a1e)); st2.position.set(s * 0.17, 0, 0.04); pad.add(st2); } pad.visible = false; sc.add(pad);
+          D.isss = { m: m2, x: X(IC.uc), z: 44, tx: X(IC.uc), tz: 44, ball, chain, pad, play: 0, wait: 0, cell: IC };
+        }
+        // le gardien (il lit son journal la moitié du temps)
+        D.guard = npcMan({ skin: 0xd8a888, shirt: 0x3a4a3a, pants: 0x2a2a2a, hair: 0x2a2a2a });
+        D.guard.root.position.set(X(150), 0, 37.6); sc.add(D.guard.root);
+        const paper = new T.Mesh(new T.PlaneGeometry(0.6, 0.45), new T.MeshLambertMaterial({ color: 0xe8e4d8, side: T.DoubleSide })); paper.position.set(0.45, 0.45, 0); paper.rotation.y = Math.PI / 2; D.guard.torso.add(paper); D.paper = paper;
+        box(2.2, 0.9, 1.0, lam(0x4a3a2a), X(152.6), 0.45, 37.0); wallC(X(151.5), 36.5, X(153.7), 37.5);
+        plane(2.0, 0.4, label('GARDIEN-CHEF', { bg: '#3a4a3a', col: '#fff' }), X(152.6), 0.7, 36.49, Math.PI);
+        // le jugement affiché dans le couloir
+        plane(1.6, 2.2, K.txt(360, 500, (g, w, h) => { g.fillStyle = '#f4f0e2'; g.fillRect(0, 0, w, h); g.fillStyle = '#c8102e'; g.fillRect(0, 0, w, 70); g.fillStyle = '#ffd23a'; g.font = '900 30px "SSK Rodin",sans-serif'; g.textAlign = 'center'; g.fillText('JUGEMENT', w / 2, 46); g.fillStyle = '#111'; g.font = '700 22px "SSK Rodin",sans-serif'; ['Tribunal du Peuple', 'Affaire n° 001', '', 'ISSSOUFLE', 'coupable de', 'désertion du topic', 'NNN pour GTA VI', '', 'Peine : perpétuité', '(ou jusqu\'à GTA VII)'].forEach((l, i) => g.fillText(l, w / 2, 110 + i * 36)); }), X(156.5), 2.2, 34.92, 0);
+        K.pl('street', 0xffe0b0, 0.8, 30, X(153), 5.4, 37);
+      });
+
       // ================================================================= LE VAN (terrain vague, u 151..170, v 10..32)
       {
         const fence = lam(0x8a8e94, { transparent: true, opacity: 0.55, side: T.DoubleSide }), post = lam(0x5a5e64);
@@ -29618,7 +29704,7 @@
       const D = this.dx; if (!D) return;
       const m = this.me, here = ar === 'street' && inDistrict(m.x, m.z);
       if (here && !D.statuesDone && m.x > WX + 92) this.dxStatues();
-      if (here && !D.welcomed) { D.welcomed = true; this.bigText && this.bigText('QUARTIER DU PEUPLE', 'Musée · Site-19 · Palais du Grand Timonier · QG du régiment 0'); }
+      if (here && !D.welcomed) { D.welcomed = true; this.bigText && this.bigText('QUARTIER DU PEUPLE', 'Musée · Site-19 · Palais du Grand Timonier · QG du régiment 0 · Pénitencier'); }
       // hauteur de caméra : pas au-dessus du toit quand on est dedans
       const hall = here && D.halls.find(h => m.x > h.x1 && m.x < h.x2 && m.z > h.z1 && m.z < h.z2);
       D.hall = hall ? hall.id : null;
@@ -29632,8 +29718,63 @@
       // le van fume
       if (here && t % 18 === 0 && D.vanPipe) this.puff(D.vanPipe.x, 3.9, D.vanPipe.z, 0xbfe0ff, 0.4, 0.02);
       this.dxScp(t, here);
+      this.dxPrison(t, here);
       this.dxDrugStep(t, ar);
       this.dxGiftListen();
+    },
+    // ------------------------------------------------------------------ le pénitencier
+    dxPrison(t, here) {
+      const D = this.dx, I = D.isss, m = this.me; if (!I) return;
+      // projecteurs des miradors : ils balaient le parvis
+      if (D.spots && here) for (const S of D.spots) {
+        const a = Math.sin(t * 0.008 + S.ph), tx = WX + S.u + (S.u < 150 ? 1 : -1) * (8 + a * 7), tz = 24 + Math.cos(t * 0.011 + S.ph) * 6;
+        S.sp.target.position.set(tx, 0, tz); S.sp.target.updateMatrixWorld();
+        const dv = new T.Vector3(tx, 0, tz).sub(S.beam.position), L = dv.length(); S.beam.quaternion.setFromUnitVectors(new T.Vector3(0, -1, 0), dv.normalize()); S.beam.scale.set(1, L / 14, 1);
+      }
+      if (!here || D.hall !== 'prison') { if (D.jailT > 0) D.jailT = 0; return; }
+      // le gardien : il surveille 6 s, puis lit son journal 4 s
+      const g = D.guard, watch = (t % 600) < 360;
+      D.gWatch = watch;
+      g.body.rotation.y += wrap((watch ? -Math.PI / 2 : Math.PI / 2) - g.body.rotation.y) * 0.1; D.paper.visible = !watch;
+      g.armR.rotation.z = watch ? 0.2 : 1.3; g.armL.rotation.z = watch ? 0.2 : 1.3; g.head.rotation.z = watch ? 0 : -0.25;
+      for (const q of D.inmates) { q.n.torso.rotation.z = Math.sin(t * 0.02 + q.ph) * 0.05; q.n.head.rotation.y = Math.sin(t * 0.013 + q.ph) * 0.5; }
+      // Isssoufle tourne en rond dans sa cellule
+      const M = I.m, C = I.cell;
+      if (I.play > 0) {
+        I.play--; I.tx = WX + C.u0 + 2.1; I.tz = 42.6;
+        D.tvS.material = Math.floor(t / 20) % 2 || I.play > 30 ? D.tvOn : D.tvOff;
+        if (I.play === 0) { D.tvS.material = D.tvOff; I.pad.visible = false; this.cityToast('Isssoufle cache la manette sous son matelas. « Je finirai le mode histoire en 2034. »'); }
+      } else if (--I.wait <= 0) {
+        I.wait = 160 + Math.floor(Math.random() * 200);
+        if (Math.random() < 0.35) { I.tx = WX + C.uc + (Math.random() - 0.5) * 3; I.tz = 41.0; I.bars = true; }
+        else { I.tx = WX + C.u0 + 1.2 + Math.random() * (C.u1 - C.u0 - 2.4); I.tz = 41.8 + Math.random() * 4.2; I.bars = false; }
+      }
+      const dx = I.tx - I.x, dz = I.tz - I.z, d = Math.hypot(dx, dz);
+      if (d > 0.08) { I.x += dx / d * 0.03; I.z += dz / d * 0.03; M.body.rotation.y += wrap(Math.atan2(-dz, dx) - M.body.rotation.y) * 0.15; M.legL.rotation.z = Math.sin(t * 0.25) * 0.45; M.legR.rotation.z = -Math.sin(t * 0.25) * 0.45; }
+      else {
+        M.legL.rotation.z = M.legR.rotation.z = 0;
+        const face = I.play > 0 ? Math.PI : I.bars ? Math.PI / 2 : M.body.rotation.y; M.body.rotation.y += wrap(face - M.body.rotation.y) * 0.1;
+        if (I.play > 0) { M.armR.rotation.z = 1.2 + Math.sin(t * 0.6) * 0.08; M.armL.rotation.z = 1.2 + Math.cos(t * 0.7) * 0.08; }
+        else if (I.bars) { M.armR.rotation.z = 2.5; M.armL.rotation.z = 2.5; }
+        else { M.armR.rotation.z = 0.15; M.armL.rotation.z = 0.15; }
+      }
+      if (d > 0.08) { M.armR.rotation.z = Math.sin(t * 0.25) * 0.3; M.armL.rotation.z = -Math.sin(t * 0.25) * 0.3; }
+      M.torso.rotation.z = Math.sin(t * 0.03) * 0.03;
+      M.root.position.set(I.x, 0, I.z);
+      if (I.pad.visible) { I.pad.position.set(I.x - 0.55, 1.15, I.z); I.pad.rotation.y = Math.PI / 2; }
+      // le boulet suit en traînant
+      const bx = I.ball.position.x - I.x, bz = I.ball.position.z - I.z, bd = Math.hypot(bx, bz) || 1;
+      if (bd > 1.0) { I.ball.position.x = I.x + bx / bd; I.ball.position.z = I.z + bz / bd; }
+      const cx2 = (I.x + I.ball.position.x) / 2, cz2 = (I.z + I.ball.position.z) / 2, cl = Math.hypot(I.ball.position.x - I.x, I.ball.position.z - I.z);
+      I.chain.position.set(cx2, 0.18, cz2); I.chain.scale.y = Math.max(0.1, cl); I.chain.rotation.set(0, 0, 0); I.chain.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(I.ball.position.x - I.x, 0, I.ball.position.z - I.z).normalize());
+      // il interpelle les visiteurs
+      if (t % 1400 === 700 && Math.hypot(m.x - I.x, m.z - I.z) < 14) this.cityToast('Isssoufle : « ' + DX_ISSS_SHOUT[Math.floor(Math.random() * DX_ISSS_SHOUT.length)] + ' »');
+      // et toi, si tu t'es fait prendre
+      if (D.jailT > 0) {
+        D.jailT--;
+        if (D.jailT % 60 === 0 && D.jailT > 0) this.floatText && this.floatText(`🔒 ${D.jailT / 60} s`, '#ffd23a');
+        if (D.jailT === 0) { m.x = WX + 150; m.z = 32.6; m.r = Math.PI / 2; this.camPos = null; this.send(true); SFX.door && SFX.door(); this.cityToast('Le gardien te relâche. « Que je ne te revoie plus traîner près du détenu 001. »'); }
+      }
     },
     say3d(x, z, txt) {
       const host = { x, z, a: 'idle' };
@@ -29786,6 +29927,13 @@
         if (near(WX + C.u - C.half - 1.4, C.v + 1.6, 1.3)) { const e = this.dxEclairs(); return { id: 'dx-feed', label: 'Nourrir SCP-001 (un éclair à la vanille)', sub: `${e} / 64 aujourd'hui` }; }
         if (near(WX + C.u - 0.25, C.v - C.half - 1.2, 1.3) && D.scp.state === 'cell') return { id: 'dx-open', label: 'Ouvrir la porte de la cellule', sub: '⚠ formellement interdit (incident 113)' };
       }
+      if (D.hall === 'prison' && D.isss && !(D.jailT > 0)) {
+        const C = D.isss.cell;
+        if (near(WX + C.uc, 39.6, 2.2)) return { id: 'dx-isss', label: 'Parler à Isssoufle', sub: 'détenu n° 001 · désertion du topic pour GTA VI', alt: { id: 'dx-smug', label: 'Lui glisser une manette en douce', sub: D.gWatch ? '⚠ le gardien regarde…' : '✓ le gardien lit son journal !' } };
+        if (near(WX + 152.6, 36.2, 1.8)) return { id: 'dx-guard', label: 'Parler au gardien-chef', sub: D.gWatch ? 'il surveille le couloir' : 'il lit son journal' };
+        if (near(WX + 156.5, 35.4, 1.3)) return { id: 'dx-verdict', label: 'Lire le jugement du Tribunal du Peuple', sub: 'affaire n° 001' };
+        const F = D.cells[5]; if (near(WX + F.uc, 39.6, 1.8)) return { id: 'dx-plaque', p: { t: 'Cellule libre', d: 'Réservée à tout khey qui aiderait le détenu 001 à jouer à GTA VI.' }, label: 'Cellule libre', sub: 'réservée pour toi ?' };
+      }
       if (D.hall === 'palais' && near(WX + 148, -38.6, 2.6)) return { id: 'dx-bow', label: 'Prêter allégeance au Grand Timonier', sub: `ferveur révolutionnaire : ${st.fer || 0}` };
       if (D.hall === 'reg0' && near(WX + 137, 24.4, 2.0)) return { id: 'dx-reg0', label: 'Parler au commandant', sub: '« Quel régiment 0 ? »', alt: st.r0 ? null : { id: 'dx-join', label: 'Rejoindre le régiment 0' } };
       if (D.plaques) for (const p of D.plaques) if (near(p.x, p.z, 1.0)) return { id: 'dx-plaque', p, label: p.t, sub: p.d };
@@ -29825,6 +29973,24 @@
       if (zn.id === 'dx-open') {
         D.scp.state = 'out'; D.scp.t = 0; SFX.siren && SFX.siren(true);
         this.bigText && this.bigText('INCIDENT 114', 'Vous avez ouvert la cellule. SCP-001 s\'échappe. COUREZ.');
+        return true;
+      }
+      if (zn.id === 'dx-isss') { const L = DX_ISSS_TALK; D.isssI = ((D.isssI ?? -1) + 1) % L.length; const I = D.isss; I.tx = WX + I.cell.uc; I.tz = 41.0; I.bars = true; I.wait = 240; this.cityToast('Isssoufle : « ' + L[D.isssI] + ' »'); SFX.ui && SFX.ui('pick'); return true; }
+      if (zn.id === 'dx-verdict') { this.cityToast('TRIBUNAL DU PEUPLE · affaire n° 001 — Isssoufle, reconnu coupable d\'avoir déserté le topic NNN pour jouer à GTA VI, laissant le peuple sans guide. Le Grand Timonier Korochiku ayant pris la relève, le détenu est condamné à la perpétuité (ou jusqu\'à la sortie de GTA VII). Fourrure confisquée.'); return true; }
+      if (zn.id === 'dx-guard') { this.cityToast('Gardien-chef : « ' + DX_GUARD_LINES[Math.floor(Math.random() * DX_GUARD_LINES.length)] + ' »'); return true; }
+      if (zn.id === 'dx-smug') {
+        const I = D.isss; if (I.play > 0) { this.cityToast('Il joue déjà. Ne le dérange pas, il est en pleine course-poursuite.'); return true; }
+        if (D.gWatch) {
+          SFX.deny2(); this.freeze = true; this.shopClose && this.shopClose();
+          this.bigText && this.bigText('COMPLICITÉ DE DÉSERTION', 'Le gardien t\'a vu passer une manette au détenu 001.');
+          setTimeout(() => this.fade(1, 'Tribunal du Peuple', 'Complicité de désertion : 20 secondes de cellule.'), 600);
+          setTimeout(() => { const F = D.cells[5]; m.x = WX + F.uc; m.z = 44; m.r = -Math.PI / 2; this.camPos = null; this.freeze = false; D.jailT = 20 * 60; this.fade(0); this.send(true); this.cityToast('Bienvenue dans la cellule libre. Elle était réservée pour toi.'); }, 2600);
+        } else {
+          st.man = (st.man || 0) + 1; dxSave(st); SFX.pickup && SFX.pickup();
+          I.play = 14 * 60; I.pad.visible = true; I.bars = false;
+          this.cityToast(['Isssoufle : « UNE MANETTE ! Mon khey… je te revaudrai ça. »', 'Isssoufle : « Chuuut. Juste une mission. Une seule. »', 'Isssoufle : « Le Grand Timonier n\'en saura rien. N\'est-ce pas ? »'][st.man % 3]);
+          if (st.man === 5) this.bigText && this.bigText('ENNEMI DU PEUPLE', '5 manettes passées au détenu 001. Le régiment 0 t\'a à l\'œil.');
+        }
         return true;
       }
       if (zn.id === 'dx-bow') {
@@ -29946,6 +30112,18 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       if (C.step === 'mix') this.dxAct('ing' + C.shuffled[k - 1]); else if (C.step === 'heat' && k === 1) this.dxAct('stop'); else if (C.step === 'done' && k === 1) this.dxAct('start');
     },
   });
+  const DX_ISSS_TALK = [
+    'Je jouais pas à GTA VI ! Je… testais les graphismes. Pendant 400 heures.',
+    'Pendant que j\'étais à Vice City, Korochiku a pris le pouvoir. C\'est un coup d\'État, mon khey !',
+    'Dis au topic que je reviens. Juste après le mode histoire.',
+    'Ils m\'ont confisqué ma fourrure. MA FOURRURE. Je suis une icône de mode, moi !',
+    'Tous les matins, ils me forcent à regarder son portrait. Il me sourit. Tout le temps.',
+    'Le pire, c\'est pas la prison. C\'est les spoils dans la cour.',
+    'J\'ai fait des traits sur le mur. Je suis à 80 jours. Ou 80 missions, je sais plus.',
+    'Psst… t\'aurais pas une manette ? Le gardien lit son journal toutes les dix secondes…',
+  ];
+  const DX_ISSS_SHOUT = ['Libérez Isssoufle !', 'J\'ai le droit à un appel ! Je veux appeler Rockstar !', 'Korochiku, rends-moi mon topic !', 'Quelqu\'un sait si la mise à jour est sortie ?', 'Je suis innocent ! Enfin… à 70 %.'];
+  const DX_GUARD_LINES = ['Le détenu 001 ? Il a demandé une télé. On lui a laissé : débranchée.', 'Interdiction formelle de lui passer une manette. Formelle.', 'Il dit qu\'il est une icône de mode. Ici, c\'est orange pour tout le monde.', 'Ordre du Grand Timonier : il regarde le portrait trois heures par jour.', 'Moi je lis mon journal, mais je vois tout. Enfin, presque tout.', 'Libérable à la sortie de GTA VII. Donc jamais.'];
   const DX_TALK = [
     { k: 'hi', ic: '👋', q: 'Bonjour, SCP-001.' },
     { k: 'bday', ic: '🎂', q: 'Joyeux anniversaire !' },

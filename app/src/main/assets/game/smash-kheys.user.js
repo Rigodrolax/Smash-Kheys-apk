@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.95.1
+// @version      0.95.2
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -1403,10 +1403,10 @@
   //  MODÈLE 3D : DEXTRO (petit dinosaure bipède au sourire en coin)
   // =====================================================================
   const DEXTRO_PALS = [
-    // J1 : vert olive, ventre crème
-    { body: 0x8e9a64, dark: 0x6b774a, belly: 0xf0dfb0, mouth: 0x7a1f2a, tongue: 0xf07a8a, claw: 0xf4efe0, eye: 0xfff8e6, pupil: 0x1a1a10, glow: 0xcfe87a },
-    // J2 « Lave » : écailles charbon, ventre et crête orange braise
-    { body: 0x3e3a3c, dark: 0xff7a2a, belly: 0xffa04a, mouth: 0x5a1010, tongue: 0xff6a7a, claw: 0xffe2b0, eye: 0xffe9a0, pupil: 0x2a0a00, glow: 0xff8a3a },
+    // J1 : kaki grisé, ventre jaune pâle (d'après l'image de Dextro)
+    { body: 0x78755b, dark: 0x514e38, belly: 0xd4c27e, mouth: 0x9e3434, tongue: 0xe8787a, claw: 0xdcd6bc, eye: 0xfffdf4, pupil: 0x2a1a0e, line: 0x4a4630, glow: 0xcfe87a },
+    // J2 « Lave » : écailles charbon, ventre orange braise
+    { body: 0x3e3a3c, dark: 0x282426, belly: 0xffa04a, mouth: 0x5a1010, tongue: 0xff6a7a, claw: 0xffe2b0, eye: 0xffe9a0, pupil: 0x2a0a00, line: 0x140f10, glow: 0xff8a3a },
   ];
 
   function buildDextro(pal) {
@@ -1424,8 +1424,10 @@
       if (outline) { const o = new T.Mesh(geo, OUT); o.scale.setScalar(ol); me.add(o); }
       return me;
     };
-    const SPH = new T.SphereGeometry(1, 16, 12);
-    const blob = (parent, mat, x, y, z, sx, sy, sz, rz = 0, ol = true) => { const m = add(parent, SPH, mat, x, y, z, ol, 1.07); m.scale.set(sx, sy, sz); m.rotation.z = rz; return m; };
+    const SPH = new T.SphereGeometry(1, 20, 14);
+    const blob = (parent, mat, x, y, z, sx, sy, sz, rz = 0, ol = true, k = 1.05) => { const m = add(parent, SPH, mat, x, y, z, ol, k); m.scale.set(sx, sy, sz); m.rotation.z = rz; return m; };
+    const lineM = new T.MeshBasicMaterial({ color: pal.line != null ? pal.line : 0x3a3626 });
+    const arc = (parent, r, w, a0, len, x, y, z, rx = 0, ry = 0, rz = 0) => { const g = new T.TorusGeometry(r, w, 4, 14, len); const m = new T.Mesh(g, lineM); m.position.set(x, y, z); m.rotation.set(rx, ry, rz + a0); parent.add(m); return m; };
 
     const root = new T.Group();
     const body = new T.Group(); body.position.y = 1.0; root.add(body);
@@ -1433,83 +1435,99 @@
     const hips = new T.Group(); hips.position.y = 0.95; inner.add(hips);
 
     const mBody = M(pal.body), mDark = M(pal.dark), mBelly = M(pal.belly), mMouth = M(pal.mouth), mTongue = M(pal.tongue), mClaw = M(pal.claw);
-    const eyeM = new T.MeshBasicMaterial({ color: pal.eye }), pupM = new T.MeshBasicMaterial({ color: pal.pupil });
+    const eyeM = new T.MeshBasicMaterial({ color: pal.eye }), pupM = new T.MeshBasicMaterial({ color: pal.pupil }), hiM = new T.MeshBasicMaterial({ color: 0xffffff });
 
-    // Jambes : grosses cuisses, mollets, pieds à trois orteils griffus
+    // Jambes de sauropode : grosses cuisses, pattes en colonne, pieds ronds à petits ongles
     const legs = [];
-    for (const z of [0.17, -0.17]) {
+    for (const z of [0.18, -0.18]) {
       const leg = new T.Group(); leg.position.set(0, 0, z); hips.add(leg);
-      blob(leg, mBody, 0.02, -0.16, 0, 0.2, 0.29, 0.17);
-      add(leg, new T.CylinderGeometry(0.11, 0.085, 0.42, 10), mBody, 0.0, -0.57, 0);
-      blob(leg, mBody, 0.07, -0.88, 0, 0.17, 0.075, 0.12);
-      for (const dz of [-0.07, 0, 0.07]) {
-        blob(leg, mBody, 0.2, -0.9, dz, 0.07, 0.045, 0.04, 0, false);
-        const c = add(leg, new T.ConeGeometry(0.022, 0.07, 6), mClaw, 0.28, -0.91, dz, false); c.rotation.z = -Math.PI / 2;
-      }
+      blob(leg, mBody, 0.0, -0.17, 0, 0.23, 0.31, 0.2);
+      add(leg, new T.CylinderGeometry(0.15, 0.14, 0.46, 14), mBody, 0.01, -0.6, 0, true, 1.06);
+      blob(leg, mBody, 0.05, -0.87, 0, 0.19, 0.09, 0.17);
+      for (const dz of [-0.08, 0, 0.08]) blob(leg, mClaw, 0.2, -0.89, dz, 0.035, 0.03, 0.035, 0, false);
       legs.push(leg);
     }
 
-    // Corps en poire penché vers l'avant + ventre crème rayé
+    // Gros corps en poire, légèrement redressé, grand ventre jaune pâle qui remonte jusqu'à la gorge
     const torso = new T.Group(); hips.add(torso);
-    blob(torso, mBody, 0.0, 0.22, 0, 0.36, 0.42, 0.33, -0.35);
-    blob(torso, mBelly, 0.11, 0.2, 0, 0.27, 0.36, 0.27, -0.35, false);
-    for (let k = 0; k < 4; k++) { const r = add(torso, new T.TorusGeometry(0.2 - k * 0.012, 0.008, 4, 20, Math.PI * 0.7), mDark, 0.17 + k * 0.035, 0.0 + k * 0.1, 0, false); r.rotation.set(Math.PI / 2, 0, -Math.PI * 0.35 - 0.35); }
-    // Cou
-    const neck = add(torso, new T.CylinderGeometry(0.11, 0.16, 0.48, 12), mBody, 0.27, 0.62, 0); neck.rotation.z = -0.55;
-    const nb = add(torso, new T.CylinderGeometry(0.07, 0.1, 0.44, 10), mBelly, 0.33, 0.6, 0, false); nb.rotation.z = -0.55; nb.scale.z = 0.8;
-    // Crête dorsale
-    for (let k = 0; k < 7; k++) {
-      const t = k / 6, x = lerp(0.2, -0.28, t), y = lerp(0.8, 0.45, t) + Math.sin(t * Math.PI) * 0.12;
-      const sp = add(torso, new T.ConeGeometry(0.045 - t * 0.012, 0.12 - t * 0.03, 5), mDark, x, y, 0, false); sp.rotation.z = 0.4 + t * 0.4;
+    blob(torso, mBody, -0.04, 0.28, 0, 0.42, 0.5, 0.38, 0.12);
+    blob(torso, mBody, -0.16, 0.6, 0, 0.3, 0.28, 0.32, 0.4);                                        // dos et épaules
+    blob(torso, mBelly, 0.16, 0.24, 0, 0.3, 0.44, 0.3, 0.08, false);
+    // Long cou épais, en légère courbe, avec la bande du ventre devant
+    {
+      const a = new T.Vector3(0.04, 0.56, 0), b = new T.Vector3(0.27, 1.3, 0), d = b.clone().sub(a), L = d.length(), ang = Math.atan2(d.x, d.y);
+      const n = add(torso, new T.CylinderGeometry(0.17, 0.21, L, 18), mBody, (a.x + b.x) / 2, (a.y + b.y) / 2, 0, true, 1.05); n.rotation.z = -ang; n.scale.z = 0.95;
+      const nb = add(torso, new T.CylinderGeometry(0.11, 0.155, L * 0.98, 16), mBelly, (a.x + b.x) / 2 + 0.07, (a.y + b.y) / 2 - 0.02, 0, false); nb.rotation.z = -ang; nb.scale.z = 0.82;
+      blob(torso, mBody, b.x - 0.01, b.y - 0.02, 0, 0.17, 0.17, 0.165, 0, false);
     }
 
-    // Tête (allongée), museau, mâchoire entrouverte, yeux mi-clos narquois
-    const head = new T.Group(); head.position.set(0.46, 0.92, 0); head.scale.setScalar(1.25); torso.add(head);
-    blob(head, mBody, 0.0, 0.02, 0, 0.2, 0.17, 0.17);
-    blob(head, mBody, 0.19, -0.03, 0, 0.21, 0.12, 0.14);
-    blob(head, mBody, 0.15, -0.135, 0, 0.19, 0.055, 0.12, -0.12);                                  // mâchoire
-    blob(head, mMouth, 0.2, -0.095, 0, 0.17, 0.035, 0.105, -0.06, false);                          // intérieur de la bouche
-    for (const dz of [-0.08, -0.04, 0.04, 0.08]) { const tt = add(head, new T.ConeGeometry(0.012, 0.03, 4), mClaw, 0.3 + Math.abs(dz) * -0.6, -0.08, dz, false); tt.rotation.z = Math.PI; }
-    for (const z of [0.045, -0.045]) blob(head, new T.MeshBasicMaterial({ color: 0x1a1410 }), 0.385, 0.0, z, 0.012, 0.01, 0.014, 0, false);    // narines
-    for (const z of [0.12, -0.12]) {
-      const eg = new T.Group(); eg.position.set(0.1, 0.07, z); head.add(eg);
-      add(eg, new T.SphereGeometry(0.055, 14, 10), eyeM, 0, 0, 0, true, 1.12);
-      blob(eg, pupM, 0.035, -0.008, Math.sign(z) * 0.006, 0.02, 0.028, 0.022, 0, false);
-      const lid = add(eg, new T.SphereGeometry(0.062, 14, 8, 0, TAU, 0, Math.PI * 0.5), mBody, 0, 0, 0, false); lid.rotation.z = -0.55;   // paupière mi-close
-      const brow = blob(eg, mDark, 0.01, 0.055, 0, 0.065, 0.016, 0.03, z > 0 ? 0.25 : 0.25, false); brow.rotation.x = z > 0 ? 0.35 : -0.35;
+    // Tête : crâne rond, long museau aux grosses narines, bouche entrouverte au sourire en coin, sourcils froncés
+    const head = new T.Group(); head.position.set(0.31, 1.44, 0); head.scale.setScalar(1.42); torso.add(head);
+    blob(head, mBody, 0.0, 0.06, 0, 0.21, 0.21, 0.2);                                               // crâne rond
+    blob(head, mBody, 0.16, -0.02, 0, 0.19, 0.14, 0.17, -0.05);                                     // museau large
+    blob(head, mBody, 0.29, -0.01, 0, 0.1, 0.12, 0.15, 0, false);                                   // bout du museau, arrondi
+    const jaw = blob(head, mBody, 0.13, -0.165, 0, 0.17, 0.065, 0.14, -0.24);                       // mâchoire, bien ouverte
+    blob(head, mBelly, 0.06, -0.18, 0, 0.13, 0.065, 0.125, -0.15, false);                           // dessous de la mâchoire
+    const mouth = blob(head, mMouth, 0.18, -0.11, 0, 0.16, 0.055, 0.125, -0.12, false);             // intérieur de la bouche
+    mouth.rotation.x = 0.18;                                                                         // un coin relevé : sourire en coin
+    blob(head, mTongue, 0.19, -0.135, 0.01, 0.11, 0.026, 0.085, -0.1, false);
+    for (const s of [1, -1]) {                                                                      // commissures, la côté caméra plus haute
+      const c = blob(head, mDark, 0.06, -0.09 + (s > 0 ? 0.02 : -0.005), s * 0.115, 0.025, 0.012, 0.02, s > 0 ? 0.5 : -0.1, false);
     }
-    for (let k = 0; k < 3; k++) blob(head, mDark, -0.05 - k * 0.07, 0.17 - k * 0.02, 0, 0.035, 0.03, 0.03, 0, false);              // bosses sur le crâne
+    // narines : deux gros trous sombres en haut du museau
+    for (const z of [0.055, -0.055]) blob(head, lineM, 0.365, 0.045, z, 0.02, 0.022, 0.026, 0, false);
+    for (const z of [0.055, -0.055]) blob(head, mDark, 0.345, 0.05, z, 0.038, 0.032, 0.04, 0, false);
+    // joues et rides sous les yeux
+    for (const s of [1, -1]) {
+      blob(head, mBody, 0.06, -0.04, s * 0.14, 0.09, 0.08, 0.06, 0, false);
+      arc(head, 0.05, 0.004, 0, 1.6, 0.11, 0.02, s * 0.17, 0, s * 0.6, -0.4);
+      arc(head, 0.04, 0.004, 0, 1.4, 0.1, -0.0, s * 0.165, 0, s * 0.6, -0.5);
+    }
+    // yeux en amande : blanc, pupille sombre tournée vers l'avant, reflet ; paupière supérieure lourde
+    for (const z of [0.13, -0.13]) {
+      const s = Math.sign(z), eg = new T.Group(); eg.position.set(0.12, 0.11, z * 0.92); eg.rotation.y = s * 0.55; head.add(eg);
+      const w = add(eg, new T.SphereGeometry(0.068, 16, 12), eyeM, 0, 0, 0, true, 1.12); w.scale.set(0.75, 0.62, 0.95);
+      blob(eg, pupM, 0.032, -0.004, s * 0.012, 0.022, 0.03, 0.022, 0, false);
+      blob(eg, hiM, 0.045, 0.01, s * 0.02, 0.008, 0.008, 0.008, 0, false);
+      const lid = add(eg, new T.SphereGeometry(0.066, 16, 8, 0, TAU, 0, Math.PI * 0.42), mBody, 0, 0.002, 0, false); lid.scale.set(0.8, 0.7, 1.0); lid.rotation.z = -0.35;
+      // sourcil froncé : épais, le bout intérieur plus bas, l'air sournois
+      const br = blob(eg, mDark, 0.015, 0.05, -s * 0.0, 0.07, 0.016, 0.03, -0.35, false); br.rotation.x = s * 0.45;
+    }
+    // rides du front entre les sourcils
+    arc(head, 0.06, 0.005, 0, 1.4, 0.14, 0.17, 0, 0, Math.PI / 2, 0.75);
+    arc(head, 0.075, 0.005, 0, 1.2, 0.12, 0.2, 0, 0, Math.PI / 2, 0.85);
+    arc(head, 0.045, 0.004, 0, 1.4, 0.15, 0.14, 0, 0, Math.PI / 2, 0.7);
     // Langue (s'étire pendant les léchouilles)
-    const tongueG = new T.Group(); tongueG.position.set(0.16, -0.11, 0); head.add(tongueG);
+    const tongueG = new T.Group(); tongueG.position.set(0.1, -0.105, 0); head.add(tongueG);
     const tGeo = new T.CylinderGeometry(0.04, 0.05, 1, 12); tGeo.translate(0, 0.5, 0); tGeo.rotateZ(-Math.PI / 2);
     const tongue = new T.Mesh(tGeo, mTongue); tongue.scale.x = 0.08; tongueG.add(tongue);
-    const tip = blob(tongueG, mTongue, 0.08, 0, 0, 0.07, 0.035, 0.06, 0, true);
+    const tip = blob(tongueG, mTongue, 0.08, 0, 0, 0.065, 0.03, 0.055, 0, false);
 
-    // Petits bras griffus
+    // Bras épais aux mains rondes, portés devant le ventre
     const arms = [];
-    for (const z of [0.22, -0.22]) {
-      const arm = new T.Group(); arm.position.set(0.24, 0.38, z); torso.add(arm);
-      blob(arm, mBody, 0, 0, 0, 0.06, 0.06, 0.06);
-      add(arm, new T.CylinderGeometry(0.045, 0.035, 0.18, 8), mBody, 0, -0.1, 0);
-      blob(arm, mBody, 0, -0.21, 0, 0.045, 0.045, 0.045);
-      for (const dz of [-0.025, 0, 0.025]) { const c = add(arm, new T.ConeGeometry(0.012, 0.05, 5), mClaw, 0.02, -0.26, dz, false); c.rotation.z = Math.PI + 0.3; }
+    for (const z of [0.25, -0.25]) {
+      const arm = new T.Group(); arm.position.set(0.2, 0.5, z); torso.add(arm);
+      blob(arm, mBody, 0, 0, 0, 0.1, 0.1, 0.09);
+      add(arm, new T.CylinderGeometry(0.085, 0.07, 0.3, 12), mBody, 0, -0.16, 0, true, 1.07);
+      blob(arm, mBody, 0.01, -0.34, 0, 0.085, 0.08, 0.08);
+      for (const dz of [-0.035, 0, 0.035]) blob(arm, mBody, 0.05, -0.4, dz, 0.03, 0.035, 0.026, 0, false);
+      arc(arm, 0.04, 0.004, 0, 1.2, 0.07, -0.33, 0, 0, Math.PI / 2, -1.6);
       arms.push(arm);
     }
-    const sword = new T.Group(); sword.position.set(0, -0.22, 0); arms[0].add(sword);
+    const sword = new T.Group(); sword.position.set(0, -0.36, 0); arms[0].add(sword);
 
-    // Queue en segments (balancée), avec pointes dorsales
-    const scarf = new T.Group(); scarf.position.set(-0.26, 0.12, 0); torso.add(scarf);
+    // Grosse queue de sauropode, en segments (balancée), sans pointes
+    const scarf = new T.Group(); scarf.position.set(-0.34, 0.1, 0); torso.add(scarf);
     const tail = [];
     let parent = scarf;
-    for (let k = 0; k < 7; k++) {
-      const seg = new T.Group(); seg.position.set(k === 0 ? 0 : -0.15, 0, 0); seg.rotation.z = k === 0 ? 0.25 : 0.07; parent.add(seg);
-      const r = 0.15 - k * 0.018;
-      blob(seg, mBody, -0.08, 0, 0, 0.11, r, r);
-      if (k % 2 === 0) { const sp = add(seg, new T.ConeGeometry(0.03, 0.08, 5), mDark, -0.08, r * 0.95, 0, false); sp.rotation.z = 0.5; }
+    for (let k = 0; k < 8; k++) {
+      const seg = new T.Group(); seg.position.set(k === 0 ? 0 : -0.15, 0, 0); seg.rotation.z = k === 0 ? 0.3 : 0.06; parent.add(seg);
+      const r = 0.2 - k * 0.021;
+      blob(seg, mBody, -0.08, 0, 0, 0.14, r, r, 0, k === 0);
       tail.push(seg); parent = seg;
     }
     const scarf2 = new T.Group(); torso.add(scarf2);
-    const wiggle = tail.map((o, i) => ({ o, ax: 'y', amp: 0.08 + i * 0.015, sp: 0.07, ph: i * 0.55 }));
+    const wiggle = tail.map((o, i) => ({ o, ax: 'y', amp: 0.07 + i * 0.014, sp: 0.07, ph: i * 0.55 }));
 
     return { root, body, inner, hips, torso, head, legL: legs[0], legR: legs[1], armR: arms[0], armL: arms[1], sword, scarf, scarf2, tongue, tongueTip: tip, wiggle, mats };
   }
@@ -18881,7 +18899,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.95.1';
+  const SSK_VER = '0.95.2';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {

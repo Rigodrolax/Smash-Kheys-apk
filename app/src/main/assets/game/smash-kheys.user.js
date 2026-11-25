@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.96.1
+// @version      0.96.2
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18951,7 +18951,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.96.1';
+  const SSK_VER = '0.96.2';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -29349,22 +29349,106 @@
       // ================================================================= PALAIS DU GRAND TIMONIER (u 128..168, v -46..-12)
       this.dxHall('palais', 128, 168, -46, -12, 10, 's', 148, 4.4, lam(0xa81c14), lam(0x8a1810), () => {
         const red = lam(0xb0201a), gold = lam(0xe2b43a, { emissive: 0x3a2a00 }), yel = lam(0xe8b020, { flatShading: true, emissive: 0x2a1a00 }), jade = lam(0x1e6a5a), white = lam(0xf0ece2);
-        // soubassement de marbre blanc et balustrade
-        box(42, 0.3, 1.4, white, X(148), 0.15, -11.3); for (let u = 127; u <= 169; u += 2) box(0.25, 1.2, 0.25, white, X(u), 1.2, -11.2);
-        // toits à double avancée, tuiles jaune impérial, coins relevés
-        const roof = (y, w, d, h) => { const r = new T.Mesh(new T.CylinderGeometry(0.42, 0.72, 1, 4), yel); r.rotation.y = Math.PI / 4; r.scale.set(w, h, d); r.position.set(X(148), y + h / 2, -29); sc.add(r); for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const c = new T.Mesh(new T.ConeGeometry(0.35, 1.6, 6), gold); c.position.set(X(148) + sx * w * 0.5, y + 0.25, -29 + sz * d * 0.5); c.rotation.set(sz * 0.9, 0, -sx * 0.9); sc.add(c); } };
-        roof(10, 46, 40, 2.4); box(26, 3.2, 20, red, X(148), 13.6, -29); roof(15.2, 32, 26, 3.6);
-        box(46.5, 0.6, 0.6, jade, X(148), 9.7, -11.6); box(46.5, 0.35, 0.6, gold, X(148), 9.2, -11.6);
-        // colonnade rouge
-        for (let i = 0; i < 10; i++) { const x = X(129.5 + i * 4.1); if (Math.abs(x - X(148)) < 2.6) continue; cyl(0.38, 0.42, 9, red, x, 4.5, -10.9, sc, 14); box(0.95, 0.4, 0.95, gold, x, 0.2, -10.9); wallC(x - 0.42, -11.3, x + 0.42, -10.5); }
+        // ---- façade inspirée des grands temples à étages (Puning / Putuo Zongcheng) : 4 toits impériaux superposés
+        const PX = X(148), PZ = -29, gstd = std(0xd8a838, { metalness: 0.75, roughness: 0.3, emissive: 0x2a1a00 }), bronze = std(0x7a6a4a, { metalness: 0.7, roughness: 0.4 });
+        // tuiles vernissées jaune impérial : des rangées de tuiles canal, bord de toit plus sombre
+        const tileT = K.tex(256, 256, (g, w, h) => {
+          const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#f6c83a'); gr.addColorStop(1, '#d89a18'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+          for (let i = 0; i < 4; i++) { const x = i * 64; const g2 = g.createLinearGradient(x, 0, x + 64, 0); g2.addColorStop(0, 'rgba(120,60,0,.55)'); g2.addColorStop(0.2, 'rgba(255,240,160,.35)'); g2.addColorStop(0.55, 'rgba(255,220,90,0)'); g2.addColorStop(1, 'rgba(120,60,0,.4)'); g.fillStyle = g2; g.fillRect(x, 0, 64, h); }
+          for (let y = 0; y < h; y += 32) { g.fillStyle = 'rgba(110,55,0,.18)'; g.fillRect(0, y, w, 3); }
+          g.fillStyle = '#9a5a10'; g.fillRect(0, h - 18, w, 18); for (let i = 0; i < 4; i++) { g.fillStyle = '#f0c040'; g.beginPath(); g.arc(i * 64 + 32, h - 9, 8, 0, TAU); g.fill(); }
+        });
+        tileT.wrapS = T.RepeatWrapping;
+        const tileM = new T.MeshLambertMaterial({ map: tileT, side: T.DoubleSide, emissive: 0x3a2200 });
+        // toit courbe : pente douce au bord, raide au faîte, coins relevés
+        const roof = (y, W, D, Wt, Dt, Hr, up = 1.1) => {
+          const N = 14, M = 10, pos = [], uv = [], idx = [], ring = [];
+          for (let j = 0; j <= M; j++) {
+            const t = j / M, a = W / 2 + (Wt / 2 - W / 2) * t, b = D / 2 + (Dt / 2 - D / 2) * t, yy = y + Hr * (0.3 * t + 0.7 * t * t);
+            const pts = [];
+            const corners = [[-a, -b], [a, -b], [a, b], [-a, b], [-a, -b]];
+            for (let s = 0; s < 4; s++) for (let k = 0; k < N; k++) { const f = k / N; pts.push([corners[s][0] + (corners[s + 1][0] - corners[s][0]) * f, corners[s][1] + (corners[s + 1][1] - corners[s][1]) * f]); }
+            pts.push(pts[0]);
+            let L = 0;
+            pts.forEach((p, k) => {
+              if (k) L += Math.hypot(p[0] - pts[k - 1][0], p[1] - pts[k - 1][1]);
+              const dc = Math.min(...[[-a, -b], [a, -b], [a, b], [-a, b]].map(c => Math.hypot(p[0] - c[0], p[1] - c[1])));
+              const c = Math.max(0, 1 - dc / (Math.min(a, b) * 0.55)), lift = up * c * c * (1 - t) * (1 - t), out = 1 + 0.05 * c * c * (1 - t);
+              pos.push(PX + p[0] * out, yy + lift, PZ + p[1] * out); uv.push(L / 3.2, 1 - t);
+            });
+            ring.push(pts.length);
+          }
+          const R = ring[0];
+          for (let j = 0; j < M; j++) for (let k = 0; k < R - 1; k++) { const a0 = j * R + k, b0 = a0 + R; idx.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1); }
+          const gm = new T.BufferGeometry(); gm.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); gm.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); gm.setIndex(idx); gm.computeVertexNormals();
+          sc.add(new T.Mesh(gm, tileM));
+          // dessous du toit : chevrons peints en vert
+          box(W - 0.6, 0.12, D - 0.6, lam(0x1e5a4a), PX, y - 0.02, PZ);
+          // épis de faîtage dorés aux quatre coins
+          for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const o = new T.Mesh(new T.ConeGeometry(0.18, 0.9, 6), gold); o.position.set(PX + sx * W * 0.527, y + up + 0.25, PZ + sz * D * 0.527); o.rotation.set(sz * 0.5, 0, -sx * 0.5); sc.add(o); }
+        };
+        // les bandes d'étages : colonnes rouges, fenêtres à croisillons, frise de consoles bleu-vert
+        const bayT = K.tex(256, 256, (g, w, h) => {
+          g.fillStyle = '#b4201a'; g.fillRect(0, 0, w, h);
+          g.fillStyle = '#c8a46a'; g.fillRect(34, 40, 188, 196); g.strokeStyle = '#6a3a1a'; g.lineWidth = 5;
+          for (let x = 34; x <= 222; x += 23.5) { g.beginPath(); g.moveTo(x, 40); g.lineTo(x, 236); g.stroke(); } for (let y = 40; y <= 236; y += 24.5) { g.beginPath(); g.moveTo(34, y); g.lineTo(222, y); g.stroke(); }
+          g.strokeStyle = '#7a1810'; g.lineWidth = 10; g.strokeRect(34, 40, 188, 196);
+          g.fillStyle = '#d02a20'; g.fillRect(0, 0, 22, h); g.fillRect(w - 6, 0, 6, h);
+          g.fillStyle = '#e2b43a'; g.fillRect(0, 14, w, 8);
+        });
+        const bandT = K.tex(256, 64, (g, w, h) => {
+          g.fillStyle = '#1a5a6a'; g.fillRect(0, 0, w, h); g.fillStyle = '#2a8a6a'; for (let x = 0; x < w; x += 32) g.fillRect(x + 4, 6, 24, 26);
+          g.fillStyle = '#24407a'; for (let x = 16; x < w; x += 32) g.fillRect(x + 4, 34, 24, 24);
+          g.fillStyle = '#e2b43a'; for (let x = 0; x < w; x += 32) { g.beginPath(); g.arc(x + 16, 19, 5, 0, TAU); g.fill(); g.beginPath(); g.arc(x, 46, 4, 0, TAU); g.fill(); }
+          g.fillRect(0, 0, w, 3); g.fillRect(0, h - 3, w, 3);
+        });
+        const rep = (map, n) => { const t = map.clone(); t.needsUpdate = true; t.wrapS = T.RepeatWrapping; t.repeat.set(Math.max(1, n), 1); return new T.MeshLambertMaterial({ map: t }); };
+        const facade = (w, d, y, h, map, unit, inset = 0) => {
+          for (const [ry, ww, ox, oz] of [[0, w, 0, d / 2 + 0.02], [Math.PI, w, 0, -d / 2 - 0.02], [Math.PI / 2, d, w / 2 + 0.02, 0], [-Math.PI / 2, d, -w / 2 - 0.02, 0]]) plane(ww - inset, h, rep(map, Math.round(ww / unit)), PX + ox, y + h / 2, PZ + oz, ry);
+        };
+        const tier = (w, d, y, h) => { box(w, h, d, red, PX, y + h / 2, PZ); facade(w, d, y, h - 0.7, bayT, 2.6); facade(w + 0.1, d + 0.1, y + h - 0.75, 0.75, bandT, 2.2); };
+        // rez-de-chaussée : frise sous le premier toit tout autour du bâtiment
+        facade(40.1, 34.1, 9.05, 0.95, bandT, 2.2);
+        roof(10.0, 47, 41, 28.4, 22.4, 3.2, 1.3);
+        tier(28, 22, 12.4, 4.6);
+        roof(16.9, 34, 28, 26.4, 20.4, 2.2, 0.9);
+        tier(26, 20, 18.6, 3.4);
+        roof(21.9, 32, 26, 24.4, 18.4, 2.2, 0.9);
+        tier(24, 18, 23.6, 4.0);
+        roof(27.5, 31, 25, 8, 1.6, 6.5, 1.2);
+        // faîtage et les trois grands épis dorés du sommet
+        box(8.4, 0.5, 0.7, yel, PX, 34.2, PZ);
+        const fin = (x, s) => { cyl(0.9 * s, 1.1 * s, 0.7 * s, bronze, x, 34.4 + 0.35 * s, PZ, sc, 12); cyl(0.5 * s, 0.7 * s, 0.6 * s, gstd, x, 34.4 + 0.95 * s, PZ, sc, 12); const b = new T.Mesh(new T.SphereGeometry(1.0 * s, 16, 12), bronze); b.position.set(x, 34.4 + 2.0 * s, PZ); b.scale.y = 1.25; sc.add(b); cyl(0.12 * s, 0.25 * s, 0.6 * s, gstd, x, 34.4 + 3.4 * s, PZ, sc, 8); const t2 = new T.Mesh(new T.SphereGeometry(0.22 * s, 10, 8), gstd); t2.position.set(x, 34.4 + 3.8 * s, PZ); sc.add(t2); };
+        for (const s2 of [-1, 1]) K.pl('street', 0xffc890, 1.3, 46, PX + s2 * 12, 16, -3);
+        fin(PX, 1.35); fin(PX - 3.9, 0.75); fin(PX + 3.9, 0.75);
+        // soubassement de pierre blanche et escalier d'honneur
+        for (const [a, b2] of [[127.6, 145.6], [150.4, 168.4]]) box(b2 - a, 0.9, 0.5, white, X((a + b2) / 2), 0.45, -11.9);
+        for (let k = 0; k < 3; k++) box(7.2 - k * 0.6, 0.12, 0.5, white, PX, 0.06 + k * 0.12, -10.3 - k * 0.45);
+        // colonnade rouge sur socles de pierre
+        for (let i = 0; i < 10; i++) { const x = X(129.5 + i * 4.1); if (Math.abs(x - PX) < 2.6) continue; cyl(0.38, 0.42, 9, red, x, 4.5, -10.9, sc, 14); box(0.95, 0.4, 0.95, white, x, 0.2, -10.9); box(0.95, 0.3, 0.95, gold, x, 8.85, -10.9); wallC(x - 0.42, -11.3, x + 0.42, -10.5); }
+        // fenêtres à croisillons du rez-de-chaussée et portes latérales bleu sombre, comme sur les temples
+        for (let i = 0; i < 9; i++) { const u = 131.55 + i * 4.1; if (Math.abs(u - 148) < 4) continue; const side = Math.abs(u - 148) < 9; plane(3.0, side ? 3.4 : 3.6, side ? lam(0x1a3a5a) : rep(bayT, 1), X(u), side ? 1.7 : 3.6, -11.83); if (side) box(3.3, 0.3, 0.1, gold, X(u), 3.5, -11.86); }
         // LE grand portrait au-dessus de la porte, façon place Tian'anmen
-        box(9.5, 7.7, 0.3, gold, X(148), 9.6, -11.05); plane(8.88, 7.1, koroM, X(148), 9.6, -10.88);
-        plane(14, 1.5, label('KOROCHIKU NOTRE GRAND TIMONIER !', { bg: '#c8102e', col: '#ffd23a' }), X(148), 4.8, -10.9);
-        for (const [s, t2] of [[-1, 'NNN POUR TOUJOURS !'], [1, 'NE JAMAIS ABANDONNER']]) plane(7, 1.2, label(t2, { bg: '#c8102e', col: '#fff' }), X(148 + s * 10), 7.4, -10.6);
-        // drapeaux rouges, lions de pierre, lanternes
+        box(7.0, 5.7, 0.3, gold, PX, 6.55, -11.95); plane(6.5, 5.2, koroM, PX, 6.55, -11.78);
+        plane(6.6, 0.85, label('伟大领袖宫 · PALAIS DU GRAND TIMONIER', { bg: '#1a2e6a', col: '#ffd23a', border: '#e2b43a', w: 1400 }), PX, 3.75, -11.82);
+        for (const [s, t2] of [[-1, 'NNN POUR TOUJOURS !'], [1, 'NE JAMAIS ABANDONNER']]) plane(6.4, 1.0, label(t2, { bg: '#c8102e', col: '#fff' }), X(148 + s * 10.25), 7.9, -11.78);
+        plane(12, 1.3, label('KOROCHIKU NOTRE GRAND TIMONIER !', { bg: '#c8102e', col: '#ffd23a' }), PX, 14.7, PZ + 11.12);
+        // drapeaux rouges
         for (const u of [131, 137, 159, 165]) { cyl(0.06, 0.06, 7, lam(0x8a8a92), X(u), 3.5, -7.6, sc, 6); const fl = plane(2.2, 1.4, lam(0xc8102e, { side: T.DoubleSide }), X(u) + 1.1, 6.2, -7.6); D.anim.push({ flag: fl, ph: u }); const st = plane(0.5, 0.5, bas(0xffd23a, { side: T.DoubleSide, transparent: true }), X(u) + 0.6, 6.45, -7.58); void st; wallC(X(u) - 0.15, -7.75, X(u) + 0.15, -7.45); }
-        for (const s of [-1, 1]) { const x = X(148 + s * 4.2); box(1.4, 0.9, 1.4, white, x, 0.45, -9.2); const b = new T.Mesh(new T.SphereGeometry(0.55, 12, 10), lam(0x9a9488)); b.position.set(x, 1.4, -9.2); b.scale.set(1, 1.1, 1.3); sc.add(b); const hd = new T.Mesh(new T.SphereGeometry(0.42, 12, 10), lam(0x9a9488)); hd.position.set(x, 2.15, -8.9); sc.add(hd); wallC(x - 0.75, -9.95, x + 0.75, -8.45); }
-        for (let u = 132; u <= 164; u += 8) { if (Math.abs(u - 148) < 6) continue; const ln = new T.Mesh(new T.SphereGeometry(0.45, 12, 10), lam(0xff3020, { emissive: 0xd01010, emissiveIntensity: 0.9 })); ln.scale.y = 0.8; ln.position.set(X(u), 8.4, -10.2); sc.add(ln); }
+        // devant l'entrée : deux grandes étoiles rouges cerclées d'or sur socles de marbre (elles tournent lentement)
+        const starShape = (R, r) => { const s = new T.Shape(); for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r : R; const px = Math.cos(a) * rr, py = Math.sin(a) * rr; if (k) s.lineTo(px, py); else s.moveTo(px, py); } s.closePath(); return s; };
+        const starRed = std(0xd0101a, { metalness: 0.3, roughness: 0.35, emissive: 0x500000 });
+        for (const s of [-1, 1]) {
+          const x = X(148 + s * 4.6), z = -8.9;
+          box(1.6, 1.1, 1.6, white, x, 0.55, z); box(1.9, 0.2, 1.9, white, x, 0.1, z); box(1.3, 0.12, 1.3, gold, x, 1.16, z); cyl(0.12, 0.16, 0.7, gstd, x, 1.5, z, sc, 10);
+          const g = new T.Group(); g.position.set(x, 2.95, z); sc.add(g);
+          const rim = new T.Mesh(new T.ExtrudeGeometry(starShape(1.25, 0.5), { depth: 0.22, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06, bevelSegments: 2 }), gstd); rim.position.z = -0.11; g.add(rim);
+          const st = new T.Mesh(new T.ExtrudeGeometry(starShape(1.02, 0.4), { depth: 0.3, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.08, bevelSegments: 2 }), starRed); st.position.z = -0.15; g.add(st);
+          g.rotation.y = s * 0.35; D.anim.push({ star: g, ph: s });
+          wallC(x - 0.95, z - 0.95, x + 0.95, z + 0.95);
+        }
+        // lanternes rouges suspendues sous l'avant-toit
+        for (let u = 132; u <= 164; u += 8) { if (Math.abs(u - 148) < 6) continue; cyl(0.02, 0.02, 1.0, lam(0x2a1a10), X(u), 9.0, -9.9, sc, 4); const ln = new T.Mesh(new T.SphereGeometry(0.45, 12, 10), lam(0xff3020, { emissive: 0xd01010, emissiveIntensity: 0.9 })); ln.scale.y = 0.8; ln.position.set(X(u), 8.2, -9.9); sc.add(ln); box(0.4, 0.1, 0.4, gold, X(u), 8.6, -9.9); }
         // l'intérieur : tapis rouge, colonnes, portraits partout, slogans, statue du Grand Timonier sur l'estrade
         plane(4, 30, lam(0xc8102e), X(148), 0.02, -28, 0, -Math.PI / 2);
         for (let i = 0; i < 6; i++) for (const s of [-1, 1]) { const x = X(148 + s * 6.5), z = -16 - i * 4.8; cyl(0.45, 0.5, 10, red, x, 5, z, sc, 14); wallC(x - 0.5, z - 0.5, x + 0.5, z + 0.5); }
@@ -29540,7 +29624,7 @@
       D.hall = hall ? hall.id : null;
       if (ar === 'street') this.camMaxY = hall ? hall.H - 0.8 : 28;
       // animations
-      for (const A of D.anim) { if (A.spin) A.spin.rotation.y += 0.01; if (A.flag) { A.flag.rotation.y = Math.sin(t * 0.05 + A.ph) * 0.25; } }
+      for (const A of D.anim) { if (A.spin) A.spin.rotation.y += 0.01; if (A.flag) { A.flag.rotation.y = Math.sin(t * 0.05 + A.ph) * 0.25; } if (A.star) A.star.rotation.y = A.ph * 0.35 + Math.sin(t * 0.012) * 0.6; }
       if (D.koroStatue && t % 2 === 0) D.koroStatue.root.rotation.y = 0;
       if (D.rec && here) D.rec.head.rotation.y = Math.sin(t * 0.01) * 0.4;
       // haut-parleurs de propagande

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.97.6
+// @version      0.98.0
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.97.6';
+  const SSK_VER = '0.98.0';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -22998,6 +22998,7 @@
             <div class="sk-mm" data-i="0" style="--c:#e8343a"><b>COMBAT</b><small>1 CONTRE 1</small></div>
             <div class="sk-mm" data-i="1" style="--c:#8a3cf0"><b>EN LIGNE</b><small>1V1 · MÊLÉE · TOURNOI · L'APPART</small></div>
             <div class="sk-mm" data-i="2" style="--c:#e89a1e"><b>HISTOIRE</b><small>25 NIVEAUX · KOH-KHEYS</small></div>
+            <div class="sk-mm fb-mm" data-i="6" style="--c:#b0101e"><b>BOSS FINAL</b><small>ISSSOUFLE · MODOS JVC · BRIGADEANTIPORN</small></div>
             <div class="sk-mm" data-i="3" style="--c:#3c6ff0"><b>OPTIONS</b><small>VIES · JOUEUR 2 · MUSIQUE</small></div>
             <div class="sk-mm" data-i="4" style="--c:#22a866"><b>CONTRÔLES</b><small>TOUCHES · COUPS SPÉCIAUX</small></div>
             <div class="sk-mm" data-i="5" style="--c:#7d828f"><b>QUITTER</b><small>RETOUR AU FORUM</small></div>
@@ -23034,7 +23035,7 @@
       this.home = { idx: 0, opt: 0, show: 0, showT: 0, navY: 0, navX: 0 };
       this.homeItems = [...el.querySelectorAll('.sk-mm')];
       this.homeOpts = [...el.querySelectorAll('.sk-row2[data-o]')];
-      this.homeDescs = ['Choisis ton khey et affronte un ami ou l’ordinateur sur l’Île lunaire.', 'Affronte les kheys du topic en ligne : 1 contre 1, mêlée jusqu’à 4, tournois… ou va boire un verre à l’appart des kheys.', 'Traverse l’archipel de Koh-Kheys et bats les 25 kheys, un par un, jusqu’aux Poteaux.', 'Nombre de vies, joueur 2 (humain ou ordinateur) et volume de la musique.', 'Les touches, la manette et les coups spéciaux de chaque khey.', 'Ferme le jeu et retourne sur le forum.'];
+      this.homeDescs = ['Choisis ton khey et affronte un ami ou l’ordinateur sur l’Île lunaire.', 'Affronte les kheys du topic en ligne : 1 contre 1, mêlée jusqu’à 4, tournois… ou va boire un verre à l’appart des kheys.', 'Traverse l’archipel de Koh-Kheys et bats les 25 kheys, un par un, jusqu’aux Poteaux.', 'Isssoufle, les Modos JVC et BrigadeAntiPorn veulent ta peau. Un combat tout simple… en apparence.', 'Nombre de vies, joueur 2 (humain ou ordinateur) et volume de la musique.', 'Les touches, la manette et les coups spéciaux de chaque khey.', 'Ferme le jeu et retourne sur le forum.'];
       this.homeItems.forEach((it, i) => {
         it.addEventListener('mouseenter', () => { if (this.mode === 'menu') { this.home.idx = i; this.renderHome(); } });
         it.addEventListener('click', () => { if (this.mode === 'menu') { this.home.idx = i; this.homeNav('ok'); } });
@@ -23286,12 +23287,14 @@
         else if (a === 'down') H.idx = (H.idx + 1) % nI;
         else if (a === 'back') { this.showTitle(); return; }
         else if (a === 'ok') {
-          if (H.idx === 0) { this.homeEl.style.display = 'none'; this.showSelect(); return; }
-          if (H.idx === 1) { this.openOnline(); return; }
-          if (H.idx === 2) { this.storyEnter(); return; }
-          if (H.idx === 3) { this.showOptions(); return; }
-          if (H.idx === 4) { this.showControls(); return; }
-          if (H.idx === 5) { closeGame(); return; }
+          const DI = this.homeItems[H.idx] ? +this.homeItems[H.idx].dataset.i : H.idx;
+          if (DI === 6) { this.fbEnter(); return; }
+          if (DI === 0) { this.homeEl.style.display = 'none'; this.showSelect(); return; }
+          if (DI === 1) { this.openOnline(); return; }
+          if (DI === 2) { this.storyEnter(); return; }
+          if (DI === 3) { this.showOptions(); return; }
+          if (DI === 4) { this.showControls(); return; }
+          if (DI === 5) { closeGame(); return; }
         }
         this.renderHome(); return;
       }
@@ -30031,6 +30034,1270 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     { k: 'gtfo', ic: '🚪', q: 'Bon, je dois y aller. Je me retourne…' },
   ];
   const DX_ING = ['Sirop de Risitas', 'Sel de larmes de khey', 'Poudre de Monster bleu'];
+
+  // =====================================================================
+  //  LE VRAI BOSS FINAL : « LA FUSION » — Isssoufle × Modos JVC × BrigadeAntiPorn
+  //  Un boss méta façon Undertale, en trois phases :
+  //   1. un 1 contre 3 tout simple (Isssoufle, Modos JVC, BrigadeAntiPorn), puis l'écran de victoire…
+  //      qu'Isssoufle déchire. Monologues, et les trois fusionnent en une abomination.
+  //   2. la Fusion, barre de vie normale : rayons de merde, tempête de mouchoirs, disques de GTA VI,
+  //      mains qui attrapent et serrent, tampon BANNI, signalements, pubs NoFap, fourrure qui balaie.
+  //   3. il pirate le compte du joueur, poste sur le topic, s'ajoute 100 vies dans le code source.
+  //      Il tue le joueur (qui se relève, deux fois), puis la vision du Leader Suprême, le menu
+  //      d'actions façon FF7, le bouton « SUPPRIMER LE 18-25 », l'arrivée de Korochiku en tank avec
+  //      Dextro en laisse, la vie infinie et le coup final.
+  //  Après la fusion, le joueur ne peut pas perdre : la Fusion le ramène à la vie pour l'humilier encore.
+  // =====================================================================
+  const FB_KEY = 'ssk-fb-v1';
+  const BAP_PALS = [
+    { hood: 0x5a5f6c, hoodD: 0x3c404a, jeans: 0x2c4774, shoe: 0xf0f0ee, sole: 0x2a2a2e, skin: 0xf2caa8, hair: 0x6a4424, hairD: 0x4a2c14, brow: 0x3a2412, eye: 0x2a3a4a, glow: 0xff3a3a },
+    { hood: 0xe8e4dc, hoodD: 0xbcb8b0, jeans: 0x1c1c22, shoe: 0x1c1c22, sole: 0xf0f0ee, skin: 0xe8b894, hair: 0x2a1a10, hairD: 0x1a0e08, brow: 0x1a0e08, eye: 0x3a2a1c, glow: 0x5aa0ff },
+  ];
+  let FB_BAP_TEX = null;
+  const fbBapTex = () => { if (!FB_BAP_TEX) { FB_BAP_TEX = new T.TextureLoader().load(BAP_IMG_DATA); FB_BAP_TEX.colorSpace = T.SRGBColorSpace || FB_BAP_TEX.colorSpace; } return FB_BAP_TEX; };
+  // BrigadeAntiPorn : sweat à capuche gris, jean, lunettes, et sa pancarte « NO PORN » en guise d'arme
+  function buildBap(pal) {
+    const K = hkKit(), { M, add, B } = K;
+    const mHood = M(pal.hood), mHoodD = M(pal.hoodD), mJean = M(pal.jeans), mShoe = M(pal.shoe), mSole = M(pal.sole), mSkin = M(pal.skin), mHair = M(pal.hair);
+    const legs = hkLegs(K, { mLeg: mJean, mShoe, mSole, w: 0.125, gap: 0.115, shoeL: 0.26 });
+    const torso = hkTorso(K, { mTop: mHood, w: 0.27, h: 0.6, depth: 0.82, taper: 0.86 });
+    add(torso, new T.BoxGeometry(0.03, 0.18, 0.3), mHoodD, 0.22, 0.2, 0, false);                                      // poche kangourou
+    const hoodBack = add(torso, new T.SphereGeometry(0.2, 14, 10, 0, TAU, 0, Math.PI / 2), mHoodD, -0.16, 0.62, 0, true, 1.05); hoodBack.rotation.z = 1.2;
+    for (const s of [1, -1]) { const c = add(torso, new T.CylinderGeometry(0.008, 0.008, 0.2, 6), B(0xf2f2f2), 0.215, 0.5, s * 0.05, false); c.rotation.z = 0.1; }
+    const { arms, sword } = hkArms(K, torso, { mUp: mHood, mLow: mHood, mCuff: mHoodD, mHand: mSkin, w: 0.08 });
+    const H = hkHead(K, torso, { mSkin, r: 0.2, eye: pal.eye, brow: pal.brow, browH: 0.022, browTilt: -0.25, jawY: 0.78, mouth: 0x6a2a2a, mouthW: 0.05 });
+    const head = H.head;
+    const cap = add(head, new T.SphereGeometry(0.212, 18, 12, 0, TAU, 0, Math.PI * 0.42), mHair, -0.02, 0.06, 0, true, 1.04); cap.scale.set(1.02, 0.9, 1);
+    for (const s of [1, -1]) { const r = add(head, new T.TorusGeometry(0.045, 0.009, 6, 16), B(0x111114), 0.19, 0.0, s * 0.078, false); r.rotation.y = Math.PI / 2; }   // lunettes
+    add(head, new T.BoxGeometry(0.01, 0.009, 0.05), B(0x111114), 0.2, 0.0, 0, false);
+    // la pancarte : un panneau rond rouge barré, sur un manche
+    const stick = add(sword, new T.CylinderGeometry(0.025, 0.025, 0.95, 8), M(0x8a6a44), 0, -0.25, 0);
+    stick.rotation.z = Math.PI / 2; stick.position.set(0.3, -0.02, 0);
+    const sign = new T.Group(); sign.position.set(0.82, 0, 0); sword.add(sign);
+    const flip = fbBapTex().clone(); flip.needsUpdate = true; flip.wrapS = T.RepeatWrapping; flip.repeat.x = -1; flip.offset.x = 1;
+    const disc = new T.Mesh(new T.CylinderGeometry(0.36, 0.36, 0.04, 28), [M(0xd8d8d8), new T.MeshBasicMaterial({ map: fbBapTex() }), new T.MeshBasicMaterial({ map: flip })]);
+    disc.rotation.x = Math.PI / 2; sign.add(disc);
+    const ring = new T.Mesh(new T.TorusGeometry(0.36, 0.025, 8, 28), K.OUT); sign.add(ring);
+    return hkModel(K, { torso, head, legs, arms, sword }, { posture: { lean: 0.02, head: -0.02 } });
+  }
+  const BAP_DEF = { id: 'bap', name: 'BRIGADEANTIPORN', title: 'Le croisé du NoFap', specials: ['Tract NoFap · projectile', 'Ruée de la vertu', 'Sermon ascendant', 'Pancarte · contre'], build: buildBap, moves: USOCON_MOVES, pals: BAP_PALS, trailPart: 'armR',
+    portrait: (m, bust) => { m.body.rotation.y = -0.5; m.armR.rotation.z = 1.3; m.sword.rotation.z = 0.6; m.armL.rotation.z = 0.2; } };
+
+  // ------------------------------------------------------------------ petit synthé (bruitages du boss)
+  const FBS = {
+    ac: null,
+    ctx() { if (!this.ac) { try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ac = null; } } if (this.ac && this.ac.state === 'suspended') this.ac.resume().catch(() => {}); return this.ac; },
+    vol() { return Math.max(0, Math.min(1, (SFX.vol != null ? SFX.vol : 7) / 10)); },
+    tone(f0, f1, dur, type = 'square', g0 = 0.08, at = 0) {
+      const ac = this.ctx(), v = this.vol(); if (!ac || !v) return;
+      const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+      g.gain.setValueAtTime(g0 * v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
+    },
+    noise(dur, f0, f1, g0 = 0.3, q = 1, type = 'bandpass', at = 0) {
+      const ac = this.ctx(), v = this.vol(); if (!ac || !v) return;
+      const t = ac.currentTime + at, n = ac.sampleRate * dur, b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = type; f.Q.value = q;
+      f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur);
+      const g = ac.createGain(); g.gain.setValueAtTime(g0 * v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      s.connect(f).connect(g).connect(ac.destination); s.start(t);
+    },
+    blip(p = 1) { this.tone(420 * p, 400 * p, 0.045, 'square', 0.035); },
+    boss() { this.tone(110 + Math.random() * 40, 60, 0.09, 'sawtooth', 0.05); this.tone(1400 + Math.random() * 300, 900, 0.05, 'square', 0.015); },
+    rip() { this.noise(0.9, 5000, 400, 0.5, 0.6); this.noise(0.4, 1500, 200, 0.4, 2, 'bandpass', 0.15); },
+    glitch() { for (let i = 0; i < 6; i++) this.tone(80 + Math.random() * 1600, 60 + Math.random() * 900, 0.06, 'square', 0.05, i * 0.05); },
+    rumble(d = 1.4) { this.noise(d, 120, 40, 0.6, 0.7, 'lowpass'); },
+    beam() { this.noise(1.0, 300, 900, 0.25, 1.5); this.tone(70, 55, 1.0, 'sawtooth', 0.06); },
+    charge() { this.tone(200, 1200, 0.7, 'triangle', 0.05); },
+    slam() { this.noise(0.5, 200, 40, 0.8, 0.8, 'lowpass'); this.tone(90, 40, 0.4, 'sine', 0.2); },
+    click() { this.noise(0.03, 3000, 2500, 0.3, 3); },
+    shatter() { this.noise(0.8, 7000, 1500, 0.5, 0.5, 'highpass'); for (let i = 0; i < 8; i++) this.tone(2000 + Math.random() * 3000, 800, 0.08, 'triangle', 0.04, i * 0.04); },
+    heal() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, f, 0.18, 'triangle', 0.06, i * 0.09)); },
+    determ() { [262, 330, 392, 523].forEach((f, i) => this.tone(f, f * 1.01, 0.5, 'triangle', 0.05, i * 0.22)); },
+    laugh() { for (let i = 0; i < 7; i++) this.tone(300 - i * 15, 180 - i * 10, 0.11, 'sawtooth', 0.06, i * 0.13); },
+    menu() { this.tone(880, 880, 0.05, 'square', 0.03); },
+    pick() { this.tone(660, 990, 0.1, 'square', 0.04); },
+  };
+
+  // ------------------------------------------------------------------ textures
+  const fbCanvas = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; };
+  // l'écran de la télé : le visage de la Fusion, en pixels (yeux « ! » rouges des Modos, lunettes roses d'Isssoufle)
+  function fbFace(g, w, h, mode, t) {
+    g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+    const P = 8, px = (x, y, c, ww = 1, hh = 1) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, ww * P, hh * P); };
+    const cx = w / P / 2, jit = mode === 'glitch' || mode === 'angry' ? (Math.random() - 0.5) * 1.5 : 0;
+    // yeux
+    for (const s of [-1, 1]) {
+      const ex = cx + s * 7 + jit, ey = 8;
+      if (mode === 'dead') { px(ex - 2, ey, '#fff', 5, 1); px(ex, ey - 2, '#fff', 1, 5); continue; }
+      for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) if (x * x + y * y <= 10) px(ex + x, ey + y, '#fff');
+      const red = mode === 'hurt' ? '#ffd23a' : '#e8101e';
+      px(ex - 1, ey - 2, red, 2, 3); px(ex - 1, ey + 2, red, 2, 1);                 // « ! » rouge
+      // lunettes roses par-dessus
+      g.strokeStyle = '#ff4fd0'; g.lineWidth = 6; g.strokeRect((ex - 4.5) * P, (ey - 4) * P, 9 * P, 8 * P);
+      if (mode === 'angry') { g.fillStyle = '#000'; g.beginPath(); g.moveTo((ex - 5) * P, (ey - 5 + (s > 0 ? 3 : 0)) * P); g.lineTo((ex + 5) * P, (ey - 5 + (s > 0 ? 0 : 3)) * P); g.lineTo((ex + 5) * P, (ey - 6) * P); g.lineTo((ex - 5) * P, (ey - 6) * P); g.fill(); }
+    }
+    g.fillStyle = '#ff4fd0'; g.fillRect((cx - 2.5) * P, 7.5 * P, 5 * P, P * 0.75);
+    // bouche
+    const my = 15 + (mode === 'laugh' ? Math.round(Math.sin(t * 0.6)) : 0);
+    if (mode === 'hurt' || mode === 'dead') { for (let x = -6; x <= 6; x++) px(cx + x, my + Math.round(Math.sin(x * 1.3) * 0.6), '#fff'); }
+    else {
+      const open = mode === 'laugh' ? 4 : mode === 'angry' ? 3 : 2;
+      for (let x = -9; x <= 9; x++) { const curve = Math.round((x * x) / 30); px(cx + x, my - curve, '#fff'); px(cx + x, my - curve + open, '#fff'); }
+      for (let x = -8; x <= 8; x += 2) { const curve = Math.round((x * x) / 30); px(cx + x, my - curve + 1, '#fff', 1, open - 1); }
+    }
+    if (mode === 'glitch' || Math.random() < 0.04) {
+      for (let i = 0; i < 6; i++) { const y = Math.random() * h, hh = 4 + Math.random() * 16; const img = g.getImageData(0, y, w, hh); g.putImageData(img, (Math.random() - 0.5) * 40, y); }
+      g.fillStyle = 'rgba(255,0,60,.25)'; g.fillRect(0, Math.random() * h, w, 6);
+    }
+    g.fillStyle = 'rgba(255,255,255,.06)'; for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1);    // lignes du tube
+  }
+  function fbEyeTex() {
+    const c = fbCanvas(256, 128, (g, w, h) => {
+      g.fillStyle = '#f2e8e0'; g.fillRect(0, 0, w, h);
+      g.strokeStyle = 'rgba(200,30,30,.55)';
+      for (let i = 0; i < 40; i++) { g.lineWidth = 0.6 + Math.random() * 1.6; g.beginPath(); let x = Math.random() * w, y = Math.random() < 0.5 ? 0 : h; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (Math.random() - 0.5) * 30; y += (y < h / 2 ? 1 : -1) * Math.random() * 14; g.lineTo(x, y); } g.stroke(); }
+      const cx = w * 0.75, cy = h / 2;
+      const r = g.createRadialGradient(cx, cy, 4, cx, cy, 30); r.addColorStop(0, '#2a4a2a'); r.addColorStop(0.6, '#6a8a4a'); r.addColorStop(1, '#3a2a1a'); g.fillStyle = r; g.beginPath(); g.arc(cx, cy, 30, 0, TAU); g.fill();
+      g.fillStyle = '#050505'; g.beginPath(); g.arc(cx, cy, 12, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.arc(cx - 8, cy - 9, 5, 0, TAU); g.fill();
+    });
+    const t = new T.CanvasTexture(c); return t;
+  }
+  function fbZebraTex() {
+    const c = fbCanvas(128, 256, (g, w, h) => { g.fillStyle = '#ff6ac0'; g.fillRect(0, 0, w, h); g.fillStyle = '#1a0a14'; for (let y = 0; y < h; y += 26) { g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 16) g.lineTo(x, y + Math.sin(x * 0.15 + y) * 6 + 7); for (let x = w; x >= 0; x -= 16) g.lineTo(x, y + Math.sin(x * 0.15 + y) * 4); g.fill(); } });
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(2, 3); return t;
+  }
+  function fbCableTex() {
+    const c = fbCanvas(64, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#6a6e78'); gr.addColorStop(0.5, '#b8bcc6'); gr.addColorStop(1, '#4a4e58'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(0,0,0,.45)'; for (let x = 0; x < w; x += 8) g.fillRect(x, 0, 3, h); });
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(30, 1); return t;
+  }
+  function fbDiscTex() {
+    const c = fbCanvas(256, 256, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#ff4fa0'); gr.addColorStop(0.5, '#ffb04a'); gr.addColorStop(1, '#4fc3ff');
+      g.fillStyle = gr; g.beginPath(); g.arc(128, 128, 126, 0, TAU); g.fill();
+      g.fillStyle = '#f0f0f4'; g.beginPath(); g.arc(128, 128, 30, 0, TAU); g.fill(); g.fillStyle = '#222'; g.beginPath(); g.arc(128, 128, 12, 0, TAU); g.fill();
+      g.fillStyle = '#fff'; g.font = '900 52px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.strokeStyle = '#000'; g.lineWidth = 6;
+      g.strokeText('GTA VI', 128, 72); g.fillText('GTA VI', 128, 72);
+    });
+    return new T.CanvasTexture(c);
+  }
+
+  // ------------------------------------------------------------------ la Fusion (modèle)
+  function buildFusion() {
+    const root = new T.Group(), toon = (c, e = 0, x = {}) => new T.MeshToonMaterial({ color: c, gradientMap: toonGradient(), emissive: c, emissiveIntensity: e, ...x });
+    const OUT = new T.MeshBasicMaterial({ color: 0x0a0c18, side: T.BackSide });
+    const add = (p, geo, mat, x = 0, y = 0, z = 0, ol = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); p.add(m); if (ol) { const o = new T.Mesh(geo, OUT); o.scale.setScalar(ol); m.add(o); } return m; };
+    const skinT = new T.CanvasTexture(fbCanvas(256, 256, (c, w, h) => { c.fillStyle = '#b9766a'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { c.fillStyle = `rgba(${90 + Math.random() * 80},${30 + Math.random() * 40},${30 + Math.random() * 40},${Math.random() * 0.25})`; c.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 5, 2 + Math.random() * 5); } c.strokeStyle = 'rgba(110,20,40,.35)'; for (let i = 0; i < 26; i++) { c.lineWidth = 0.5 + Math.random() * 1.5; c.beginPath(); let x = Math.random() * w, y = Math.random() * h; c.moveTo(x, y); for (let k = 0; k < 7; k++) { x += (Math.random() - 0.5) * 40; y += (Math.random() - 0.5) * 40; c.lineTo(x, y); } c.stroke(); } }));
+    skinT.wrapS = skinT.wrapT = T.RepeatWrapping;
+    const std = (o) => new T.MeshStandardMaterial({ roughness: 0.62, metalness: 0.05, ...o });
+    const flesh = std({ color: 0xf0c4b0, map: skinT }), fleshD = std({ color: 0x9a5a58, map: skinT, roughness: 0.5 }), pink = std({ color: 0xa8306a, roughness: 0.9 }), dark = std({ color: 0x141418, roughness: 0.4, metalness: 0.4 });
+    const cabT = fbCableTex(); const cab = std({ color: 0x9aa0aa, map: cabT, metalness: 0.75, roughness: 0.32 });
+    const body = new T.Group(); root.add(body);
+    // la télé (cœur) : visage en pixels
+    const tvC = document.createElement('canvas'); tvC.width = 256; tvC.height = 192;
+    const tvT = new T.CanvasTexture(tvC); tvT.magFilter = T.NearestFilter;
+    const tv = new T.Group(); tv.position.set(0, 4.0, 0.2); body.add(tv);
+    add(tv, new T.BoxGeometry(3.6, 2.8, 1.6), dark, 0, 0, -0.4, 1.03);
+    add(tv, new T.BoxGeometry(3.7, 0.25, 1.7), toon(0x2a2a32), 0, 1.45, -0.4);
+    const scr = add(tv, new T.PlaneGeometry(3.0, 2.25), new T.MeshBasicMaterial({ map: tvT }), 0, 0, 0.41);
+    for (const s of [-1, 1]) { const a = add(tv, new T.CylinderGeometry(0.03, 0.03, 1.4, 6), toon(0x8a8a92), s * 0.5, 2.0, -0.4); a.rotation.z = -s * 0.5; }
+    // chair : le « visage » sous la télé, joues, et la bouche-pancarte de BAP entourée de dents
+    const face = add(body, new T.SphereGeometry(1.7, 24, 18), flesh, 0, 1.6, 0, 1.03); face.scale.set(1.35, 1.0, 0.75);
+    for (const s of [-1, 1]) { const ch = add(body, new T.SphereGeometry(0.9, 18, 14), fleshD, s * 1.7, 1.4, 0.2, 1.04); ch.scale.set(1, 1.2, 0.7); }
+    const mouth = new T.Group(); mouth.position.set(0, 1.25, 1.25); body.add(mouth);
+    add(mouth, new T.CircleGeometry(0.95, 30), new T.MeshBasicMaterial({ color: 0x1a0306 }), 0, 0, -0.02);
+    const sign = add(mouth, new T.CircleGeometry(0.62, 30), new T.MeshBasicMaterial({ map: fbBapTex() }), 0, 0, 0.02);
+    const toothM = std({ color: 0xe8dcc0, roughness: 0.35 });
+    for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, th = add(mouth, new T.ConeGeometry(0.1, 0.36, 6), toothM, Math.cos(a) * 0.8, Math.sin(a) * 0.8, 0.05); th.rotation.z = a + Math.PI / 2; }
+    // deux longues défenses de chair (comme le nez de Photoshop Flowey)
+    for (const s of [-1, 1]) { const tk = add(body, new T.ConeGeometry(0.28, 2.6, 10), flesh, s * 0.55, -0.4, 0.9, 1.04); tk.rotation.z = Math.PI + s * 0.08; }
+    // les grands yeux réalistes
+    const eyeT = fbEyeTex(), eyes = [];
+    for (const [x, y, z, r] of [[-3.1, 4.2, 0.2, 0.75], [3.1, 4.2, 0.2, 0.75], [-1.9, 1.7, 1.0, 0.45], [1.9, 1.7, 1.0, 0.45]]) {
+      const e = new T.Group(); e.position.set(x, y, z); body.add(e);
+      add(e, new T.SphereGeometry(r * 1.25, 18, 12), fleshD, 0, 0, -0.15).scale.set(1.25, 0.8, 0.8);
+      const ball = add(e, new T.SphereGeometry(r, 24, 16), std({ map: eyeT, roughness: 0.15 }), 0, 0, 0.15); ball.rotation.y = -Math.PI / 2;
+      eyes.push({ g: e, ball });
+    }
+    // fourrure rose d'Isssoufle tout autour
+    const furs = [];
+    for (let i = 0; i < 30; i++) {
+      const a = i / 30 * TAU, rr = 3.2 + Math.random() * 0.5;
+      const f = add(body, new T.ConeGeometry(0.16 + Math.random() * 0.14, 1.6 + Math.random() * 1.2, 6), i % 3 ? pink : std({ color: 0x7a1a4a, roughness: 0.95 }), Math.cos(a) * rr * 1.2, 2.2 + Math.sin(a) * rr * 0.75, -0.8);
+      f.rotation.z = a - Math.PI / 2; furs.push(f);
+    }
+    // câbles des Modos qui partent dans tous les sens
+    const cables = [];
+    for (let i = 0; i < 10; i++) {
+      const s = i % 2 ? 1 : -1, k = Math.floor(i / 2), g = new T.Group(); g.position.set(s * (1.2 + k * 0.4), 4.6 + k * 0.25, -1.0); body.add(g);
+      const pts = []; for (let j = 0; j <= 8; j++) { const u = j / 8; pts.push(new T.Vector3(s * (u * (5 + k * 1.3)), Math.sin(u * Math.PI) * (2.5 + k * 0.6) - u * k * 0.8, -u * 2 + Math.sin(u * 7 + k) * 0.4)); }
+      add(g, new T.TubeGeometry(new T.CatmullRomCurve3(pts), 40, 0.22 + (k % 2) * 0.06, 8), cab, 0, 0, 0, 1.06);
+      cables.push({ g, s, ph: i * 0.9 });
+    }
+    const mini = [];
+    for (const [id, x, y, z, rz] of [['isss', -5.6, 6.6, -1.6, 0.25], ['modos', 5.6, 6.8, -1.6, -0.2], ['bap', 0, 8.0, -2.2, 0.05]]) {
+      const g2 = new T.Group(); g2.position.set(x, y, z); g2.rotation.z = rz; body.add(g2);
+      add(g2, new T.BoxGeometry(1.7, 1.35, 0.9), dark, 0, 0, -0.3, 1.04);
+      const im = new T.MeshBasicMaterial({ color: 0xffffff }); const sc2 = add(g2, new T.PlaneGeometry(1.4, 1.05), im, 0, 0, 0.16);
+      try { const P = PORTRAITS_REF && PORTRAITS_REF[id]; const src = id === 'bap' ? BAP_IMG_DATA : P && P.icon; if (src) { const tx = new T.TextureLoader().load(src); tx.colorSpace = T.SRGBColorSpace || tx.colorSpace; im.map = tx; im.needsUpdate = true; } } catch (e) {}
+      mini.push({ g: g2, scr: sc2, im });
+    }
+    // signalements « ! » en orbite, aura rouge
+    const flags = new T.Group(); flags.position.set(0, 4, -1); body.add(flags);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, f = add(flags, new T.BoxGeometry(0.5, 0.62, 0.08), new T.MeshBasicMaterial({ color: 0xe8101e }), Math.cos(a) * 5.6, Math.sin(a) * 3.6, 0); add(f, new T.BoxGeometry(0.11, 0.3, 0.1), new T.MeshBasicMaterial({ color: 0xffffff }), 0, 0.07, 0.01); add(f, new T.BoxGeometry(0.11, 0.09, 0.1), new T.MeshBasicMaterial({ color: 0xffffff }), 0, -0.19, 0.01); }
+    const glow = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xff1a3a, transparent: true, opacity: 0.6, blending: T.AdditiveBlending, depthWrite: false }));
+    glow.scale.set(16, 13, 1); glow.position.set(0, 3, -2.5); body.add(glow);
+    const light = new T.PointLight(0xff7080, 0.7, 40, 1.4); light.position.set(0, 4, 4); body.add(light);
+    // bras zébrés roses et mains géantes aux griffes rouges
+    const zebra = std({ map: fbZebraTex(), roughness: 0.8 }), claw = std({ color: 0x5a0a10, roughness: 0.3, metalness: 0.2 }), hand = std({ color: 0xc8907c, map: skinT });
+    const hands = [], free = new T.Group();
+    for (const s of [-1, 1]) {
+      const arm = new T.Mesh(new T.CylinderGeometry(0.42, 0.55, 1, 12), zebra); free.add(arm);
+      const ao = new T.Mesh(arm.geometry, OUT); ao.scale.set(1.08, 1, 1.08); arm.add(ao);
+      const h = new T.Group(); free.add(h);
+      const palm = add(h, new T.BoxGeometry(1.5, 0.6, 1.3), hand, 0, 0, 0, 1.05);
+      const fingers = [];
+      for (let k = 0; k < 4; k++) {
+        const f = new T.Group(); f.position.set(-0.55 + k * 0.37, -0.25, 0.3); h.add(f);
+        add(f, new T.CylinderGeometry(0.14, 0.12, 0.9, 8), hand, 0, -0.45, 0, 1.08);
+        const c = add(f, new T.ConeGeometry(0.12, 0.42, 6), claw, 0, -1.08, 0, 1.08); c.rotation.x = Math.PI;
+        fingers.push(f);
+      }
+      const th = new T.Group(); th.position.set(s * -0.8, -0.1, 0.3); h.add(th); add(th, new T.CylinderGeometry(0.15, 0.13, 0.7, 8), hand, 0, -0.35, 0, 1.08); fingers.push(th); th.rotation.z = s * 0.8;
+      hands.push({ s, g: h, arm, fingers, shoulder: new T.Vector3(s * 3.2, 1.8, -0.4), home: new T.Vector3(s * 6.2, 1.2, 0.4), pos: new T.Vector3(s * 6.2, 1.2, 0.4), grip: 0 });
+    }
+    return { root, free, body, tv, scr, tvC, tvT, eyes, furs, cables, flags, glow, light, hands, mouth, sign, mini, face: 'grin', faceT: 0 };
+  }
+
+  // ------------------------------------------------------------------ textes
+  const FB_INSULTS = ['Crève, sale branleur !', 'T\'es qu\'un déchet du 18-25 !', 'Je vais te bannir de la vie !', 'Même dans les chiottes de l\'appart t\'es moins utile que moi !', 'Tu pues le craquage !', 'Isssoufle te reprend tout !', 'Signalé ! Signalé ! SIGNALÉ !', 'Retourne au 18-25, tocard !', 'Ton NNN, je vais le piétiner !', 'Pauvre khey… tu fais peine à voir !', 'Ferme ta gueule et meurs !', 'Le vrai Leader, c\'est NOUS !'];
+  const FB_REVIVE = 'Pas encore… Je dois encore t\'humilier un peu.';
+
+  // ------------------------------------------------------------------ interface (dialogues façon Undertale, barres, menus FF7, écrans méta)
+  const FB_CSS = `
+  .fb-ui{position:absolute;inset:0;z-index:60;pointer-events:none;font-family:"SSK Rodin","Arial Black",sans-serif}
+  .fb-ui *{box-sizing:border-box}
+  .fb-dlg{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(860px,92%);min-height:132px;background:#000;border:5px solid #fff;padding:16px 22px 16px 22px;color:#fff;font:700 22px/1.35 "Courier New",monospace;letter-spacing:.5px;pointer-events:auto;cursor:pointer;display:none;box-shadow:0 0 0 3px #000}
+  .fb-dlg b{display:block;font:900 15px "SSK Rodin","Arial Black",sans-serif;letter-spacing:2px;margin-bottom:6px;color:#ffd23a}
+  .fb-dlg.boss{border-color:#ff2a3a;color:#ffdede}.fb-dlg.boss b{color:#ff4a5a}
+  .fb-dlg.boss span{display:inline-block;animation:fbShake .12s infinite}
+  .fb-dlg .nx{position:absolute;right:14px;bottom:8px;font-size:16px;animation:fbBlink .8s infinite}
+  @keyframes fbBlink{50%{opacity:0}} @keyframes fbShake{25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}}
+  .fb-top{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:min(760px,80%);display:none;text-align:center}
+  .fb-top .nm{color:#fff;font:italic 900 18px "SSK Rodin","Arial Black",sans-serif;letter-spacing:3px;text-shadow:2px 2px 0 #000,0 0 12px #f00}
+  .fb-top .nm i{color:#ffd23a;font-style:normal;margin-left:10px}
+  .fb-bar{position:relative;height:22px;margin-top:4px;background:#2a0608;border:3px solid #000;box-shadow:0 0 0 2px #fff;overflow:visible}
+  .fb-bar>u{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#ffe04a,#ff8a1a 55%,#e8101e);transition:width .25s}
+  .fb-bar>s{position:absolute;left:0;top:0;bottom:0;background:#fff;opacity:.6;transition:width .9s .2s}
+  .fb-say{position:absolute;left:50%;top:84px;transform:translateX(-50%);color:#ff4a5a;font:italic 900 22px "SSK Rodin","Arial Black",sans-serif;text-shadow:3px 3px 0 #000;white-space:nowrap;opacity:0;transition:opacity .3s}
+  .fb-narr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,.82);color:#fff;font:700 30px/1.4 "Courier New",monospace;padding:0 8%;letter-spacing:1px;pointer-events:auto;cursor:pointer}
+  .fb-narr em{color:#ffd23a;font-style:normal}
+  .fb-flash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .25s}
+  .fb-menu{position:absolute;left:3%;bottom:4%;width:min(520px,60%);background:linear-gradient(#2a3ab8,#0c1450);border:3px solid #e8e8f4;border-radius:8px;padding:10px 14px;pointer-events:auto;box-shadow:0 6px 20px rgba(0,0,0,.6);display:none}
+  .fb-menu h4{margin:0 0 6px;color:#fff;font:italic 900 14px "SSK Rodin",sans-serif;letter-spacing:2px;opacity:.8}
+  .fb-menu button{display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px 8px 30px;background:none;border:0;color:#fff;font:700 18px "Courier New",monospace;cursor:pointer;position:relative;text-shadow:2px 2px 0 #000}
+  .fb-menu button.on::before{content:'☛';position:absolute;left:4px;top:6px;color:#fff;font-size:20px}
+  .fb-menu button[disabled]{color:#8a8ab0}
+  .fb-menu.limit{background:linear-gradient(#b82a2a,#500c0c);left:50%;transform:translateX(-50%);text-align:center}
+  .fb-menu.limit button{text-align:center;font-size:24px;padding-left:10px;animation:fbPulse .7s infinite}
+  @keyframes fbPulse{50%{color:#ffd23a;transform:scale(1.04)}}
+  .fb-win{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(820px,94%);height:min(520px,86%);background:#fff;border:2px solid #222;box-shadow:0 14px 40px rgba(0,0,0,.7);pointer-events:auto;display:none;flex-direction:column;overflow:hidden;font-family:Arial,sans-serif;color:#222}
+  .fb-win .bar{height:30px;background:#dcdce4;display:flex;align-items:center;gap:6px;padding:0 10px;font:12px Arial,sans-serif;color:#555}
+  .fb-win .bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.fb-win .bar i+i{background:#febc2e}.fb-win .bar i+i+i{background:#28c840}
+  .fb-win .url{flex:1;margin-left:10px;background:#fff;border-radius:6px;padding:3px 10px;color:#333}
+  .fb-win .body{flex:1;overflow:hidden;position:relative}
+  .fb-term{background:#06080a;color:#3aff6a;font:16px/1.5 "Courier New",monospace;padding:16px;height:100%;white-space:pre-wrap}
+  .fb-forum .hd{background:#1d2b50;color:#fff;padding:10px 16px;font:900 20px Arial,sans-serif;letter-spacing:1px}.fb-forum .hd small{font-weight:400;font-size:12px;opacity:.8;margin-left:10px}
+  .fb-forum .tt{background:#f0f2f6;padding:8px 16px;font:700 16px Arial,sans-serif;border-bottom:1px solid #d8dbe2}
+  .fb-forum .post{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid #e4e6ea;font:14px Arial,sans-serif}
+  .fb-forum .post .av{width:42px;height:42px;border-radius:4px;background:#c8ccd6;flex:none;overflow:hidden}.fb-forum .post .av img{width:100%;height:100%;object-fit:cover}
+  .fb-forum .post b{color:#1d4fb8}.fb-forum .post small{color:#999;margin-left:8px}
+  .fb-forum .post.new{background:#fff6d8;animation:fbNew 1s}
+  @keyframes fbNew{from{background:#ffe066}}
+  .fb-forum .reply{margin:10px 16px;border:1px solid #c8ccd6;border-radius:4px;min-height:60px;padding:8px;font:14px Arial,sans-serif}
+  .fb-forum .send{margin:0 16px;background:#1d4fb8;color:#fff;display:inline-block;padding:6px 16px;border-radius:4px;font:700 13px Arial,sans-serif}
+  .fb-src{background:#1e1e24;color:#d4d4d4;font:15px/1.6 "Courier New",monospace;padding:14px 18px;height:100%;white-space:pre}
+  .fb-src .k{color:#569cd6}.fb-src .n{color:#b5cea8}.fb-src .s{color:#ce9178}.fb-src .c{color:#6a9955}.fb-src .hl{background:#3a3a10}
+  .fb-src .del{display:inline-block;margin:18px 0 0 0;padding:14px 26px;background:#e8101e;color:#fff;font:900 22px "SSK Rodin","Arial Black",sans-serif;border:3px solid #fff;cursor:pointer;letter-spacing:1px;box-shadow:0 0 18px #f00;position:relative}
+  .fb-shard{position:absolute;background:#e8101e;border:2px solid #fff;transition:transform 1.1s cubic-bezier(.2,.8,.4,1),opacity 1.1s}
+  .fb-cursor{position:absolute;width:64px;height:64px;left:0;top:0;transition:none;display:none;z-index:5;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.6))}
+  .fb-bin{position:absolute;right:4%;bottom:12%;width:110px;text-align:center;color:#fff;font:700 15px Arial,sans-serif;display:none;text-shadow:1px 1px 2px #000}
+  .fb-bin .ic{font-size:76px;line-height:1}
+  .fb-confirm{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);background:#f0f0f0;border:1px solid #888;box-shadow:0 10px 30px rgba(0,0,0,.6);width:360px;display:none;font:14px Arial,sans-serif;color:#111}
+  .fb-confirm .t{background:#fff;padding:8px 12px;font-weight:700;border-bottom:1px solid #ccc}.fb-confirm .b{padding:16px 12px}.fb-confirm .r{padding:8px 12px;text-align:right}
+  .fb-confirm .r span{display:inline-block;border:1px solid #888;padding:4px 18px;margin-left:8px;background:#e4e4e4}.fb-confirm .r span.on{outline:2px solid #3a7aff}
+  .fb-pop{position:absolute;width:300px;background:#fff;border:2px solid #333;box-shadow:0 8px 24px rgba(0,0,0,.6);font:13px Arial,sans-serif;color:#111;pointer-events:none;animation:fbPop .25s}
+  @keyframes fbPop{from{transform:scale(.3);opacity:0}}
+  .fb-pop .t{background:#e8101e;color:#fff;padding:5px 8px;font-weight:700;display:flex;justify-content:space-between}.fb-pop .b{padding:12px;text-align:center}.fb-pop img{width:60px;display:block;margin:0 auto 6px}
+  .fb-vision{position:absolute;inset:0;display:none;background:radial-gradient(ellipse at 50% 40%,rgba(200,16,46,.55),rgba(0,0,0,.92) 70%);align-items:center;justify-content:center;flex-direction:column;gap:18px;pointer-events:auto;cursor:pointer}
+  .fb-vision img{width:min(300px,40vw);border:6px solid #e2b43a;box-shadow:0 0 50px #ffd23a;animation:fbFloat 3s ease-in-out infinite}
+  .fb-vision p{max-width:80%;text-align:center;color:#ffd23a;font:700 24px/1.45 "Courier New",monospace;text-shadow:2px 2px 0 #000;margin:0}
+  @keyframes fbFloat{50%{transform:translateY(-8px)}}
+  .fb-quit{position:absolute;right:12px;top:52px;pointer-events:auto;background:rgba(0,0,0,.55);color:#bbb;border:1px solid #666;font:700 11px "SSK Rodin",sans-serif;padding:4px 9px;border-radius:6px;cursor:pointer;letter-spacing:1px}
+  .fb-tear{position:absolute;inset:0;z-index:59;pointer-events:none}
+  .fb-tear>div{position:absolute;inset:0;transition:transform 1.1s cubic-bezier(.5,0,.6,1),opacity 1.1s}
+  .fb-tear .snap{position:absolute;inset:0;width:100%;height:100%}
+  .fb-pick{position:absolute;inset:0;z-index:61;background:rgba(6,4,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto}
+  .fb-pick h2{margin:0;color:#ff3a4a;font:italic 900 34px "SSK Rodin","Arial Black",sans-serif;letter-spacing:4px;text-shadow:3px 3px 0 #000;animation:fbShake .2s infinite}
+  .fb-pick p{margin:0;color:#ccc;font:14px "Courier New",monospace;text-align:center;max-width:640px}
+  .fb-pick .g{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:860px;max-height:52vh;overflow:auto}
+  .fb-pick .g button{width:96px;background:#141018;border:2px solid #3a2a3a;color:#fff;font:900 10px "SSK Rodin",sans-serif;padding:4px;cursor:pointer}
+  .fb-pick .g button img{width:84px;height:72px;object-fit:cover;display:block;margin:0 auto 3px}
+  .fb-pick .g button:hover{border-color:#ff3a4a}
+  .fb-pick .back{background:none;border:1px solid #777;color:#aaa;padding:6px 16px;cursor:pointer;font:700 12px "SSK Rodin",sans-serif}
+  .sk-mm.fb-mm b{animation:fbShake .25s infinite;color:#fff;text-shadow:2px 0 #f00,-2px 0 #0ff}
+  `;
+
+  class FinalBoss {
+    constructor(g, def) {
+      this.g = g; this.def = def; this.on = true; this.mode = 'cine'; this.t = 0; this.aborted = false;
+      this.pname = (NET.name && NET.name()) || 'Khey';
+      this.hz = []; this.atk = []; this.puppets = new Set(); this.zones = [];
+      this.hp = 0; this.hpMax = 1; this.lives = 1; this.post = false; this.koMsg = FB_REVIVE;
+      if (!document.getElementById('fb-css')) { const s = document.createElement('style'); s.id = 'fb-css'; s.textContent = FB_CSS; document.head.appendChild(s); }
+      const ui = this.ui = document.createElement('div'); ui.className = 'fb-ui';
+      ui.innerHTML = `<div class="fb-top"><div class="nm">LA FUSION<i></i></div><div class="fb-bar"><s></s><u></u></div></div><div class="fb-say"></div>
+        <div class="fb-dlg"><b></b><div class="tx"></div><div class="nx">▼</div></div><div class="fb-narr"></div><div class="fb-menu"></div>
+        <div class="fb-win"><div class="bar"><i></i><i></i><i></i><div class="url"></div></div><div class="body"></div></div>
+        <div class="fb-vision"><img alt=""><p></p></div><div class="fb-bin"><div class="ic">🗑️</div>Corbeille</div><div class="fb-confirm"><div class="t">Supprimer le fichier</div><div class="b"></div><div class="r"><span class="y">Oui</span><span>Non</span></div></div>
+        <svg class="fb-cursor" viewBox="0 0 24 24"><path d="M3 2 L3 20 L8 15 L11.5 22.5 L14.5 21 L11 14 L18 14 Z" fill="#fff" stroke="#000" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <div class="fb-flash"></div><button class="fb-quit">ABANDONNER</button>`;
+      g.ov.appendChild(ui);
+      this.$ = (s) => ui.querySelector(s);
+      this.$('.fb-quit').onclick = () => this.exit();
+      this.onKey = (e) => {
+        if (!this.wantAdv) return;
+        if (['Enter', 'Space', 'KeyF', 'KeyE', 'KeyK', 'NumpadEnter'].includes(e.code)) { e.preventDefault(); e.stopPropagation(); this.adv(); }
+      };
+      window.addEventListener('keydown', this.onKey, true);
+      for (const s of ['.fb-dlg', '.fb-narr', '.fb-vision']) this.$(s).addEventListener('pointerdown', (e) => { e.preventDefault(); this.adv(); });
+      this.saved = { stocks: STOCKS, cpuLvl: CPU_LVL, cpu: g.cpu, fog: null };
+    }
+    // ---------------------------------------------------------------- outils de script
+    chk() { if (this.aborted) throw new Error('fb-abort'); }
+    wait(ms) { return new Promise((res) => setTimeout(() => res(), ms)).then(() => this.chk()); }
+    until(fn) { return new Promise((res) => { const h = () => { if (this.aborted) { res(); return; } if (fn()) res(); else setTimeout(h, 50); }; h(); }).then(() => this.chk()); }
+    adv() { if (this.advFn) this.advFn(); }
+    say(name, text, o = {}) {
+      return new Promise((res) => {
+        const d = this.$('.fb-dlg'), tx = d.querySelector('.tx'), boss = !!o.boss;
+        d.className = 'fb-dlg' + (boss ? ' boss' : ''); d.style.display = 'block'; d.querySelector('b').textContent = name || '';
+        const full = text.replace(/\[J\]/g, this.pname); let i = 0, done = false;
+        tx.innerHTML = '';
+        const put = () => { tx.innerHTML = boss ? [...full.slice(0, i)].map(c => c === ' ' ? ' ' : `<span>${esc(c)}</span>`).join('') : esc(full.slice(0, i)); };
+        const tick = () => { if (this.aborted || done) return; i = Math.min(full.length, i + 1); put(); if (i % 2 === 0 && full[i - 1] !== ' ') (boss ? FBS.boss() : FBS.blip(o.pitch || 1)); if (i < full.length) setTimeout(tick, /[.!?…]/.test(full[i - 1]) ? 140 : (o.speed || 28)); else done = true; };
+        tick(); this.wantAdv = true;
+        if (o.auto) setTimeout(() => { if (!this.aborted) { done = true; this.advFn = null; this.wantAdv = false; d.style.display = 'none'; res(); } }, o.auto);
+        this.advFn = () => { if (!done) { done = true; i = full.length; put(); return; } this.advFn = null; this.wantAdv = false; d.style.display = 'none'; FBS.menu(); res(); };
+      }).then(() => this.chk());
+    }
+    narrate(html, ms) {
+      return new Promise((res) => {
+        const n = this.$('.fb-narr'); n.innerHTML = `<div>${html.replace(/\[J\]/g, esc(this.pname))}</div>`; n.style.display = 'flex';
+        const end = () => { this.advFn = null; this.wantAdv = false; n.style.display = 'none'; res(); };
+        setTimeout(() => { this.wantAdv = true; this.advFn = end; }, 900);
+        if (ms) setTimeout(() => { if (n.style.display !== 'none') end(); }, ms);
+      }).then(() => this.chk());
+    }
+    shout(txt, ms = 1800) {
+      const s = this.$('.fb-say'); s.textContent = txt; s.style.opacity = 1; FBS.boss();
+      clearTimeout(this.shoutT); this.shoutT = setTimeout(() => { s.style.opacity = 0; }, ms);
+    }
+    flash(op = 1, ms = 250) { const f = this.$('.fb-flash'); f.style.transition = 'none'; f.style.opacity = op; requestAnimationFrame(() => { f.style.transition = `opacity ${ms}ms`; f.style.opacity = 0; }); }
+    menu(title, opts, cls = '') {
+      return new Promise((res) => {
+        const m = this.$('.fb-menu'); m.className = 'fb-menu ' + cls; m.style.display = 'block';
+        let idx = opts.findIndex(o => !o.off); if (idx < 0) idx = 0;
+        const draw = () => { m.innerHTML = (title ? `<h4>${esc(title)}</h4>` : '') + opts.map((o, i) => `<button data-i="${i}" class="${i === idx ? 'on' : ''}" ${o.off ? 'disabled' : ''}>${esc(o.t)}</button>`).join(''); m.querySelectorAll('button').forEach(b => { b.onclick = () => pick(+b.dataset.i); b.onmouseenter = () => { if (!opts[+b.dataset.i].off) { idx = +b.dataset.i; draw(); } }; }); };
+        const pick = (i) => { if (opts[i].off) return; FBS.pick(); window.removeEventListener('keydown', key, true); m.style.display = 'none'; res(i); };
+        const key = (e) => {
+          if (e.code === 'ArrowDown' || e.code === 'KeyS') { do { idx = (idx + 1) % opts.length; } while (opts[idx].off); FBS.menu(); draw(); }
+          else if (e.code === 'ArrowUp' || e.code === 'KeyZ' || e.code === 'KeyW') { do { idx = (idx + opts.length - 1) % opts.length; } while (opts[idx].off); FBS.menu(); draw(); }
+          else if (['Enter', 'Space', 'KeyF', 'KeyE'].includes(e.code)) pick(idx); else return;
+          e.preventDefault(); e.stopPropagation();
+        };
+        window.addEventListener('keydown', key, true); draw();
+      }).then((i) => { this.chk(); return i; });
+    }
+    // ---------------------------------------------------------------- barre de vie
+    showBar(on, name) { this.$('.fb-top').style.display = on ? 'block' : 'none'; if (name) this.$('.fb-top .nm').firstChild.textContent = name; this.drawBar(); }
+    drawBar() {
+      const w = this.barW || 100, k = Math.max(0, this.hp / this.hpMax);
+      this.$('.fb-bar u').style.width = (k * w) + '%'; this.$('.fb-bar s').style.width = (k * w) + '%';
+      this.$('.fb-top .nm i').textContent = this.lives > 1 ? `VIES × ${this.lives}` : '';
+    }
+    dmgBoss(v) {
+      if (!this.bossHit || this.hp <= 0) return;
+      this.hp = Math.max(0, this.hp - v); this.drawBar();
+      const F = this.F; if (F) { F.hurtT = 10; F.face = 'hurt'; F.faceT = 20; }
+    }
+    // ---------------------------------------------------------------- démarrage
+    async run() {
+      try {
+        await this.phase1();
+        await this.tear();
+        await this.monologues();
+        await this.fusion();
+        await this.phase2();
+        await this.wake();
+        await this.hack();
+        await this.phase3();
+        await this.ending();
+      } catch (e) { if (String(e && e.message) !== 'fb-abort') { console.warn('[SSK] boss final', e); this.exit(); } }
+    }
+    // la mise en place du combat (persos, stage, HUD)
+    setupFight() {
+      const g = this.g;
+      g.clearVictory && g.clearVictory();
+      g.fighters.forEach(f => f.dispose());
+      const isss = findDef('isss'), modos = findDef('modos');
+      const pal = (d, s) => ({ ...palFor(d, s, 0), keep: true });
+      this.me = new Fighter(g, 0, { ...palFor(this.def, 0), keep: true }, this.def);
+      this.foes = [new Fighter(g, 1, pal(isss, 1), isss), new Fighter(g, 2, pal({ ...modos, ascend: null }, 2), { ...modos, ascend: null, modo: false }), new Fighter(g, 3, pal(BAP_DEF, 3), BAP_DEF)];
+      g.fighters = [this.me, ...this.foes];
+      g.stageDef = null; g.setStage(STAGES.find(s => s.id === 'bureau') || STAGES[0]);
+      STOCKS = 3; g.rebuildHUD(); g.start();
+      for (const f of this.foes) { f.stocks = f.maxStocks = 1; }
+      g.cards.forEach((c, i) => { const nm = c.el.querySelector('.sk-name'); if (nm) nm.innerHTML = `<b>${i ? 'CPU' : 'J1'}</b>${g.fighters[i].name}`; });
+      g.tick = 0; g.ov.classList.add('sk-playing'); g.homeEl.style.display = 'none'; g.menu.style.display = 'none';
+      if (g.pauseBtn) g.pauseBtn.style.display = 'none';
+    }
+    // ---------------------------------------------------------------- PHASE 1 : trois CPU, tout simple
+    phase1() {
+      return new Promise((res) => {
+        this.setupFight(); CPU_LVL = 1; this.mode = 'fight1'; this.p1done = res;
+        const el = document.createElement('div'); el.className = 'sk-lv-intro'; el.innerHTML = '<small>LE BOSS FINAL</small><b>VS ISSSOUFLE · MODOS JVC · BRIGADEANTIPORN</b>'; this.g.ov.appendChild(el); setTimeout(() => el.remove(), 2600);
+      }).then(() => this.chk());
+    }
+    stepFight1() {
+      const g = this.g, inps = g.fighters.map((f, i) => {
+        if (i === 0) return g.readInput(0);
+        if (f.dead || this.t % 3 === 0) return EMPTY_INPUT;                    // des CPU un peu lents : c'est censé être facile
+        const inp = cpuThink(f, this.me); if (inp.shield && Math.random() < 0.7) inp.shield = false; return inp;
+      });
+      const res = g.netSimStep(inps);
+      if (res) {
+        this.mode = 'vic';
+        if (res.winner === this.me) { g.showOver(this.me, this.foes[0]); this.vicHold = true; setTimeout(() => { if (this.vicHold) this.tearNow(); }, 3600); }
+        else this.lose1();
+      }
+    }
+    async lose1() {
+      this.mode = 'frozen';
+      const i = await this.menu('LES TROIS T\'ONT EU… (ça devait être facile)', [{ t: 'RÉESSAYER' }, { t: 'ABANDONNER' }]);
+      if (i === 1) { this.exit(); return; }
+      this.setupFight(); this.mode = 'fight1';
+    }
+    tearNow() { if (!this.vicHold) return; this.vicHold = false; if (this.p1done) { const r = this.p1done; this.p1done = null; r(); } }
+    // ---------------------------------------------------------------- Isssoufle déchire l'écran de victoire
+    async tear() {
+      const g = this.g;
+      let main = '', lose = '';
+      try { g.renderVictory(); main = g.renderer.domElement.toDataURL('image/jpeg', 0.85); if (g.vicR) lose = g.vicR.domElement.toDataURL(); } catch (e) {}
+      const shot = (el) => { if (!el) return null; const c = el.cloneNode(true); const src = el.querySelectorAll('canvas'), dst = c.querySelectorAll('canvas'); dst.forEach((cv, i) => { const im = document.createElement('img'); try { im.src = src[i] === (g.vicR && g.vicR.domElement) ? lose : src[i].toDataURL(); } catch (e) {} im.style.cssText = cv.style.cssText + ';width:100%;height:100%'; im.className = cv.className; cv.replaceWith(im); }); return c; };
+      const T0 = document.createElement('div'); T0.className = 'fb-tear';
+      const pts = []; for (let y = 0; y <= 100; y += 5) pts.push([48 + (Math.random() - 0.5) * 9, y]);
+      const L = `polygon(0 0,${pts.map(p => p[0] + '% ' + p[1] + '%').join(',')},0 100%)`, R = `polygon(100% 0,${pts.map(p => p[0] + '% ' + p[1] + '%').join(',')},100% 100%)`;
+      for (const cp of [L, R]) {
+        const h = document.createElement('div'); h.style.clipPath = cp; h.style.webkitClipPath = cp;
+        const bg = shot(g.vicBg); if (bg) h.appendChild(bg);
+        const im = document.createElement('img'); im.className = 'snap'; im.src = main; h.appendChild(im);
+        const ve = shot(g.vicEl); if (ve) h.appendChild(ve);
+        T0.appendChild(h);
+      }
+      g.ov.appendChild(T0);
+      this.vicHold = false;
+      // derrière l'écran : le terrain, les trois debout, le khey au centre
+      g.clearVictory(); g.mode = 'play'; this.mode = 'cine';
+      this.reviveFoes();
+      this.cam = { pos: new T.Vector3(1.6, 2.6, 10), look: new T.Vector3(1.6, 1.4, 0) };
+      await this.wait(500);
+      FBS.rip(); g.shake = 0.6;
+      const [a, b] = T0.children;
+      a.style.transform = 'translate(-62%,8%) rotate(-11deg)'; b.style.transform = 'translate(62%,-6%) rotate(9deg)';
+      a.style.opacity = b.style.opacity = '0.0';
+      setTimeout(() => T0.remove(), 1300);
+      await this.wait(700);
+      await this.say('ISSSOUFLE', 'Non non non. Tu croyais vraiment que c\'était fini, [J] ?');
+      await this.say('ISSSOUFLE', 'Un petit écran de victoire, des confettis, et hop, au revoir ? Pas aujourd\'hui.');
+    }
+    reviveFoes() {
+      const xs = [1.6, -2.2, 5.2];
+      this.foes.forEach((f, i) => { f.reset(xs[i]); f.stocks = 1; f.dead = false; f.percent = 0; f.facing = -1; f.model.root.visible = true; this.puppets.add(f); });
+      this.me.reset(-5.4); this.me.facing = 1; this.me.stocks = this.me.maxStocks;
+      this.g.endT = 0; this.g.banner.style.opacity = 0;
+    }
+    focus(f, d = 6.5) { this.cam = { pos: new T.Vector3(f.x * 0.9 + (f === this.me ? 1.2 : -1.2), f.y + 2.3, d), look: new T.Vector3(f.x, f.y + 1.4, 0) }; }
+    // ---------------------------------------------------------------- les monologues
+    async monologues() {
+      const [I, M, B] = this.foes;
+      this.focus(I);
+      await this.say('ISSSOUFLE', 'Vous m\'avez trahi. Tous. J\'ai créé ce topic, j\'ai allumé les torches, j\'ai distribué les matricules.');
+      await this.say('ISSSOUFLE', 'Et le jour où je pars jouer à GTA VI, quelques heures à peine… vous installez Korochiku à MA place. « Leader Suprême ». Laisse-moi rire.');
+      await this.say('ISSSOUFLE', 'Alors je fais la révolution. Contre Korochiku, contre son régiment, contre chacun d\'entre vous. Coup d\'État.');
+      this.g.say(I, 'JE SUIS LE VRAI LEADER', true, 120);
+      await this.say('ISSSOUFLE', 'Le seul, le véritable Leader du NNN, c\'est moi. Et toi, [J], tu vas être le premier à tomber.');
+      this.focus(M);
+      await this.say('MODOS JVC', 'Nous, on n\'en peut plus du 18-25. Des années à nettoyer derrière vous.');
+      await this.say('MODOS JVC', 'Ce forum est devenu un repère à fachos. Un égout. Chaque jour, des milliers de signalements.');
+      this.g.say(M, 'SUPPRESSION.', true, 120);
+      await this.say('MODOS JVC', 'Il n\'y a plus rien à modérer. Il faut tout éliminer. En commençant par les kheys comme toi.');
+      this.focus(B);
+      await this.say('BRIGADEANTIPORN', 'Moi, je voulais juste aider. Mon site NoFap, je l\'ai proposé à Kaaido et à Isssoufle pour le NNN. Une petite pub, rien de plus.');
+      await this.say('BRIGADEANTIPORN', 'Refusé. Ignoré. Comme si je n\'existais pas. Et puis il y a eu ChieSurBigade…');
+      await this.say('BRIGADEANTIPORN', 'Il m\'a chié dessus. LITTÉRALEMENT. Et depuis, vous tous, vous me chiez dessus tous les jours dans les toilettes de l\'appart des kheys.');
+      this.g.say(B, 'VENGEANCE', true, 120);
+      await this.say('BRIGADEANTIPORN', 'Ma vengeance sera simple : je vais vous faire craquer. Tous. Un par un. Et ton NNN, [J], partira en premier.');
+      this.cam = { pos: new T.Vector3(0, 3.4, 15), look: new T.Vector3(0, 1.6, 0) };
+      await this.say('ISSSOUFLE', 'Seuls, on a perdu contre toi. Mais ensemble…', { pitch: 0.9 });
+      await this.say('MODOS JVC', '… ensemble …', { pitch: 0.7 });
+      await this.say('BRIGADEANTIPORN', '… ENSEMBLE.', { pitch: 1.2 });
+    }
+    // ---------------------------------------------------------------- la fusion
+    async fusion() {
+      const g = this.g;
+      this.cam = { pos: new T.Vector3(0, 5.5, 22), look: new T.Vector3(0, 4, 0) };
+      const start = this.foes.map(f => ({ x: f.x, y: f.y })), t0 = this.t;
+      this.fuseAnim = (t) => {
+        const k = Math.min(1, (t - t0) / 150);
+        this.foes.forEach((f, i) => { const a = i / 3 * TAU + k * k * 14; const r = (1 - k) * 3.5; f.x = start[i].x * (1 - k) + Math.cos(a) * r; f.y = start[i].y * (1 - k) + 4 * k + Math.sin(a) * r * 0.5; f.vy = 0; f.model.root.rotation.y += 0.3 * k; });
+        if (t % 6 === 0) g.fx.spark(0, 4, [0xff4fd0, 0xe8101e, 0xffffff][t % 3], 6, 0.2);
+      };
+      FBS.charge(); setTimeout(() => FBS.charge(), 700); setTimeout(() => FBS.glitch(), 1400);
+      this.glitchCss(true);
+      await this.wait(2600);
+      this.fuseAnim = null; this.flash(1, 1200); FBS.rumble(2.2); g.shake = 1.2;
+      // la Fusion apparaît, les trois disparaissent
+      for (const f of this.foes) { f.stocks = 0; f.dead = true; f.x = 999; f.y = 999; f.model.root.visible = false; this.puppets.delete(f); }
+      g.cards.forEach((c, i) => { if (i) c.el.style.display = 'none'; });
+      const F = this.F = buildFusion(); F.root.position.set(0, 3.4, -3.2); F.root.scale.setScalar(0.05); g.scene.add(F.root); g.scene.add(F.free);
+      this.fogSave = g.scene.fog ? { c: g.scene.fog.color.getHex(), n: g.scene.fog.near, f: g.scene.fog.far } : null;
+      if (g.scene.fog) { g.scene.fog.color.setHex(0x1a0206); }
+      this.dim = []; g.scene.traverse(o => { if (o.isLight && !(F.root === o || o.parent === F.body)) { this.dim.push([o, o.intensity]); o.intensity *= o.isAmbientLight || o.isHemisphereLight ? 0.4 : 0.35; } });
+      this.mood = new T.PointLight(0xff2040, 1.4, 60, 1.2); this.mood.position.set(0, 9, 6); g.scene.add(this.mood);
+      this.growT = 0;
+      this.glitchCss(false);
+      this.music('modos');
+      await this.wait(1600);
+      this.glitchCss(true); setTimeout(() => this.glitchCss(false), 600);
+      F.face = 'laugh'; F.faceT = 160; FBS.laugh();
+      await this.say('LA FUSION', 'HAHAHAHA ! Regarde-nous, [J]. Regarde ce que tu as fait de nous.', { boss: true });
+      await this.say('LA FUSION', 'Trois voix, trois haines, un seul corps. Le topic tremble.', { boss: true });
+      await this.say('LA FUSION', 'Allez. Montre-moi ce que vaut un khey quand il n\'y a plus de règles.', { boss: true });
+    }
+    music(k) {
+      const g = this.g, src = k === 'hymn' ? (typeof KORO_HYMN !== 'undefined' ? KORO_HYMN : null) : STAGE_MUSIC[k];
+      if (g.bgms) for (const id in g.bgms) { try { g.bgms[id].pause(); } catch (e) {} }
+      if (this.mus) { try { this.mus.pause(); } catch (e) {} this.mus = null; }
+      if (!src) return;
+      try { const a = new Audio(src); a.loop = true; a.volume = Math.min(1, (g.musicVol || 0) / 10 * 0.75); a.play().catch(() => {}); this.mus = a; } catch (e) {}
+    }
+    glitchCss(on) { const cv = this.g.renderer.domElement; cv.style.filter = on ? 'hue-rotate(90deg) saturate(2) contrast(1.4)' : ''; cv.style.transform = on ? 'translateX(3px)' : ''; if (on) FBS.glitch(); }
+    // ---------------------------------------------------------------- PHASE 2
+    async phase2() {
+      this.post = true; this.hpMax = this.hp = 700; this.lives = 1; this.barW = 100;
+      this.showBar(true, 'LA FUSION'); this.bossHit = true; this.level = 2;
+      this.cam = null; this.camFixed = true; this.mode = 'fight';
+      this.me.reset(-3); this.me.stocks = this.me.maxStocks; this.me.invuln = 60;
+      await this.until(() => this.hp <= 0);
+      // il s'effondre
+      this.mode = 'cine'; this.bossHit = false; this.clearHz();
+      this.F.face = 'dead'; this.F.faceT = 99999; this.sinkT = 1; FBS.rumble(2); this.g.shake = 1;
+      this.music(null);
+      await this.wait(1800);
+      this.me.stocks = this.me.maxStocks; this.me.percent = 0; FBS.heal(); this.g.fx.ring(this.me.x, this.me.y + 1, 0x7dff6a, 3, 24);
+      this.g.say(this.me, 'Toutes mes vies !', true, 90);
+      this.showBar(false);
+      await this.wait(2600);
+    }
+    async wake() {
+      const F = this.F;
+      F.face = 'glitch'; F.faceT = 30;
+      await this.say('LA FUSION', '?…', { boss: true });
+      await this.say('LA FUSION', '… je ne peux pas finir comme ça… pas avant…', { boss: true });
+      this.sinkT = -1; F.face = 'angry'; F.faceT = 99999; FBS.rumble(2.5); this.g.shake = 1.4; this.glitchCss(true); setTimeout(() => this.glitchCss(false), 900);
+      await this.say('LA FUSION', 'AVANT QUE TU NE SOIS ANNIHILÉ PAR MA MAIN !', { boss: true, speed: 45 });
+      // la barre se remplit… puis grandit, grandit, et sort de l'écran
+      this.hp = 0; this.hpMax = 700; this.barW = 100; this.showBar(true, 'LA FUSION');
+      for (let k = 1; k <= 20; k++) { this.hp = this.hpMax * k / 20; this.drawBar(); FBS.tone(300 + k * 30, 300 + k * 30, 0.05, 'square', 0.03); await this.wait(45); }
+      const bar = this.$('.fb-bar'); bar.style.transition = 'width 3s cubic-bezier(.6,0,.2,1)';
+      this.$('.fb-top').style.overflow = 'visible';
+      bar.style.width = '520%'; FBS.rumble(3);
+      await this.wait(3200);
+      this.music('modos');
+      await this.say('LA FUSION', 'Tu n\'aurais jamais dû me provoquer, espèce de sale merde.', { boss: true });
+      await this.say('LA FUSION', 'La fusion m\'a donné des pouvoirs qui te dépassent… des pouvoirs qui ME dépassent !', { boss: true });
+      await this.say('LA FUSION', 'Il n\'y a RIEN que je ne puisse pas faire. Tu comprends ça ?', { boss: true });
+    }
+    // ---------------------------------------------------------------- le piratage (compte, message sur le topic, code source)
+    win(url, html) { const w = this.$('.fb-win'); w.style.display = 'flex'; w.querySelector('.url').textContent = url; w.querySelector('.body').innerHTML = html; return w.querySelector('.body'); }
+    async typeInto(el, txt, sp = 45) { for (let i = 1; i <= txt.length; i++) { el.textContent = txt.slice(0, i); if (i % 2) FBS.click(); await this.wait(sp); } }
+    async hack() {
+      const me = esc(this.pname), av = (this.g.portraits && this.g.portraits[this.def.id] && this.g.portraits[this.def.id].icon) || '';
+      this.mode = 'frozen'; this.glitchCss(true); setTimeout(() => this.glitchCss(false), 500);
+      // 1. le terminal
+      let b = this.win('terminal — fusion@nnn', '<div class="fb-term"></div>'); const term = b.firstChild;
+      const lines = [`> cible : ${this.pname}`, '> recherche du compte jeuxvideo.com ...', '> mot de passe : ●●●●●●●●●●●', '> contournement de la double authentification ...', '> ACCÈS AUTORISÉ ✔'];
+      for (const l of lines) { term.textContent += '\n'; const sp = document.createElement('span'); term.appendChild(sp); await this.typeInto(sp, l, 22); await this.wait(260); }
+      await this.wait(700);
+      // 2. le topic : il poste à ta place
+      b = this.win('https://www.jeuxvideo.com/forums/42-51-NO-NUT-NOVEMBER-2026.htm', `<div class="fb-forum"><div class="hd">jeuxvideo.com<small>Forum Blabla 18-25 ans</small></div><div class="tt">NO NUT NOVEMBER 2026 — le topic officiel (ne pas craquer)</div>
+        <div class="post"><div class="av"></div><div><b>Korochiku</b><small>il y a 3 min</small><br>Tenez bon les soldats. Le Leader Suprême veille.</div></div>
+        <div class="post"><div class="av"></div><div><b>Dextro</b><small>il y a 2 min</small><br>64 éclairs aujourd'hui, objectif tenu.</div></div>
+        <div class="reply"></div><div class="send">Poster</div></div>`);
+      const rep = b.querySelector('.reply');
+      await this.wait(500); await this.typeInto(rep, 'Vive Isssoufle, BrigadeAntiPorn et les Modos JVC !', 55); await this.wait(400);
+      FBS.click(); b.querySelector('.send').style.background = '#e8101e';
+      const np = document.createElement('div'); np.className = 'post new'; np.innerHTML = `<div class="av">${av ? `<img src="${av}">` : ''}</div><div><b>${me}</b><small>à l'instant</small><br>Vive Isssoufle, BrigadeAntiPorn et les Modos JVC !</div>`;
+      rep.before(np); rep.textContent = '';
+      await this.wait(1600);
+      // 3. le code source : il se donne 100 vies, il t'en laisse une
+      b = this.win('view-source:jeuxvideo.com/forums/42-51-NO-NUT-NOVEMBER-2026.htm', `<div class="fb-src"><span class="c">// super-smash-kheys.js — combat en cours</span>
+<span class="k">const</span> JOUEUR = <span class="s">"${me}"</span>;
+<span class="k">let</span> viesJoueur = <span class="n" id="fbv1">${this.me.stocks}</span>;
+<span class="k">let</span> viesBoss   = <span class="n" id="fbv2">1</span>;
+<span class="k">const</span> regles = { triche: <span class="k">false</span>, pitie: <span class="k">false</span> };</div>`);
+      await this.wait(900);
+      const v1 = b.querySelector('#fbv1'), v2 = b.querySelector('#fbv2');
+      v2.parentNode.classList; v2.textContent = ''; v2.classList.add('hl'); await this.typeInto(v2, '100', 140);
+      await this.wait(400); v1.textContent = ''; v1.classList.add('hl'); await this.typeInto(v1, '1', 160);
+      await this.wait(500); FBS.glitch(); this.glitchCss(true);
+      await this.wait(700);
+      this.$('.fb-win').style.display = 'none'; this.glitchCss(false);
+      this.lives = 100; this.hpMax = this.hp = 520; this.drawBar();
+      this.me.stocks = this.me.maxStocks = 1; this.g.rebuildHUD(); this.g.cards.forEach((c, i) => { if (i) c.el.style.display = 'none'; });
+      FBS.laugh(); this.F.face = 'laugh'; this.F.faceT = 140;
+      await this.say('LA FUSION', 'Je ne vais pas seulement te tuer, ce serait bien trop simple…', { boss: true });
+      await this.say('LA FUSION', 'Je vais t\'HUMILIER comme jamais tu n\'as été humilié. Prépare-toi à souffrir, [J] !', { boss: true });
+    }
+    // ---------------------------------------------------------------- PHASE 3
+    async phase3() {
+      this.level = 3; this.bossHit = true; this.mode = 'fight'; this.camFixed = true; this.me.invuln = 60;
+      // jusqu'à la moitié de la première vie
+      await this.until(() => this.hp <= this.hpMax / 2);
+      this.mode = 'cine'; this.clearHz(); this.bossHit = false;
+      await this.say('LA FUSION', 'Tu ne te débrouilles pas trop mal…', { boss: true });
+      await this.say('LA FUSION', '… mais il est temps que je te montre la réelle étendue de mes pouvoirs.', { boss: true });
+      await this.cursorKill();
+      await this.riseUp('[J] ne veut pas perdre le NNN. Il se relève.');
+      FBS.laugh(); this.F.face = 'laugh'; this.F.faceT = 200;
+      await this.say('LA FUSION', 'ahah… ahhaha… AHAHAHHAHAHA !', { boss: true });
+      await this.say('LA FUSION', 'Tu fais pitié, putain. Tu crois vraiment pouvoir me battre ?', { boss: true });
+      // il le retue
+      this.mode = 'fight'; this.bossHit = true; this.me.invuln = 60;
+      const t1 = this.t; await this.until(() => this.t - t1 > 600 || this.me.percent > 110);
+      await this.totalBeam();
+      await this.riseUp('[J] est prêt à tout pour ne pas perdre le NNN.');
+      this.F.face = 'hurt'; this.F.faceT = 90;
+      await this.say('LA FUSION', 'Et bah putain… j\'ai presque envie de te féliciter pour ton courage.', { boss: true });
+      await this.say('LA FUSION', 'Mais la finalité ne change pas : j\'ai gagné, et tu as perdu. Accepte-le.', { boss: true });
+      // il est sur le point de gagner…
+      this.mode = 'fight'; this.bossHit = true; this.me.invuln = 60;
+      const t2 = this.t; await this.until(() => this.t - t2 > 720 || this.me.percent > 120);
+      this.mode = 'cine'; this.clearHz(); this.bossHit = false;
+      await this.vision();
+      await this.actMenu();
+      await this.deleteButton();
+      await this.korochiku();
+    }
+    // le « coup ultime » : un curseur géant le glisse dans la corbeille
+    proj(x, y, z = 0) { const v = new T.Vector3(x, y, z).project(this.g.camera), W = this.g.ov.clientWidth, H = this.g.ov.clientHeight; return { x: (v.x + 1) / 2 * W, y: (1 - v.y) / 2 * H }; }
+    async moveCursor(cur, x, y, ms) { const x0 = parseFloat(cur.dataset.x || this.g.ov.clientWidth / 2), y0 = parseFloat(cur.dataset.y || -80), n = Math.max(1, Math.round(ms / 16)); for (let i = 1; i <= n; i++) { const k = i / n, e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; const cx = x0 + (x - x0) * e, cy = y0 + (y - y0) * e; cur.style.transform = `translate(${cx}px,${cy}px)`; cur.dataset.x = cx; cur.dataset.y = cy; if (this.onCursor) this.onCursor(cx, cy); await this.wait(16); } }
+    async cursorKill() {
+      const g = this.g, cur = this.$('.fb-cursor'), bin = this.$('.fb-bin'), me = this.me;
+      cur.style.display = 'block'; cur.dataset.x = g.ov.clientWidth * 0.5; cur.dataset.y = -80; FBS.glitch();
+      bin.style.display = 'block';
+      const p = this.proj(me.x, me.y + 1.2);
+      await this.moveCursor(cur, p.x - 10, p.y - 10, 900);
+      FBS.click(); await this.wait(200);
+      this.puppets.add(me);
+      const ray = new T.Raycaster(), plane = new T.Plane(new T.Vector3(0, 0, 1), 0), hit = new T.Vector3();
+      this.onCursor = (cx, cy) => { const W = g.ov.clientWidth, H = g.ov.clientHeight; ray.setFromCamera(new T.Vector2(cx / W * 2 - 1, -(cy / H) * 2 + 1), g.camera); if (ray.ray.intersectPlane(plane, hit)) { me.x = hit.x; me.y = hit.y - 1.2; me.vx = me.vy = 0; } };
+      const br = bin.getBoundingClientRect(), or = g.ov.getBoundingClientRect();
+      await this.moveCursor(cur, br.left - or.left + 40, br.top - or.top + 30, 1400);
+      this.onCursor = null; FBS.click();
+      me.model.root.visible = false;
+      const cf = this.$('.fb-confirm'); cf.querySelector('.b').innerHTML = `Voulez-vous vraiment supprimer définitivement « ${esc(this.pname)} » ?`; cf.style.display = 'block';
+      const yes = cf.querySelector('.y'), yr = yes.getBoundingClientRect();
+      await this.moveCursor(cur, yr.left - or.left + 18, yr.top - or.top + 10, 700);
+      yes.classList.add('on'); FBS.click(); await this.wait(250);
+      cf.style.display = 'none'; cur.style.display = 'none'; bin.style.display = 'none'; yes.classList.remove('on');
+      FBS.shatter(); this.flash(1, 600);
+      me.stocks = 0; g.updateHUD && g.updateHUD();
+      await this.wait(900);
+    }
+    async riseUp(txt) {
+      const me = this.me;
+      await this.narrate(`<p>${esc(txt).replace(/\[J\]/g, '<em>' + esc(this.pname) + '</em>')}</p>`, 5000);
+      me.reset(-3); me.stocks = 1; me.model.root.visible = true; me.invuln = 90; this.puppets.add(me);
+      // il se relève lentement
+      const t0 = this.t; this.riseAnim = (t) => { const k = Math.min(1, (t - t0) / 90); me.model.body.rotation.z = (1 - k) * 1.45; me.model.root.position.y = me.y + (1 - k) * 0.25; if (k >= 1) { this.riseAnim = null; me.model.body.rotation.z = 0; } };
+      FBS.determ(); this.g.fx.ring(me.x, me.y + 1, 0xff2a2a, 2.5, 30);
+      await this.wait(1700);
+      this.puppets.delete(me);
+    }
+    async totalBeam() {
+      this.mode = 'cine'; this.clearHz(); this.bossHit = false;
+      this.shout('DISPARAIS !', 2200); this.F.face = 'angry'; this.F.faceT = 200; FBS.charge();
+      await this.wait(900);
+      const m = new T.Mesh(new T.BoxGeometry(22, 9, 0.5), new T.MeshBasicMaterial({ color: 0xff2a3a, transparent: true, opacity: 0.85, blending: T.AdditiveBlending, depthWrite: false }));
+      m.position.set(0, 2.5, 0.4); this.g.scene.add(m); FBS.beam(); FBS.rumble(1.5); this.g.shake = 1.4;
+      this.flash(0.8, 900);
+      await this.wait(700);
+      this.g.scene.remove(m);
+      this.me.stocks = 0; this.me.model.root.visible = false; FBS.shatter(); this.g.fx.spark(this.me.x, this.me.y + 1, 0xffffff, 40, 0.3);
+      await this.wait(900);
+    }
+    // ---------------------------------------------------------------- la vision du Leader Suprême et le menu d'actions
+    async vision() {
+      const v = this.$('.fb-vision'); v.querySelector('img').src = typeof DX_KORO !== 'undefined' ? DX_KORO : '';
+      const p = v.querySelector('p'); p.textContent = ''; v.style.display = 'flex'; FBS.determ();
+      const txt = `Soldat ${this.pname} ! Distrais-le quelques instants, il en va de notre Nation. C'est la seule solution pour vaincre cette abomination… C'est un ordre !`;
+      for (let i = 1; i <= txt.length; i++) { p.textContent = txt.slice(0, i); if (i % 2) FBS.blip(0.8); await this.wait(/[.!…]/.test(txt[i - 1]) ? 160 : 30); }
+      await new Promise((res) => { this.wantAdv = true; this.advFn = () => { this.advFn = null; this.wantAdv = false; res(); }; });
+      v.style.display = 'none';
+    }
+    async actMenu() {
+      const opts = [
+        { t: 'Parler en bien de GTA VI', r: ['Il est excellent, on est d\'accord ??? Meilleur jeu de toute ma vie.', 'J\'ai passé des heures à masser les feet de Lucia et à lui faire les courses, c\'était trop bien.', 'J\'ai envie de perdre la mémoire pour le refaire de zéro…'] },
+        { t: 'Parler en bien du site NoFap de BrigadeAntiPorn', r: ['Merci khey… Toi au moins tu me comprends.', 'Je veux juste 2 OROS. Le bien des gens. Qu\'ils ne se masturbent plus et qu\'ils se défassent du porno.', 'Je suis un peu le Jésus contemporain, quand t\'y penses.'] },
+        { t: 'Dire du bien des Modos JVC (et qu\'on déteste les fachos, et qu\'on est féministe)', r: ['Enfin… tu me comprends.', 'Alors suis-moi. Et aide-moi à mettre fin au 18-25.'] },
+      ];
+      this.F.face = 'grin';
+      for (let n = 0; n < 3; n++) {
+        const i = await this.menu('ACTION', opts);
+        opts[i].off = true;
+        this.F.face = 'laugh'; this.F.faceT = 80;
+        for (const l of opts[i].r) await this.say('LA FUSION', l, { boss: true });
+      }
+    }
+    async deleteButton() {
+      const b = this.win('view-source:jeuxvideo.com/forums/0-51-0-1-0-1-0-blabla-18-25-ans.htm', `<div class="fb-src"><span class="c">// forum Blabla 18-25 ans</span>
+<span class="k">function</span> <span class="s">forum1825</span>() { <span class="c">/* ... 2 147 483 647 messages ... */</span> }
+
+<span class="c">// Il n'y a plus qu'à cliquer.</span>
+<button class="del">SUPPRIMER LE 18-25</button></div>`);
+      FBS.glitch();
+      await this.say('LA FUSION', 'Vas-y, [J]. Un clic. Un seul. Et le 18-25 n\'existera plus jamais.', { boss: true, auto: 3600 });
+      const del = b.querySelector('.del');
+      await new Promise((res) => {
+        const go = () => { window.removeEventListener('keydown', key, true); res(); };
+        const key = (e) => { if (['Enter', 'Space', 'KeyF', 'KeyE'].includes(e.code)) { e.preventDefault(); e.stopPropagation(); go(); } };
+        del.onclick = go; window.addEventListener('keydown', key, true);
+      });
+      // le bouton se brise
+      const r = del.getBoundingClientRect(), wr = b.getBoundingClientRect();
+      FBS.shatter(); del.style.visibility = 'hidden';
+      for (let i = 0; i < 14; i++) {
+        const s = document.createElement('div'); s.className = 'fb-shard';
+        const w = 20 + Math.random() * 50, h = 12 + Math.random() * 30;
+        s.style.cssText = `left:${r.left - wr.left + Math.random() * r.width}px;top:${r.top - wr.top + Math.random() * r.height}px;width:${w}px;height:${h}px;clip-path:polygon(${Math.random() * 40}% 0,100% ${Math.random() * 50}%,${60 + Math.random() * 40}% 100%,0 ${50 + Math.random() * 50}%)`;
+        b.appendChild(s); requestAnimationFrame(() => { s.style.transform = `translate(${(Math.random() - 0.5) * 600}px,${200 + Math.random() * 400}px) rotate(${(Math.random() - 0.5) * 720}deg)`; s.style.opacity = 0; });
+      }
+      this.g.shake = 1;
+      await this.wait(1200);
+      this.$('.fb-win').style.display = 'none';
+      this.F.face = 'glitch'; this.F.faceT = 60;
+      await this.say('LA FUSION', 'Qu… quoi ? Qu\'est-ce que…', { boss: true });
+    }
+    // ---------------------------------------------------------------- Korochiku arrive en tank, Dextro en laisse
+    buildTank() {
+      const g = new T.Group(), M = (c) => new T.MeshToonMaterial({ color: c, gradientMap: toonGradient() }), OUT = new T.MeshBasicMaterial({ color: 0x0a0c18, side: T.BackSide });
+      const add = (geo, m, x, y, z, p = g) => { const me = new T.Mesh(geo, m); me.position.set(x, y, z); p.add(me); const o = new T.Mesh(geo, OUT); o.scale.setScalar(1.04); me.add(o); return me; };
+      const olive = M(0x4a5a3a), oliveD = M(0x34402a), black = M(0x1a1a1e);
+      add(new T.BoxGeometry(4.2, 0.9, 2.2), olive, 0, 0.95, 0); add(new T.BoxGeometry(3.6, 0.5, 2.3), oliveD, 0, 0.35, 0);
+      for (const z of [1.15, -1.15]) { add(new T.BoxGeometry(4.4, 0.7, 0.4), black, 0, 0.35, z); for (let i = 0; i < 6; i++) add(new T.CylinderGeometry(0.28, 0.28, 0.42, 12), M(0x2a2a30), -1.8 + i * 0.72, 0.35, z).rotation.x = Math.PI / 2; }
+      const tur = new T.Group(); tur.position.set(-0.2, 1.6, 0); g.add(tur);
+      add(new T.CylinderGeometry(0.95, 1.1, 0.6, 16), olive, 0, 0, 0, tur);
+      const gun = add(new T.CylinderGeometry(0.14, 0.16, 2.8, 10), oliveD, 1.6, 0.05, 0, tur); gun.rotation.z = Math.PI / 2;
+      const star = new T.Mesh(new T.CircleGeometry(0.45, 5), new T.MeshBasicMaterial({ color: 0xe8101e })); star.position.set(0, 1.0, 1.36); g.add(star);
+      const fl = new T.Mesh(new T.PlaneGeometry(1.1, 0.7), new T.MeshBasicMaterial({ color: 0xc8102e, side: T.DoubleSide })); fl.position.set(-1.8, 2.7, 0); g.add(fl);
+      add(new T.CylinderGeometry(0.03, 0.03, 1.8, 6), M(0x9a9aa2), -2.3, 2.2, 0);
+      return { g, tur, gun, fl };
+    }
+    async korochiku() {
+      const g = this.g, kd = findDef('korochiku'), dd = findDef('dextro');
+      this.music('hymn');
+      const tank = this.tank = this.buildTank(); tank.g.position.set(-20, 0, 1.2); g.scene.add(tank.g);
+      const km = kd.build(palFor(kd, 0, 2)); km.root.position.set(0, 2.0, 0); tank.g.add(km.root); km.body.rotation.y = 0; km.root.scale.setScalar(1.05);
+      const dm = dd.build(palFor(dd, 0)); dm.root.position.set(-20, 0, 2.6); g.scene.add(dm.root);
+      const leash = new T.Mesh(new T.CylinderGeometry(0.02, 0.02, 1, 5), new T.MeshBasicMaterial({ color: 0xe8101e })); g.scene.add(leash);
+      this.koro = { km, dm, leash };
+      this.cam = { pos: new T.Vector3(-6, 3.4, 15), look: new T.Vector3(-6, 2, 0) };
+      const t0 = this.t;
+      this.koroAnim = (t) => {
+        const k = Math.min(1, (t - t0) / 200), x = -20 + k * 13;
+        tank.g.position.x = x; tank.fl.rotation.y = Math.sin(t * 0.2) * 0.3;
+        dm.root.position.x = x + 3.2 + Math.sin(t * 0.3) * 0.2; dm.legL.rotation.z = Math.sin(t * 0.5) * 0.6; dm.legR.rotation.z = -Math.sin(t * 0.5) * 0.6;
+        const hp = new T.Vector3(), dp = new T.Vector3(x + 0.6, 2.9, 1.2); km.armR.getWorldPosition(hp); dp.set(dm.root.position.x, 1.1, 2.6);
+        const mid = hp.clone().add(dp).multiplyScalar(0.5), dir = dp.clone().sub(hp); leash.position.copy(mid); leash.scale.y = dir.length(); leash.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), dir.normalize());
+        if (t % 8 === 0) g.fx.spark(x - 2, 0.3, 0x9a8a6a, 3, 0.05);
+      };
+      FBS.rumble(3); setTimeout(() => FBS.rumble(2), 1500);
+      await this.wait(3400);
+      km.armR.rotation.z = 2.6;
+      await this.say('KOROCHIKU', 'LE VÉRITABLE LEADER SUPRÊME DU NNN EST LÀ !', { pitch: 0.8, speed: 40 });
+      this.F.face = 'hurt'; this.F.faceT = 300;
+      await this.say('LA FUSION', 'Korochiku ?! Et… le dinosaure du Site-19 ?!', { boss: true });
+      await this.say('KOROCHIKU', 'Soldat [J], tu as tenu bon. Le peuple est fier de toi. Laisse-moi corriger leur petit code.', { pitch: 0.8 });
+      // il pirate le code source à son tour
+      const b = this.win('view-source:super-smash-kheys.js', `<div class="fb-src"><span class="c">// correctif du Leader Suprême</span>
+<span class="k">let</span> viesJoueur  = <span class="n" id="fbk1">1</span>;
+<span class="k">let</span> forceJoueur = <span class="n" id="fbk2">1</span>;</div>`);
+      await this.wait(700);
+      const k1 = b.querySelector('#fbk1'), k2 = b.querySelector('#fbk2');
+      k1.textContent = ''; k1.classList.add('hl'); await this.typeInto(k1, 'Infinity', 90);
+      k2.textContent = ''; k2.classList.add('hl'); await this.typeInto(k2, 'Infinity', 90);
+      await this.wait(600); this.$('.fb-win').style.display = 'none';
+      FBS.heal(); this.flash(0.7, 700);
+      this.me.infinite = true; const pn = g.cards[0] && g.cards[0].stocks; if (pn) pn.innerHTML = '<b style="font:900 22px SSK Rodin,sans-serif;color:#ffd23a">∞</b>';
+      g.fx.ring(this.me.x, this.me.y + 1, 0xffd23a, 4, 30); g.fx.spark(this.me.x, this.me.y + 1, 0xffd23a, 40, 0.25);
+      this.cam = { pos: new T.Vector3(0, 5.5, 22), look: new T.Vector3(0, 4, 0) };
+      await this.say('KOROCHIKU', 'Vies infinies. Force infinie. Termine-le, soldat. C\'est un ordre.', { pitch: 0.8 });
+      await this.say('LA FUSION', 'Non… NON… NOOOON !', { boss: true });
+    }
+    // ---------------------------------------------------------------- le coup final et la fin
+    async ending() {
+      const g = this.g, me = this.me, F = this.F;
+      await this.menu('LIMITE', [{ t: '★ COUP FINAL : LE NNN ÉTERNEL ★' }], 'limit');
+      // le khey s'élance
+      this.puppets.add(me); const x0 = me.x, y0 = me.y, t0 = this.t; FBS.charge();
+      this.limitAnim = (t) => { const k = Math.min(1, (t - t0) / 40); me.x = x0 + (0 - x0) * k; me.y = y0 + (7.4 - y0) * k; me.model.root.rotation.z = k * TAU * 2; if (t % 2 === 0) g.fx.spark(me.x, me.y + 1, 0xffd23a, 4, 0.1); };
+      await this.wait(800);
+      this.limitAnim = null; me.model.root.rotation.z = 0;
+      for (let i = 0; i < 12; i++) { g.fx.ring((Math.random() - 0.5) * 4, 6 + Math.random() * 3, [0xffd23a, 0xffffff, 0xff2a3a][i % 3], 2 + Math.random() * 3, 18); FBS.tone(200 + i * 60, 80, 0.12, 'sawtooth', 0.08); this.hp = Math.max(0, this.hp - this.hpMax / 12); this.drawBar(); g.shake = 1; await this.wait(110); }
+      this.lives = 0; this.hp = 0; this.drawBar(); this.flash(1, 1600); FBS.shatter(); FBS.rumble(3);
+      this.$('.fb-bar').style.transition = 'opacity .8s'; this.$('.fb-bar').style.opacity = 0;
+      await this.wait(400);
+      // la Fusion explose : les trois retombent, vaincus
+      g.scene.remove(F.root); g.scene.remove(F.free); this.F = null; this.showBar(false); this.puppets.delete(me);
+      me.reset(-5); me.facing = 1; this.music('hymn');
+      const xs = [-0.6, 1.4, 3.4];
+      this.foes.forEach((f, i) => { f.reset(xs[i]); f.dead = false; f.stocks = 1; f.model.root.visible = true; f.facing = -1; this.puppets.add(f); f.y = 0; });
+      this.cam = { pos: new T.Vector3(1.5, 2.4, 10.5), look: new T.Vector3(1.5, 1.0, 0) };
+      // ils chialent, BAP suce ses pièces de 2 oros
+      const coinM = new T.MeshToonMaterial({ color: 0xd8b840, gradientMap: toonGradient() }), coins = [];
+      for (let i = 0; i < 3; i++) { const c = new T.Mesh(new T.CylinderGeometry(0.11, 0.11, 0.03, 16), coinM); g.scene.add(c); coins.push(c); }
+      this.coins = coins;
+      const [I, M, B] = this.foes, t1 = this.t;
+      this.cryAnim = (t) => {
+        for (const f of this.foes) { f.model.body.rotation.z = 0.35; f.model.head.rotation.z = -0.45 + Math.sin(t * 0.4 + f.slot) * 0.06; f.model.armR.rotation.z = 2.4; f.model.armL.rotation.z = 2.2; if (t % 7 === f.slot) g.fx.spark(f.x + 0.25, f.y + 1.9, 0x6ac8ff, 2, 0.04); }
+        const hp = new T.Vector3(); B.model.head.getWorldPosition(hp);
+        coins.forEach((c, i) => { c.position.set(hp.x + 0.25 + i * 0.03, hp.y - 0.12 + Math.sin(t * 0.3 + i) * 0.03, hp.z + 0.1); c.rotation.set(Math.PI / 2, 0, t * 0.1); });
+      };
+      await this.wait(900);
+      await this.say('ISSSOUFLE', 'Snif… snif… j\'voulais juste… être Leader… *sanglots*');
+      await this.say('MODOS JVC', 'Signalé… *snif* … pour… méchanceté…');
+      await this.say('BRIGADEANTIPORN', '*suce ses pièces de 2 oros en chialant* … mes… mes deux oros…');
+      // Dextro leur fonce dessus, grande léchouille, et les poursuit hors du terrain
+      const dm = this.koro && this.koro.dm; if (this.koro) { g.scene.remove(this.koro.leash); }
+      if (dm) {
+        const dx0 = dm.root.position.x, t2 = this.t;
+        this.koroAnim = (t) => {
+          const k = (t - t2) / 60, x = dx0 + Math.min(1, k) * (xs[0] - 0.8 - dx0);
+          dm.root.position.set(x, 0, 0.4); dm.body.rotation.y = 0; dm.legL.rotation.z = Math.sin(t * 0.6) * 0.8; dm.legR.rotation.z = -Math.sin(t * 0.6) * 0.8;
+          if (k > 1.1 && t % 10 === 0) { g.fx.spark(x + 1, 1.4, 0xff8ab8, 6, 0.1); FBS.tone(500, 300, 0.12, 'sine', 0.05); }
+        };
+      }
+      await this.say('DEXTRO', 'RAAAAH ! *grande léchouille* *grande léchouille* *GRANDE LÉCHOUILLE*', { pitch: 0.6 });
+      this.cryAnim = null;
+      const t3 = this.t;
+      this.fleeAnim = (t) => { const k = (t - t3); this.foes.forEach((f, i) => { f.x = xs[i] + k * 0.16; f.facing = 1; f.model.body.rotation.z = 0; f.model.legL.rotation.z = Math.sin(t * 0.6 + i) * 0.8; f.model.legR.rotation.z = -Math.sin(t * 0.6 + i) * 0.8; }); if (dm) dm.root.position.x = xs[0] - 1.4 + k * 0.17; coins.forEach(c => c.visible = false); };
+      this.cam = { pos: new T.Vector3(3, 3.4, 17), look: new T.Vector3(4, 1.4, 0) };
+      await this.wait(3200);
+      this.fleeAnim = null;
+      this.cam = { pos: new T.Vector3(-5, 2.6, 8), look: new T.Vector3(-5, 1.3, 0) };
+      me.facing = 1;
+      await this.say('KOROCHIKU', 'Le NNN est sauvé. Gloire au soldat [J] !', { pitch: 0.8 });
+      try { localStorage.setItem(FB_KEY, JSON.stringify({ won: 1, at: Date.now() })); } catch (e) {}
+      try { if (typeof v93Eco !== 'undefined') v93Eco.pay(500).catch(() => {}); } catch (e) {}
+      await this.narrate('<p style="font-size:38px;color:#ffd23a">LE NNN EST SAUVÉ</p><p>Isssoufle, les Modos JVC et BrigadeAntiPorn ont été vaincus.<br>+500 R$ · le Leader Suprême te salue, soldat <em>[J]</em>.</p>', 9000);
+      this.exit();
+    }
+    // ---------------------------------------------------------------- attaques de la Fusion
+    addObj(o) { this.g.scene.add(o); (this.objs || (this.objs = [])).push(o); return o; }
+    clearHz() { for (const h of this.hz) if (h.mesh) this.g.scene.remove(h.mesh); this.hz = []; for (const o of this.objs || []) this.g.scene.remove(o); this.objs = []; this.atk = []; for (const p of [...this.ui.querySelectorAll('.fb-pop')]) p.remove(); if (this.grab) this.releaseGrab(false); }
+    fake(col) { return { hitlag: 0, pal: { glow: col }, def: {}, move: null, x: 0, y: 0 }; }
+    hurtMe(x, y, h, col, face) {
+      const me = this.me; if (me.dead || me.invuln > 0 || (me.intangible && me.intangible())) return false;
+      this.g.hit(this.fake(col), me, h, x, y, face || (Math.sign(me.x - x) || 1), true);
+      return true;
+    }
+    addHz(o) { const h = { life: 120, r: 0.5, dmg: 8, ang: 45, bkb: 30, kbg: 50, col: 0xffffff, vx: 0, vy: 0, grav: 0, hitCD: 0, ...o }; if (h.mesh) this.g.scene.add(h.mesh); this.hz.push(h); return h; }
+    stepHz() {
+      const me = this.me;
+      for (const h of this.hz) {
+        h.life--; if (h.tick) h.tick(h);
+        h.vy -= h.grav; h.x += h.vx; h.y += h.vy;
+        if (h.bounce && h.y < h.r && h.vy < 0) { h.y = h.r; h.vy = -h.vy * h.bounce; }
+        if (h.mesh) { h.mesh.position.set(h.x, h.y, h.z || 0.2); if (h.spin) h.mesh.rotation.z += h.spin; }
+        if (h.hitCD > 0) h.hitCD--;
+        if (h.harm !== false && h.hitCD <= 0 && !me.dead) {
+          let touch = false;
+          if (h.seg) { const [x1, y1, x2, y2, w] = h.seg; for (let k = 0; k <= 12 && !touch; k++) { const u = k / 12; touch = hurtTest(me, x1 + (x2 - x1) * u, y1 + (y2 - y1) * u, w); } }
+          else touch = hurtTest(me, h.x, h.y, h.r);
+          if (touch && this.hurtMe(h.x, h.y, { dmg: h.dmg, ang: h.ang, bkb: h.bkb, kbg: h.kbg }, h.col, h.face)) { h.hitCD = h.multi || 999; if (h.onHit) h.onHit(h); if (!h.multi && !h.pierce) h.life = 0; }
+        }
+      }
+      for (const h of this.hz) if (h.life <= 0 && h.mesh) { this.g.scene.remove(h.mesh); if (h.mesh.geometry) h.mesh.geometry.dispose(); }
+      this.hz = this.hz.filter(h => h.life > 0);
+    }
+    // mouth = sortie des rayons (la bouche-pancarte)
+    mouthPos() { const v = new T.Vector3(); this.F.mouth.getWorldPosition(v); return v; }
+    pickAttack() {
+      const P = this.level === 3 ? ['shit', 'tissue', 'disc', 'grab', 'ban', 'report', 'pub', 'fur', 'shit2', 'controls'] : ['shit', 'tissue', 'disc', 'grab', 'ban', 'report', 'pub', 'fur'];
+      let k; do { k = P[Math.floor(Math.random() * P.length)]; } while (k === this.lastAtk && P.length > 1);
+      if (k === 'controls' && this.reverse > 0) k = 'disc';
+      this.lastAtk = k; return k;
+    }
+    startAttack(k) {
+      const g = this.g, me = this.me, F = this.F, L3 = this.level === 3;
+      if (Math.random() < 0.7) this.shout(FB_INSULTS[Math.floor(Math.random() * FB_INSULTS.length)]);
+      F.face = 'angry'; F.faceT = 60;
+      const A = { k, t: 0 };
+      if (k === 'shit' || k === 'shit2') {
+        // RAYON DE MERDE : on vise, on charge, puis un rayon épais qui balaie
+        const n = k === 'shit2' ? 2 : 1;
+        A.beams = [];
+        for (let i = 0; i < n; i++) {
+          const tl = new T.Mesh(new T.BoxGeometry(1, 0.06, 0.06), new T.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.8 })); this.addObj(tl);
+          const bm = new T.Mesh(new T.CylinderGeometry(0.55, 0.75, 1, 12, 1, true), new T.MeshBasicMaterial({ color: 0x6a3a12, transparent: true, opacity: 0.95 })); bm.visible = false; this.addObj(bm);
+          const core = new T.Mesh(new T.CylinderGeometry(0.25, 0.35, 1, 10), new T.MeshBasicMaterial({ color: 0xa8682a })); bm.add(core);
+          A.beams.push({ tl, bm, tx: me.x + (i ? (Math.random() < 0.5 ? -4 : 4) : 0), ty: me.y + 0.8, sweep: (Math.random() < 0.5 ? -1 : 1) * (L3 ? 0.09 : 0.05), hz: null });
+        }
+        FBS.charge();
+        A.tick = () => {
+          const o = this.mouthPos();
+          for (const B of A.beams) {
+            if (A.t < (L3 ? 40 : 55)) { B.tx += (me.x - B.tx) * 0.05; const dx = B.tx - o.x, dy = B.ty - o.y, L = Math.hypot(dx, dy); B.tl.position.set((o.x + B.tx) / 2, (o.y + B.ty) / 2, 0.2); B.tl.scale.x = L; B.tl.rotation.z = Math.atan2(dy, dx); B.tl.visible = A.t % 6 < 4; }
+            else if (A.t < (L3 ? 120 : 125)) {
+              if (!B.bm.visible) { B.bm.visible = true; B.tl.visible = false; FBS.beam(); g.shake = 0.5; B.hz = this.addHz({ x: B.tx, y: B.ty, harm: true, multi: 14, dmg: L3 ? 7 : 6, ang: 70, bkb: 25, kbg: 30, col: 0x8a5a2a, seg: [0, 0, 0, 0, 0.7], life: 999 }); }
+              B.tx += B.sweep; const ex = B.tx, ey = 0.2, dx = ex - o.x, dy = ey - o.y, L = Math.hypot(dx, dy) + 3, ux = dx / Math.hypot(dx, dy), uy = dy / Math.hypot(dx, dy);
+              const x2 = o.x + ux * L, y2 = o.y + uy * L;
+              B.bm.position.set((o.x + x2) / 2, (o.y + y2) / 2, 0.2); B.bm.scale.set(1 + Math.sin(A.t * 0.8) * 0.1, L, 1); B.bm.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(ux, uy, 0));
+              B.hz.seg = [o.x, o.y, x2, y2, 0.75]; B.hz.x = ex; B.hz.y = ey;
+              if (A.t % 4 === 0) g.fx.spark(ex, 0.3, 0x6a3a12, 4, 0.12);
+            } else { B.bm.visible = false; if (B.hz) B.hz.life = 0; }
+          }
+          if (A.t > (L3 ? 125 : 130)) { for (const B of A.beams) { g.scene.remove(B.tl); g.scene.remove(B.bm); } return false; }
+          return true;
+        };
+      } else if (k === 'tissue') {
+        // TEMPÊTE DE MOUCHOIRS : des mouchoirs roulés en boule pleuvent sur tout le terrain
+        const geo = new T.IcosahedronGeometry(0.32, 1), mat = new T.MeshLambertMaterial({ color: 0xf6f6f0, flatShading: true });
+        A.tick = () => {
+          if (A.t < (L3 ? 150 : 120) && A.t % (L3 ? 5 : 7) === 0) { const x = (Math.random() - 0.5) * 17 + (Math.random() < 0.3 ? me.x * 0.3 : 0); this.addHz({ x, y: 14, vy: -0.05, grav: 0.006, r: 0.35, dmg: 4, ang: 80, bkb: 15, kbg: 20, life: 260, mesh: new T.Mesh(geo, mat), spin: 0.1, tick: (h) => { if (h.y < -1) h.life = 0; } }); }
+          return A.t < 200;
+        };
+      } else if (k === 'disc') {
+        // DISQUES DE GTA VI : lancés par les mains, ils rebondissent et reviennent
+        const tex = this.discTex || (this.discTex = fbDiscTex()), n = L3 ? 5 : 3;
+        A.tick = () => {
+          if (A.t % 18 === 0 && A.t < n * 18) {
+            const H = this.F.hands[A.t / 18 % 2], o = H.pos.clone(); H.throwT = 14;
+            const dx = me.x - o.x, dy = me.y + 1 - o.y, d = Math.hypot(dx, dy) || 1, sp = L3 ? 0.3 : 0.24;
+            const m = new T.Mesh(new T.CylinderGeometry(0.55, 0.55, 0.06, 26), [new T.MeshBasicMaterial({ color: 0xd8d8e0 }), new T.MeshBasicMaterial({ map: tex }), new T.MeshBasicMaterial({ map: tex })]); m.rotation.x = Math.PI / 2;
+            const sp0 = new T.Group(); sp0.add(m);
+            this.addHz({ x: o.x, y: o.y, vx: dx / d * sp, vy: dy / d * sp, grav: 0.004, bounce: 0.8, r: 0.55, dmg: 9, ang: 40, bkb: 30, kbg: 55, life: 200, mesh: sp0, spin: 0.35, col: 0xff4fa0, pierce: true, multi: 30,
+              tick: (h) => { if (Math.abs(h.x) > 9.5) h.vx = -h.vx; h.mesh.children[0].rotation.y += 0.3; if (h.life < 60) { h.vx += (Math.sign(o.x - h.x)) * 0.01; } } });
+            FBS.tone(800, 300, 0.15, 'triangle', 0.05);
+          }
+          return A.t < n * 18 + 40;
+        };
+      } else if (k === 'grab') {
+        // LA MAIN : elle se place au-dessus du khey, s'abat, et l'attrape s'il est dessous
+        const H = this.F.hands[me.x < 0 ? 0 : 1]; A.H = H;
+        const shadow = new T.Mesh(new T.CircleGeometry(1.2, 24), new T.MeshBasicMaterial({ color: 0xff2a3a, transparent: true, opacity: 0.35, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; this.addObj(shadow); A.sh = shadow;
+        A.tick = () => {
+          const lead = L3 ? 45 : 60;
+          if (A.t < lead) { H.target = new T.Vector3(me.x, 6, 0.4); shadow.position.set(me.x, 0.03, 0.4); shadow.material.opacity = 0.2 + (A.t % 10 < 5 ? 0.25 : 0); }
+          else if (A.t === lead) { H.target = new T.Vector3(H.pos.x, 0.6, 0.4); H.fast = true; }
+          else if (A.t === lead + 10) {
+            FBS.slam(); g.shake = 0.8; g.fx.ring(H.pos.x, 0.2, 0xff6a6a, 3, 20);
+            if (!me.dead && me.invuln <= 0 && Math.abs(me.x - H.pos.x) < 1.6 && me.y < 2.4) this.startGrab(H);
+            else { this.addHz({ x: H.pos.x, y: 0.5, r: 1.3, dmg: 10, ang: 80, bkb: 40, kbg: 40, life: 4 }); }
+            this.zones.push({ x: H.pos.x, y: 0.8, r: 1.3, mul: 1.5, life: L3 ? 50 : 70, hand: H });
+          } else if (A.t > lead + (L3 ? 60 : 80) && !this.grab) { H.target = null; H.fast = false; g.scene.remove(shadow); return false; }
+          if (this.grab && A.t > lead + 200) { this.releaseGrab(true); }
+          return true;
+        };
+      } else if (k === 'ban') {
+        // LE TAMPON « BANNI » : une zone rouge, puis le tampon géant
+        const w = L3 ? 6 : 4.5, cx = clamp(me.x, -7, 7);
+        const zone = new T.Mesh(new T.PlaneGeometry(w, 0.1), new T.MeshBasicMaterial({ color: 0xff1a2a, transparent: true, opacity: 0.5 })); zone.position.set(cx, 0.06, 0.3); this.addObj(zone);
+        const st = new T.Group(); const head = new T.Mesh(new T.BoxGeometry(w, 0.9, 1.6), new T.MeshToonMaterial({ color: 0xb8101e, gradientMap: toonGradient() })); st.add(head);
+        const hd = new T.Mesh(new T.CylinderGeometry(0.3, 0.4, 2, 10), new T.MeshToonMaterial({ color: 0x3a2a1a, gradientMap: toonGradient() })); hd.position.y = 1.4; st.add(hd);
+        const lab = new T.Mesh(new T.PlaneGeometry(w * 0.9, 0.7), new T.MeshBasicMaterial({ map: new T.CanvasTexture(fbCanvas(512, 80, (c, W, H) => { c.fillStyle = '#fff'; c.font = '900 64px "SSK Rodin","Arial Black",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('BANNI', W / 2, H / 2 + 3); })), transparent: true })); lab.position.z = 0.81; st.add(lab);
+        st.position.set(cx, 12, 0.3); this.addObj(st);
+        A.tick = () => {
+          const lead = L3 ? 45 : 60;
+          zone.material.opacity = A.t < lead ? 0.2 + (A.t % 8 < 4 ? 0.4 : 0) : 0;
+          if (A.t < lead) st.position.y = 12 - A.t * 0.03;
+          else if (A.t < lead + 8) { st.position.y = Math.max(0.45, st.position.y - 1.5); if (st.position.y <= 0.45 && !A.hit) { A.hit = true; FBS.slam(); g.shake = 1; g.fx.ring(cx, 0.3, 0xff2a2a, w / 1.5, 20); if (Math.abs(me.x - cx) < w / 2 && me.y < 1.8 && this.hurtMe(cx, 0.5, { dmg: L3 ? 14 : 11, ang: 90, bkb: 20, kbg: 30 }, 0xe8101e) && L3) g.ban(me, null); } }
+          else if (A.t > lead + 40) { st.position.y += 0.4; if (st.position.y > 14) { g.scene.remove(st); g.scene.remove(zone); return false; } }
+          return true;
+        };
+      } else if (k === 'report') {
+        // SIGNALEMENTS : des « ! » rouges qui te poursuivent
+        const n = L3 ? 6 : 4;
+        A.tick = () => {
+          if (A.t % 14 === 0 && A.t < n * 14) {
+            const a = Math.random() * TAU, ox = Math.cos(a) * 5.6, oy = 7.4 + Math.sin(a) * 3.6;
+            const m = new T.Group(); const b = new T.Mesh(new T.BoxGeometry(0.55, 0.7, 0.1), new T.MeshBasicMaterial({ color: 0xe8101e })); m.add(b); const e1 = new T.Mesh(new T.BoxGeometry(0.12, 0.34, 0.12), new T.MeshBasicMaterial({ color: 0xffffff })); e1.position.y = 0.08; m.add(e1); const e2 = new T.Mesh(new T.BoxGeometry(0.12, 0.1, 0.12), new T.MeshBasicMaterial({ color: 0xffffff })); e2.position.y = -0.2; m.add(e2);
+            this.addHz({ x: ox, y: oy, r: 0.4, dmg: 6, ang: 50, bkb: 20, kbg: 35, life: 220, mesh: m, col: 0xe8101e, tick: (h) => { const dx = me.x - h.x, dy = me.y + 1 - h.y, d = Math.hypot(dx, dy) || 1, sp = L3 ? 0.11 : 0.08; h.vx += (dx / d * sp - h.vx) * 0.05; h.vy += (dy / d * sp - h.vy) * 0.05; }, onHit: () => { if (L3) g.addReport && g.addReport(me, null); } });
+          }
+          return A.t < n * 14 + 20;
+        };
+      } else if (k === 'pub') {
+        // PUBS NOFAP : des fenêtres pop-up couvrent l'écran (et la croix s'enfuit)
+        const n = L3 ? 5 : 3, W = g.ov.clientWidth, Hh = g.ov.clientHeight;
+        const txt = ['ARRÊTEZ LE PORNO MAINTENANT !', 'Rejoignez le site NoFap de BAP : seulement 2 OROS', 'Vous avez été SIGNALÉ (3)', 'GTA VI : précommandez maintenant !', 'Votre NNN est en danger !', 'Faites un don à la Brigade'];
+        A.pops = [];
+        A.tick = () => {
+          if (A.t % 20 === 0 && A.t < n * 20) { const p = document.createElement('div'); p.className = 'fb-pop'; p.style.left = (Math.random() * (W - 320)) + 'px'; p.style.top = (60 + Math.random() * (Hh - 260)) + 'px'; p.innerHTML = `<div class="t"><span>⚠ Publicité</span><span>✕</span></div><div class="b"><img src="${BAP_IMG_DATA}">${esc(txt[Math.floor(Math.random() * txt.length)])}</div>`; this.ui.appendChild(p); A.pops.push(p); FBS.tone(900, 900, 0.08, 'square', 0.05); }
+          if (A.t > (L3 ? 230 : 190)) { A.pops.forEach(p => p.remove()); return false; }
+          return true;
+        };
+        this.addHz({ x: 0, y: 0, harm: false, life: 1 });
+        // pendant ce temps, un petit rayon de merde quand même
+        if (L3) this.atk.push(this.startAttack('tissue'));
+      } else if (k === 'fur') {
+        // FOURRURE : une vague de fourrure rose balaie le sol, il faut sauter par-dessus
+        const dir = Math.random() < 0.5 ? 1 : -1, x0 = -dir * 12;
+        const m = new T.Group(); for (let i = 0; i < 9; i++) { const c = new T.Mesh(new T.ConeGeometry(0.35, 1.4 + Math.random() * 0.6, 7), new T.MeshToonMaterial({ color: i % 2 ? 0xff5ab8 : 0xff8ad0, gradientMap: toonGradient() })); c.position.set((i - 4) * 0.25, 0.6, (Math.random() - 0.5) * 0.6); c.rotation.z = (Math.random() - 0.5) * 0.6; m.add(c); }
+        this.addHz({ x: x0, y: 0.6, vx: dir * (L3 ? 0.26 : 0.19), r: 0.9, dmg: 9, ang: 75, bkb: 35, kbg: 40, life: 140, mesh: m, col: 0xff5ab8, pierce: true, multi: 40 });
+        if (L3) setTimeout(() => { if (this.mode === 'fight') this.addHz({ x: -x0, y: 0.6, vx: -dir * 0.26, r: 0.9, dmg: 9, ang: 75, bkb: 35, kbg: 40, life: 140, mesh: m.clone(), col: 0xff5ab8, pierce: true, multi: 40 }); }, 900);
+        A.tick = () => A.t < 90;
+      } else if (k === 'controls') {
+        // MÉTA : il modifie tes touches dans le code source (gauche et droite inversées)
+        this.shout('Je viens de changer tes touches dans le code source !', 2600); FBS.glitch(); this.glitchCss(true); setTimeout(() => this.glitchCss(false), 400);
+        this.reverse = 300;
+        A.tick = () => A.t < 30;
+      }
+      return A;
+    }
+    startGrab(H) {
+      const me = this.me; this.grab = { H, t: 0, mash: 0 }; this.puppets.add(me); me.vx = me.vy = 0; FBS.tone(160, 90, 0.4, 'sawtooth', 0.08);
+      this.g.say(me, 'Lâche-moi !', false, 70);
+    }
+    releaseGrab(thrown) {
+      const G = this.grab; if (!G) return; this.grab = null; this.puppets.delete(this.me);
+      G.H.target = null; G.H.fast = false; G.H.grip = 0;
+      if (thrown) { this.me.invuln = 0; this.hurtMe(G.H.pos.x, this.me.y, { dmg: 9, ang: 70, bkb: 70, kbg: 55 }, 0xff6a6a, G.H.s > 0 ? -1 : 1); }
+      else this.me.invuln = 40;
+    }
+    bossAI() {
+      if (this.wait2 > 0) { this.wait2--; }
+      else {
+        const L3 = this.level === 3, maxA = L3 ? 2 : 1;
+        if (this.atk.length < maxA) { this.atk.push(this.startAttack(this.pickAttack())); this.wait2 = L3 ? 55 + Math.random() * 35 : 95 + Math.random() * 50; }
+      }
+      this.atk = this.atk.filter(A => { A.t++; const r = A.tick ? A.tick() : false; return r !== false; });
+    }
+    // ---------------------------------------------------------------- une image
+    step() {
+      const g = this.g; this.t++;
+      if (this.mode === 'fight1') { this.stepFight1(); return; }
+      if (this.mode === 'vic') { return 'orig'; }
+      g.tick++;
+      const me = this.me;
+      let inp = EMPTY_INPUT;
+      if (this.mode === 'fight' && !this.puppets.has(me)) {
+        inp = g.readInput(0);
+        if (this.reverse > 0) { this.reverse--; inp = { ...inp, x: -inp.x }; }
+      } else if (this.grab) {
+        const r = g.readInput(0); if (r.attackP || r.jumpP || r.specialP) { this.grab.mash++; g.fx.spark(me.x, me.y + 1.2, 0xffffff, 3, 0.06); }
+      }
+      for (const f of g.fighters) {
+        if (f.stocks <= 0 && f !== me) continue;
+        if (this.puppets.has(f)) continue;
+        f.update(f === me ? inp : EMPTY_INPUT);
+      }
+      if (this.mode === 'fight') {
+        g.updateProjs(); g.resolveHits();
+        this.bossAI(); this.stepHz(); this.stepZones(); this.stepGrab();
+        // la Fusion ne te laisse pas mourir : elle te ramène pour t'humilier encore
+        g.checkKO();
+        if (me.dead && !this.koSeen) { this.koSeen = true; g.endT = 0; g.banner.style.opacity = 0; me.stocks = Math.max(1, me.maxStocks || 1); if (me.infinite) {} else setTimeout(() => { if (this.mode === 'fight') this.shout(this.koMsg, 2600); }, 400); }
+        if (!me.dead) this.koSeen = false;
+        if (g.endT > 0) { g.endT = 0; g.banner.style.opacity = 0; }
+      } else if (this.mode === 'cine' || this.mode === 'frozen') {
+        g.updateProjs();
+      }
+      if (this.fuseAnim) this.fuseAnim(this.t);
+      if (this.riseAnim) this.riseAnim(this.t);
+      if (this.koroAnim) this.koroAnim(this.t);
+      if (this.limitAnim) this.limitAnim(this.t);
+      if (this.cryAnim) this.cryAnim(this.t);
+      if (this.fleeAnim) this.fleeAnim(this.t);
+      if (this.F) this.animFusion();
+      g.animateStage(g.tick);
+      g.netVisuals(1);
+      if (this.cryAnim || this.fleeAnim) { /* les poses de pleurs sont posées après la synchro */ this.cryAnim && this.cryAnim(this.t); this.fleeAnim && this.fleeAnim(this.t); }
+      if (this.riseAnim) this.riseAnim(this.t);
+    }
+    stepZones() {
+      // les mains au sol : points faibles (les coups du khey y comptent double)
+      this.zones = this.zones.filter(z => --z.life > 0);
+    }
+    stepGrab() {
+      const G = this.grab; if (!G) return;
+      const me = this.me, H = G.H; G.t++;
+      H.target = new T.Vector3(H.pos.x, 2.2 + Math.sin(G.t * 0.2) * 0.1, 0.4); H.grip = 1;
+      me.x = H.pos.x; me.y = H.pos.y - 1.3; me.vx = me.vy = 0; me.kbx = me.kby = 0; me.grounded = false; me.state = 'hitstun'; me.hitstun = 3;
+      if (G.t % 22 === 0) { me.percent = Math.min(999, me.percent + (this.level === 3 ? 4 : 3)); me.flash = 6; this.g.fx.spark(me.x, me.y + 1, 0xff6a6a, 6, 0.08); FBS.tone(120, 80, 0.12, 'sawtooth', 0.07); if (G.t % 66 === 0) this.shout(['Je te serre, je te serre…', 'Craque ! CRAQUE !', 'Tu sens la pression du NNN ?'][Math.floor(Math.random() * 3)], 1400); }
+      if (G.mash >= (this.level === 3 ? 14 : 10)) { this.g.say(me, 'Libéré !', false, 60); this.releaseGrab(false); me.vy = 0.25; }
+      else if (G.t > 160) this.releaseGrab(true);
+    }
+    animFusion() {
+      const F = this.F, g = this.g, t = this.t, me = this.me;
+      // apparition
+      if (this.growT < 1) { this.growT = Math.min(1, this.growT + 0.02); const e = 1 - Math.pow(1 - this.growT, 3); F.root.scale.setScalar(0.05 + e * 0.95); }
+      // effondrement / réveil
+      if (this.sinkT > 0) { F.root.position.y += (-2.6 - F.root.position.y) * 0.04; F.body.rotation.z += (0.25 - F.body.rotation.z) * 0.04; }
+      else { F.root.position.y += (3.4 + Math.sin(t * 0.025) * 0.25 - F.root.position.y) * 0.08; F.body.rotation.z += (Math.sin(t * 0.013) * 0.04 - F.body.rotation.z) * 0.1; }
+      if (F.hurtT > 0) { F.hurtT--; F.root.position.x = (Math.random() - 0.5) * 0.3; } else F.root.position.x = 0;
+      // visage de la télé
+      if (F.faceT > 0) F.faceT--; else F.face = 'grin';
+      if (t % 5 === 0) { const c = F.tvC.getContext('2d'); fbFace(c, F.tvC.width, F.tvC.height, F.face, t); F.tvT.needsUpdate = true; }
+      // yeux qui suivent le khey
+      for (const e of F.eyes) { const wp = new T.Vector3(); e.g.getWorldPosition(wp); const dx = me.x - wp.x, dy = me.y + 1 - wp.y; e.ball.rotation.set(0, -Math.PI / 2 + clamp(dx * 0.05, -0.5, 0.5), clamp(dy * 0.05, -0.4, 0.4)); }
+      for (const c of F.cables) c.g.rotation.z = Math.sin(t * 0.02 + c.ph) * 0.12;
+      F.furs.forEach((f, i) => { f.scale.y = 1 + Math.sin(t * 0.08 + i) * 0.12; });
+      F.flags.rotation.z += 0.004; F.glow.material.opacity = 0.45 + Math.sin(t * 0.05) * 0.15;
+      F.mouth.rotation.z = Math.sin(t * 0.04) * 0.1;
+      for (const m of F.mini) { m.g.rotation.y = Math.sin(t * 0.03 + m.g.position.x) * 0.2; m.im.color.setHex(Math.random() < 0.06 ? 0xff4060 : Math.random() < 0.04 ? 0x60ffff : 0xffffff); m.scr.position.x = Math.random() < 0.05 ? (Math.random() - 0.5) * 0.15 : 0; }
+      // les mains : au repos de chaque côté, ou vers leur cible
+      const root = F.root; root.updateMatrixWorld(true);
+      for (const H of F.hands) {
+        const rest = new T.Vector3(H.s * (7.0 + Math.sin(t * 0.03 + H.s) * 0.4), 4.6 + Math.sin(t * 0.04 + H.s) * 0.5, 0.6);
+        const tg = H.target || rest; H.pos.lerp(tg, H.fast ? 0.35 : 0.08);
+        H.g.position.copy(H.pos); H.g.scale.setScalar(root.scale.x);
+        H.g.rotation.set(0, 0, H.s * 0.15);
+        const grip = H.grip ? 1 : H.throwT > 0 ? (H.throwT--, 0.6) : 0;
+        H.fingers.forEach((f, i) => { f.rotation.x = 0; f.rotation.z = (i < 4 ? -1 : H.s) * (0.2 + grip * 0.9); });
+        const sh = H.shoulder.clone().applyMatrix4(root.matrixWorld), dir = H.pos.clone().sub(sh), L = dir.length();
+        H.arm.position.copy(sh).add(H.pos).multiplyScalar(0.5); H.arm.scale.set(root.scale.x, L, root.scale.x); H.arm.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), dir.normalize());
+      }
+      if (this.mood) this.mood.intensity = 1.2 + Math.sin(t * 0.07) * 0.4;
+    }
+    // ---------------------------------------------------------------- coups du khey sur la Fusion
+    bossZones() {
+      const z = [{ x: 0, y: (this.F ? this.F.root.position.y : 3.4) + 4.0, r: 1.9, mul: 1.6 }, { x: 0, y: (this.F ? this.F.root.position.y : 3.4) + 1.4, r: 1.6, mul: 1 }];
+      for (const s of this.zones) z.push(s);
+      if (this.F) for (const H of this.F.hands) if (H.pos.y < 3) z.push({ x: H.pos.x, y: H.pos.y, r: 1.0, mul: 1.2 });
+      return z;
+    }
+    hitBoss() {
+      if (!this.bossHit || this.mode !== 'fight') return;
+      const a = this.me; if (a.dead || !a.move || a.hitlag > 0) return;
+      if (a.state !== 'attack' && a.state !== 'airattack' && a.state !== 'special') return;
+      const Z = this.bossZones();
+      for (const h of a.move.hits) {
+        if (a.frame < h.start || a.frame > h.end) continue;
+        const hx = a.x + h.x * HIT_REACH * a.facing, hy = a.y + h.y;
+        for (let i = 0; i < Z.length; i++) {
+          const z = Z[i], id = 'fb' + i;
+          if (a.hitList.has(id) || Math.hypot(hx - z.x, hy - z.y) > h.r * HIT_GROW + z.r) continue;
+          a.hitList.add(id); for (let j = 0; j < Z.length; j++) a.hitList.add('fb' + j);
+          const dmg = (h.dmg || 5) * z.mul * (a.infinite ? 99 : 1);
+          this.dmgBoss(dmg); a.hitlag = Math.floor(h.dmg / 3) + 3;
+          this.g.fx.spark(hx, hy, 0xffd23a, 8 + h.dmg, 0.1); this.g.fx.ring(hx, hy, 0xffffff, 0.8, 10); SFX.hit && SFX.hit(h.dmg, 40);
+          return;
+        }
+      }
+    }
+    hitBossProj() {
+      if (!this.bossHit || this.mode !== 'fight') return;
+      const Z = this.bossZones();
+      for (const p of this.g.projs) {
+        if (p.fbDone || (p.owner !== this.me && p.thrower !== this.me)) continue;
+        for (const z of Z) if (Math.hypot(p.x - z.x, p.y - z.y) < (p.r || 0.4) + z.r) { p.fbDone = true; this.dmgBoss(((p.h && p.h.dmg) || 6) * z.mul); this.g.fx.spark(p.x, p.y, 0xffd23a, 8, 0.1); p.life = 0; break; }
+      }
+    }
+    camera() {
+      const g = this.g, cam = g.camera;
+      let pos, look;
+      if (this.cam) { pos = this.cam.pos; look = this.cam.look; }
+      else if (this.camFixed) {
+        const asp = cam.aspect < 1.2 ? 1.3 : 1;
+        pos = new T.Vector3(this.me.x * 0.2, 5.0, 23.5 * asp); look = new T.Vector3(this.me.x * 0.2, 4.0, 0);
+      } else return false;
+      g.camPos.lerp(pos, 0.07); g.camLook.lerp(look, 0.07);
+      cam.position.copy(g.camPos);
+      if (g.shake > 0.01) { cam.position.x += (Math.random() - 0.5) * g.shake; cam.position.y += (Math.random() - 0.5) * g.shake; g.shake *= 0.88; }
+      cam.lookAt(g.camLook);
+      return true;
+    }
+    // ---------------------------------------------------------------- sortie
+    exit() {
+      if (this.dead) return; this.dead = true; this.aborted = true; this.on = false;
+      const g = this.g;
+      window.removeEventListener('keydown', this.onKey, true);
+      try { this.clearHz(); } catch (e) {}
+      if (this.mus) { try { this.mus.pause(); } catch (e) {} }
+      if (this.F) { g.scene.remove(this.F.root); g.scene.remove(this.F.free); }
+      if (this.mood) g.scene.remove(this.mood);
+      if (this.dim) for (const [o, i] of this.dim) o.intensity = i;
+      if (this.coins) for (const c of this.coins) g.scene.remove(c);
+      if (this.tank) g.scene.remove(this.tank.g);
+      if (this.koro) { g.scene.remove(this.koro.dm.root); g.scene.remove(this.koro.leash); }
+      this.glitchCss(false);
+      this.ui.remove(); g.ov.querySelectorAll('.fb-tear').forEach(e => e.remove());
+      STOCKS = this.saved.stocks; CPU_LVL = this.saved.cpuLvl; g.cpu = this.saved.cpu;
+      g.clearVictory && g.clearVictory();
+      g.fighters.forEach(f => f.dispose());
+      g.fighters = [new Fighter(g, 0, PALETTES[0], AVAILABLE[0]), new Fighter(g, 1, PALETTES[1], AVAILABLE[1] || AVAILABLE[0])];
+      g.stageDef = null; g.setStage(STAGES[0]); g.rebuildHUD();
+      g.endT = 0; g.banner.style.opacity = 0; g.fb = null;
+      g.ov.classList.remove('sk-playing');
+      g.showMenu();
+    }
+  }
+
+  // ------------------------------------------------------------------ branchements
+  {
+    const GP = Game.prototype;
+    const step0 = GP.step;
+    GP.step = function () {
+      const fb = this.fb;
+      if (fb && fb.on && fb.mode !== 'vic') { try { fb.step(); } catch (e) { console.warn('[SSK] boss final', e); fb.exit(); } return; }
+      return step0.call(this);
+    };
+    const cam0 = GP.updateCamera;
+    GP.updateCamera = function () { if (this.fb && this.fb.on && this.fb.mode !== 'fight1' && this.fb.mode !== 'vic' && this.fb.camera()) return; return cam0.call(this); };
+    const rh0 = GP.resolveHits;
+    GP.resolveHits = function () { rh0.call(this); if (this.fb && this.fb.on) this.fb.hitBoss(); };
+    const up0 = GP.updateProjs;
+    GP.updateProjs = function () { if (this.fb && this.fb.on) this.fb.hitBossProj(); return up0.call(this); };
+    const va0 = GP.vicAction;
+    GP.vicAction = function (i) { if (this.fb && this.fb.vicHold) { this.fb.tearNow(); return; } return va0.call(this, i); };
+    GP.fbEnter = function () {
+      const g = this;
+      if (!document.getElementById('fb-css')) { const s = document.createElement('style'); s.id = 'fb-css'; s.textContent = FB_CSS; document.head.appendChild(s); }
+      const own = AVAILABLE.filter(d => !d.boss && (typeof isOwned !== 'function' || isOwned(d.id)));
+      const el = document.createElement('div'); el.className = 'fb-pick';
+      const won = (() => { try { return !!JSON.parse(localStorage.getItem(FB_KEY) || 'null'); } catch (e) { return false; } })();
+      el.innerHTML = `<h2>LE BOSS FINAL</h2><p>Isssoufle, les Modos JVC et BrigadeAntiPorn t'attendent sur le bureau du khey.<br>Un combat tout simple… en apparence.${won ? '<br><br>★ Déjà vaincu une fois.' : ''}</p>
+        <div class="g">${own.map(d => { const p = g.portraits && g.portraits[d.id]; let ic = ''; try { ic = p ? p.icon : ''; } catch (e) {} return `<button data-id="${d.id}">${ic ? `<img src="${ic}">` : ''}${esc(d.name)}</button>`; }).join('')}</div>
+        <button class="back">◀ RETOUR</button>`;
+      g.ov.appendChild(el);
+      const close = () => { el.remove(); window.removeEventListener('keydown', key, true); };
+      const key = (e) => { if (e.code === 'Escape' || e.code === 'Backspace') { e.preventDefault(); e.stopPropagation(); close(); } };
+      window.addEventListener('keydown', key, true);
+      el.querySelector('.back').onclick = close;
+      el.querySelectorAll('.g button').forEach(b => b.onclick = () => {
+        close(); SFX.ui && SFX.ui('click');
+        const d = findDef(b.dataset.id); if (!d) return;
+        g.homeEl.style.display = 'none';
+        g.mode = 'play';
+        const fb = g.fb = new FinalBoss(g, d); fb.run();
+      });
+    };
+  }
 
   function hurtTest(b, hx, hy, r) {
     if (b.giant && b.giant.hurt) { const g = b.giant.hurt, gy = clamp(hy, b.y + g.y0, b.y + g.y1); return Math.hypot(hx - b.x, hy - gy) < r + g.r; }

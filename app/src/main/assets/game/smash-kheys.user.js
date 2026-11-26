@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.97.5
+// @version      0.97.6
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -2149,7 +2149,122 @@
     return prepMoves(set);
   })();
 
-  // texture du ballon (projectiles de type « ball »)
+  // =====================================================================
+  //  MODÈLE 3D : ANTOINEFOOT (plus jouable : il est enfermé au Pénitencier du Peuple)
+  // =====================================================================
+  const ANTOINE_PALS = [
+    // J1 : maillot domicile bleu marine, short blanc, chaussettes rouges
+    { shirt: 0x1c2752, trim: 0xd8263a, shorts: 0xf2f2f4, socks: 0xd8263a, boots: 0x18181c, sole: 0xf2f2f4, num: '#ffffff',
+      hair: 0x8a5a34, hairD: 0x6a4224, brow: 0x5a3a22, eye: 0x7f9fb8, skin: 0xefc6a6, glow: 0x6f9bff },
+    // J2 : maillot extérieur blanc, short bleu marine, chaussettes blanches
+    { shirt: 0xf2f2f4, trim: 0x1c2752, shorts: 0x1c2752, socks: 0xf2f2f4, boots: 0xf2f2f4, sole: 0xd8263a, num: '#1c2752',
+      hair: 0x4e3220, hairD: 0x35210f, brow: 0x35210f, eye: 0x6a8a5a, skin: 0xe2b48e, glow: 0xff6a7a },
+  ];
+
+  function buildAntoine(pal) {
+    const mats = [];
+    const M = (color, extra = {}) => {
+      const m = new T.MeshToonMaterial({ color, gradientMap: toonGradient(), emissive: 0xffffff, emissiveIntensity: 0, ...extra });
+      mats.push(m);
+      return m;
+    };
+    const OUT = new T.MeshBasicMaterial({ color: 0x0a0c18, side: T.BackSide });
+    const add = (parent, geo, mat, x = 0, y = 0, z = 0, outline = true, ol = 1.09) => {
+      const me = new T.Mesh(geo, mat);
+      me.position.set(x, y, z);
+      parent.add(me);
+      if (outline) { const o = new T.Mesh(geo, OUT); o.scale.setScalar(ol); me.add(o); }
+      return me;
+    };
+
+    const root = new T.Group();
+    const body = new T.Group(); body.position.y = 1.0; root.add(body);
+    const inner = new T.Group(); inner.position.y = -1.0; body.add(inner);
+    const hips = new T.Group(); hips.position.y = 0.95; inner.add(hips);
+    const mShirt = M(pal.shirt), mTrim = M(pal.trim), mShorts = M(pal.shorts), mSocks = M(pal.socks), mBoots = M(pal.boots), mSole = M(pal.sole);
+    const mSkin = M(pal.skin), mHair = M(pal.hair), mHairD = M(pal.hairD);
+
+    // Short + jambes (cuisses nues, chaussettes hautes, crampons)
+    add(hips, new T.CylinderGeometry(0.22, 0.24, 0.16, 12), mShorts, 0, -0.05, 0);
+    const legs = [];
+    for (const z of [0.13, -0.13]) {
+      const leg = new T.Group(); leg.position.set(0, 0, z); hips.add(leg);
+      add(leg, new T.CylinderGeometry(0.135, 0.125, 0.26, 10), mShorts, 0, -0.13, 0);
+      add(leg, new T.CylinderGeometry(0.098, 0.085, 0.2, 8), mSkin, 0, -0.33, 0);
+      add(leg, new T.CylinderGeometry(0.092, 0.075, 0.4, 8), mSocks, 0, -0.62, 0);
+      add(leg, new T.CylinderGeometry(0.094, 0.094, 0.04, 8), mShirt, 0, -0.45, 0, false);            // bande en haut de la chaussette
+      add(leg, new T.BoxGeometry(0.28, 0.12, 0.15), mBoots, 0.05, -0.88, 0);
+      add(leg, new T.BoxGeometry(0.29, 0.03, 0.16), mSole, 0.05, -0.95, 0, false);
+      legs.push(leg);
+    }
+
+    // Maillot (silhouette fine), col rond rouge, petit drapeau tricolore sur le cœur, numéro 10 dans le dos
+    const torso = new T.Group(); hips.add(torso);
+    const chest = add(torso, new T.CylinderGeometry(0.29, 0.23, 0.64, 14), mShirt, 0, 0.3, 0);
+    chest.scale.x = 0.74;
+    add(torso, new T.SphereGeometry(0.22, 12, 8), mShirt, -0.01, 0.6, 0).scale.set(0.75, 0.38, 1.3);
+    add(torso, new T.TorusGeometry(0.1, 0.022, 6, 18), mTrim, 0.0, 0.67, 0, false).rotation.x = Math.PI / 2;
+    const patch = new T.Group(); patch.position.set(0.218, 0.48, -0.1); patch.rotation.z = -0.08; torso.add(patch);
+    [0x1c3a9a, 0xffffff, 0xd8263a].forEach((c, i) => add(patch, new T.BoxGeometry(0.012, 0.06, 0.025), new T.MeshBasicMaterial({ color: c }), 0, 0, (i - 1) * 0.025, false));
+    const nc = document.createElement('canvas'); nc.width = 128; nc.height = 128;
+    const ng = nc.getContext('2d'); ng.fillStyle = pal.num; ng.font = '900 92px "SSK Rodin","Arial Black",sans-serif'; ng.textAlign = 'center'; ng.textBaseline = 'middle'; ng.fillText('10', 64, 70);
+    const num = new T.Mesh(new T.PlaneGeometry(0.26, 0.26), new T.MeshBasicMaterial({ map: new T.CanvasTexture(nc), transparent: true, depthWrite: false }));
+    num.position.set(-0.218, 0.38, 0); num.rotation.y = -Math.PI / 2; torso.add(num);
+    const scarf = new T.Group(); torso.add(scarf);
+    const scarf2 = new T.Group(); torso.add(scarf2);
+
+    // Tête : visage fin, yeux gris-bleu, sourcils bruns
+    const head = new T.Group(); head.position.y = 0.88; torso.add(head);
+    add(head, new T.CylinderGeometry(0.075, 0.08, 0.16, 8), mSkin, 0, -0.2, 0, false);
+    const skull = add(head, new T.SphereGeometry(0.22, 16, 12), mSkin, 0, 0.02, 0); skull.scale.set(1, 1.04, 0.95);
+    const jaw = add(head, new T.SphereGeometry(0.17, 12, 10), mSkin, 0.05, -0.1, 0); jaw.scale.set(1, 0.72, 0.84);
+    add(head, new T.BoxGeometry(0.045, 0.075, 0.04), mSkin, 0.225, -0.03, 0, false);
+    add(head, new T.BoxGeometry(0.02, 0.012, 0.08), new T.MeshBasicMaterial({ color: 0x8a4a40 }), 0.2, -0.12, 0, false);
+    const white = new T.MeshBasicMaterial({ color: 0xf6f6f2 }), iris = new T.MeshBasicMaterial({ color: pal.eye }), pupil = new T.MeshBasicMaterial({ color: 0x0c1020 }), browM = new T.MeshBasicMaterial({ color: pal.brow });
+    for (const s of [1, -1]) {
+      add(head, new T.BoxGeometry(0.03, 0.04, 0.075), white, 0.198, 0.0, s * 0.082, false);
+      add(head, new T.BoxGeometry(0.03, 0.04, 0.038), iris, 0.205, -0.002, s * 0.076, false);
+      add(head, new T.BoxGeometry(0.03, 0.02, 0.016), pupil, 0.211, -0.002, s * 0.076, false);
+      const brow = add(head, new T.BoxGeometry(0.03, 0.022, 0.1), browM, 0.208, 0.055, s * 0.085, false);
+      brow.rotation.x = s * 0.1;
+    }
+    add(head, new T.SphereGeometry(0.04, 8, 6), mSkin, -0.01, -0.01, 0.215, false).scale.set(0.6, 1, 0.5);   // oreilles
+    add(head, new T.SphereGeometry(0.04, 8, 6), mSkin, -0.01, -0.01, -0.215, false).scale.set(0.6, 1, 0.5);
+
+    // Cheveux châtain clair : côtés courts, grosse mèche volumineuse relevée et coiffée vers l'arrière
+    const cap = add(head, new T.SphereGeometry(0.235, 16, 10, 0, TAU, 0, Math.PI * 0.55), mHair, -0.02, 0.04, 0, true, 1.04);
+    cap.rotation.z = 0.5; cap.scale.set(1, 1, 1.02);
+    const lock = (pts, r, mat = mHair) => {
+      add(head, taperTube(pts, r), mat, 0, 0, 0, false);
+      add(head, taperTube(pts, r * 1.3 + 0.008), OUT, 0, 0, 0, false);
+    };
+    [[-0.15, 0.0, 0.06], [-0.1, 0.03, 0.075], [-0.05, 0.05, 0.08], [0.0, 0.06, 0.085], [0.05, 0.05, 0.08], [0.1, 0.035, 0.075], [0.15, 0.0, 0.06]].forEach(([z, h, r], i) => {
+      // mèches texturées relevées puis rabattues vers l'arrière, légèrement balayées sur le côté
+      lock([[0.2, 0.11, z], [0.245, 0.19 + h, z + 0.01], [0.17, 0.27 + h, z + 0.04], [0.03, 0.28 + h * 0.6, z * 1.1 + 0.06], [-0.13, 0.23, z * 1.15 + 0.05], [-0.22, 0.12, z * 1.1 + 0.03]], r, i % 2 ? mHairD : mHair);
+    });
+    lock([[0.17, 0.16, 0.16], [0.22, 0.2, 0.2], [0.18, 0.1, 0.24]], 0.05, mHairD);          // petite mèche qui retombe sur le côté
+    for (const s of [1, -1]) lock([[0.06, 0.18, s * 0.17], [-0.06, 0.2, s * 0.21], [-0.18, 0.12, s * 0.2]], 0.06, mHairD);
+
+    // Bras : manches courtes (liseré rouge), bras nus
+    const arms = [];
+    for (const z of [0.31, -0.31]) {
+      const arm = new T.Group(); arm.position.set(0, 0.55, z); torso.add(arm);
+      add(arm, new T.SphereGeometry(0.11, 10, 8), mShirt, 0, 0, 0);
+      add(arm, new T.CylinderGeometry(0.105, 0.1, 0.2, 10), mShirt, 0, -0.1, 0);
+      add(arm, new T.CylinderGeometry(0.104, 0.104, 0.035, 10), mTrim, 0, -0.205, 0, false);
+      add(arm, new T.CylinderGeometry(0.075, 0.068, 0.24, 8), mSkin, 0, -0.32, 0);
+      add(arm, new T.CylinderGeometry(0.068, 0.058, 0.26, 8), mSkin, 0, -0.52, 0);
+      add(arm, new T.SphereGeometry(0.07, 10, 8), mSkin, 0, -0.66, 0);
+      arms.push(arm);
+    }
+    const sword = new T.Group(); sword.position.set(0, -0.66, 0); arms[0].add(sword);
+    const footBall = antBallMesh(); footBall.position.set(0.45, 0.22, 0.12); root.add(footBall);   // le ballon, toujours dans les pieds
+
+    return { root, body, inner, hips, torso, head, legL: legs[0], legR: legs[1], armR: arms[0], armL: arms[1], sword, scarf, scarf2, mats, footBall };
+  }
+
+  // Ballon de foot : texture blanche à pentagones noirs
+  let BALL_TEX = null;
   function ballTexture() {
     if (BALL_TEX) return BALL_TEX;
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
@@ -2162,6 +2277,15 @@
     for (let i = 0; i < 10; i++) { g.beginPath(); g.moveTo(i * 25.6, 0); g.lineTo(i * 25.6 + 12, 128); g.stroke(); }
     BALL_TEX = new T.CanvasTexture(cv);
     return BALL_TEX;
+  }
+
+  function antBallMesh(r = 0.22) {
+    const g = new T.Group(), geo = new T.SphereGeometry(r, 18, 12);
+    const ball = new T.Mesh(geo, new T.MeshToonMaterial({ color: 0xffffff, map: ballTexture(), gradientMap: toonGradient() }));
+    g.add(ball);
+    const o = new T.Mesh(geo, new T.MeshBasicMaterial({ color: 0x0a0c18, side: T.BackSide })); o.scale.setScalar(1.1); g.add(o);
+    g.userData.ball = ball;
+    return g;
   }
 
   // =====================================================================
@@ -18605,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.97.5';
+  const SSK_VER = '0.97.6';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -29264,14 +29388,27 @@
           ['A craqué le 3 novembre', '28 jours', { skin: 0xc8946a, shirt: 0xe8701a, pants: 0xe8701a, hair: 0x1a1a1a, beard: true }],
           ['A douté du Grand Timonier', 'rééducation', { skin: 0xf0c8a8, shirt: 0xe8701a, pants: 0xe8701a, hair: 0xd8b060 }],
           null,
-          ['A ouvert un onglet suspect', '11 mois', { skin: 0x8a5a3a, shirt: 0xe8701a, pants: 0xe8701a, hair: 0x1a1a1a, bald: true }],
+          'antoine',
           'free',
         ];
         D.inmates = [];
         crimes.forEach((c, i) => {
           const C = D.cells[i];
-          const tag = c === null ? ['ISSSOUFLE · DÉTENU N° 001', 'Désertion du topic pour GTA VI'] : c === 'free' ? ['CELLULE LIBRE', 'Réservée pour toi ?'] : ['DÉTENU N° ' + String(100 + i * 37), c[0] + ' · ' + c[1]];
+          const tag = c === null ? ['ISSSOUFLE · DÉTENU N° 001', 'Désertion du topic pour GTA VI'] : c === 'antoine' ? ['ANTOINEFOOT · DÉTENU N° 002', 'Boucle sur Zara Larsson · personne ne le supporte'] : c === 'free' ? ['CELLULE LIBRE', 'Réservée pour toi ?'] : ['DÉTENU N° ' + String(100 + i * 37), c[0] + ' · ' + c[1]];
           plane(CW - 1.2, 0.8, label(tag[0] + ' — ' + tag[1], { bg: c === null ? '#c8102e' : '#2a2a2e', col: c === 'free' ? '#7dff6a' : '#ffd23a', w: 1600 }), X(C.uc), 5.0, CV - 0.12, Math.PI);
+          if (c === 'antoine') {
+            // AntoineFoot : maillot orange du pénitencier, casque sur les oreilles, il hoche la tête en boucle
+            const am = buildAntoine({ ...PALETTES[0], ...ANTOINE_PALS[0], shirt: 0xe8701a, trim: 0xc0550e, shorts: 0xe8701a, socks: 0xe8701a, num: '#1a1a1a' });
+            am.root.position.set(X(C.u0 + 2.6), 0, 44.2); am.body.rotation.y = Math.PI / 2; sc.add(am.root);
+            const hs = new T.Group(); am.head.add(hs); hs.position.set(0, 0.06, 0);
+            const band = new T.Mesh(new T.TorusGeometry(0.235, 0.025, 6, 20, Math.PI), new T.MeshLambertMaterial({ color: 0x1a1a1e })); band.rotation.y = Math.PI / 2; hs.add(band);
+            for (const zz of [1, -1]) { const cup = new T.Mesh(new T.CylinderGeometry(0.085, 0.085, 0.06, 14), new T.MeshLambertMaterial({ color: 0xff4fa0, emissive: 0x3a0a20 })); cup.rotation.x = Math.PI / 2; cup.position.set(0, -0.02, zz * 0.235); hs.add(cup); }
+            if (am.footBall) am.footBall.visible = false;
+            D.antoine = { m: am, x: X(C.u0 + 2.6), z: 44.2, cell: C };
+            box(0.5, 0.36, 0.3, lam(0x2a2a2e), X(C.u1 - 1.2), 0.18, 46.4);
+            plane(1.5, 0.3, label('ENCEINTE CONFISQUÉE', { bg: '#c8102e', col: '#fff' }), X(C.u1 - 1.2), 0.75, 46.2, Math.PI);
+            return;
+          }
           if (Array.isArray(c)) { const n = npcMan(c[2]); n.root.position.set(X(C.u0 + 1.4 + (i % 2) * 2.5), 0, 44 + (i % 2)); n.root.rotation.y = Math.PI / 2; sc.add(n.root); D.inmates.push({ n, ph: i * 1.7 }); }
         });
         // la cellule d'Isssoufle : poster du Grand Timonier imposé, compteur de jours au mur, télé confisquée
@@ -29420,6 +29557,7 @@
       D.gWatch = watch;
       g.body.rotation.y += wrap((watch ? -Math.PI / 2 : Math.PI / 2) - g.body.rotation.y) * 0.1; D.paper.visible = !watch;
       g.armR.rotation.z = watch ? 0.2 : 1.3; g.armL.rotation.z = watch ? 0.2 : 1.3; g.head.rotation.z = watch ? 0 : -0.25;
+      if (D.antoine) { const A = D.antoine.m, b = Math.sin(t * 0.21); A.head.rotation.z = -0.12 + b * 0.16; A.torso.rotation.z = b * 0.04; A.armR.rotation.z = 0.25 + Math.max(0, b) * 0.2; A.armL.rotation.z = 0.25 + Math.max(0, -b) * 0.2; if (t % 40 === 0) this.puff(D.antoine.x, 2.4, D.antoine.z - 0.2, 0xff4fa0, 0.18, 0.025); }
       for (const q of D.inmates) { q.n.torso.rotation.z = Math.sin(t * 0.02 + q.ph) * 0.05; q.n.head.rotation.y = Math.sin(t * 0.013 + q.ph) * 0.5; }
       // Isssoufle tourne en rond dans sa cellule
       const M = I.m, C = I.cell;
@@ -29676,6 +29814,7 @@
       if (D.hall === 'prison' && D.isss && !(D.jailT > 0)) {
         const C = D.isss.cell;
         if (near(WX + C.uc, 39.6, 2.2)) return { id: 'dx-isss', label: 'Parler à Isssoufle', sub: 'détenu n° 001 · désertion du topic pour GTA VI', alt: { id: 'dx-smug', label: 'Lui glisser une manette en douce', sub: D.gWatch ? '⚠ le gardien regarde…' : '✓ le gardien lit son journal !' } };
+        if (D.antoine && near(WX + D.antoine.cell.uc, 39.6, 2.2)) return { id: 'dx-antoine', label: 'Parler à AntoineFoot', sub: 'détenu n° 002 · boucle sur Zara Larsson' };
         if (near(WX + 152.6, 36.2, 1.8)) return { id: 'dx-guard', label: 'Parler au gardien-chef', sub: D.gWatch ? 'il surveille le couloir' : 'il lit son journal' };
         if (near(WX + 156.5, 35.4, 1.3)) return { id: 'dx-verdict', label: 'Lire le jugement du Tribunal du Peuple', sub: 'affaire n° 001' };
         const F = D.cells[5]; if (near(WX + F.uc, 39.6, 1.8)) return { id: 'dx-plaque', p: { t: 'Cellule libre', d: 'Réservée à tout khey qui aiderait le détenu 001 à jouer à GTA VI.' }, label: 'Cellule libre', sub: 'réservée pour toi ?' };
@@ -29723,6 +29862,7 @@
         return true;
       }
       if (zn.id === 'dx-isss') { const L = DX_ISSS_TALK; D.isssI = ((D.isssI ?? -1) + 1) % L.length; const I = D.isss; I.tx = WX + I.cell.uc; I.tz = 41.0; I.bars = true; I.wait = 240; this.cityToast('Isssoufle : « ' + L[D.isssI] + ' »'); SFX.ui && SFX.ui('pick'); return true; }
+      if (zn.id === 'dx-antoine') { const L = DX_ANT_TALK; D.antI = ((D.antI ?? -1) + 1) % L.length; this.cityToast('AntoineFoot (sans enlever son casque) : « ' + L[D.antI] + ' »'); SFX.ui && SFX.ui('pick'); return true; }
       if (zn.id === 'dx-verdict') { this.cityToast('TRIBUNAL DU PEUPLE · affaire n° 001 — Isssoufle, reconnu coupable d\'avoir déserté le topic NNN pour jouer à GTA VI, laissant le peuple sans guide. Le Grand Timonier Korochiku ayant pris la relève, le détenu est condamné à la perpétuité (ou jusqu\'à la sortie de GTA VII). Fourrure confisquée.'); return true; }
       if (zn.id === 'dx-guard') { this.cityToast('Gardien-chef : « ' + DX_GUARD_LINES[Math.floor(Math.random() * DX_GUARD_LINES.length)] + ' »'); return true; }
       if (zn.id === 'dx-smug') {
@@ -29869,6 +30009,14 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     'Le pire, c\'est pas la prison. C\'est les spoils dans la cour.',
     'J\'ai fait des traits sur le mur. Je suis à 80 jours. Ou 80 missions, je sais plus.',
     'Psst… t\'aurais pas une manette ? Le gardien lit son journal toutes les dix secondes…',
+  ];
+  const DX_ANT_TALK = [
+    'Hein ? Attends, j\'enlève pas le casque, c\'est le meilleur passage.',
+    'Ils m\'ont enfermé pour « tapage musical ». 4 000 écoutes du même morceau, c\'est pas un crime !',
+    'Encore une écoute de Zara Larsson et j\'arrête, promis. Bon, deux.',
+    'Le gardien m\'a confisqué mon enceinte. Heureusement il me reste les écouteurs.',
+    'Personne ne me supporte ? C\'est parce que personne n\'a de goût.',
+    'Isssoufle, à côté, il tape au mur toutes les nuits. Je comprends pas pourquoi.',
   ];
   const DX_ISSS_SHOUT = ['Libérez Isssoufle !', 'J\'ai le droit à un appel ! Je veux appeler Rockstar !', 'Korochiku, rends-moi mon topic !', 'Quelqu\'un sait si la mise à jour est sortie ?', 'Je suis innocent ! Enfin… à 70 %.'];
   const DX_GUARD_LINES = ['Le détenu 001 ? Il a demandé une télé. On lui a laissé : débranchée.', 'Interdiction formelle de lui passer une manette. Formelle.', 'Il dit qu\'il est une icône de mode. Ici, c\'est orange pour tout le monde.', 'Ordre du Grand Timonier : il regarde le portrait trois heures par jour.', 'Moi je lis mon journal, mais je vois tout. Enfin, presque tout.', 'Libérable à la sortie de GTA VII. Donc jamais.'];

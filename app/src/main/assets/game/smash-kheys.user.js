@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.3
+// @version      0.99.4
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.3';
+  const SSK_VER = '0.99.4';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -20309,7 +20309,7 @@
         belt.forEach((r, i) => bldg(r, beltSt[i % beltSt.length], 18 + ((i * 37) % 30)));
         // horizon : tours lointaines, sans collision
         for (let i = 0; i < 56; i++) {
-          const a = i / 56 * TAU, R = 130 + (i * 53) % 60, x = WX + Math.cos(a) * R * 1.15, z = Math.sin(a) * R, w = 12 + (i * 7) % 14, d = 12 + (i * 11) % 12, h = 25 + (i * 29) % 70; if (x > WX + 80 && x < WX + 200 && Math.abs(z) < 62) continue; if (x < WX - 80 && x > WX - 215 && Math.abs(z) < 58) continue;
+          const a = i / 56 * TAU, R = 130 + (i * 53) % 60, x = WX + Math.cos(a) * R * 1.15, z = Math.sin(a) * R, w = 12 + (i * 7) % 14, d = 12 + (i * 11) % 12, h = 25 + (i * 29) % 70; if (x > WX + 80 && x < WX + 200 && Math.abs(z) < 62) continue; if (x < WX - 80 && x > WX - 215 && Math.abs(z) < 58) continue; if (Math.abs(z) > 66 && Math.abs(x - WX) < 135) continue;
           bldg({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2 }, ['glass', 'resi', 'glass2', 'resi2', 'neon'][i % 5], h, { noSolid: true, shop: false });
         }
 
@@ -20709,7 +20709,7 @@
         g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 2, 0, TAU); g.clip();
         g.fillStyle = '#121018'; g.fillRect(0, 0, W, H);
         g.translate(W / 2, H / 2); g.rotate(this.camYaw); g.scale(zoom, zoom);
-        g.drawImage(this.miniBase, -(m.x - WX - (this.miniU0 ?? GEO_U0)) * k, -(m.z - GEO_V0) * k);
+        g.drawImage(this.miniBase, -(m.x - WX - (this.miniU0 ?? GEO_U0)) * k, -(m.z - (this.miniV0 ?? GEO_V0)) * k);
         const P = (x, z) => [(x - m.x) * k, (z - m.z) * k];
         for (const C of this.npcCars || []) { const [px, pz] = P(C.mesh.position.x, C.mesh.position.z); g.fillStyle = '#c8c8d0'; g.fillRect(px - 2, pz - 2, 4, 4); }
         for (const a of this.remote.values()) { if (cityArea(a.x, a.z) !== 'street') continue; const [px, pz] = P(a.x, a.z); g.fillStyle = mapCol(a.name); g.strokeStyle = '#000'; g.lineWidth = 1.5; g.beginPath(); g.arc(px, pz, 4.5, 0, TAU); g.fill(); g.stroke(); }
@@ -31713,14 +31713,24 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         <button data-e="gong">🔔 Gong</button><button data-e="conf">🎊 Confettis</button>
         <button data-e="gather">🏯 Rassemblement au temple</button><button data-e="hymn">🎺 Hymne pour tous</button>
         <button data-e="fw">🎆 Feu d'artifice</button><button data-e="parade">🚩 Défilé des régiments</button>
-        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button><button data-e="lant">🏮 Lâcher les lanternes</button><button data-e="dawn">🌅 L'aube rouge</button><button data-e="grace">⚖️ Gracier Isssoufle</button><button data-e="beer">🍺 Tournée générale</button></div>
+        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button><button data-e="lant">🏮 Lâcher les lanternes</button><button data-e="dawn">🌅 L'aube rouge</button><button data-e="grace">⚖️ Gracier Isssoufle</button><button data-e="beer">🍺 Tournée générale</button><button data-e="tourney">🏆 Tournoi au stade</button><button data-e="onair">🔴 ON AIR studio</button></div>
         <input maxlength="140" placeholder="Un discours pour le peuple…"><button data-e="speech" style="width:100%">🎙️ PROCLAMER</button>
+        <div class="g" style="margin-top:6px"><button data-e="memo">🪦 Graver au Mémorial</button><button data-e="podium">🥇 Podium du stade</button></div>
+        <small style="display:block;color:#c8b8a8;margin-top:4px">Mémorial : « Pseudo | Jour 12 | épitaphe » · Podium : « 1er, 2e, 3e »</small>
         <button data-e="close" style="width:100%;margin-top:8px;background:#333">FERMER</button>`;
       p.querySelectorAll('button').forEach(b => feTap(b, () => {
         const e = b.dataset.e;
         if (e === 'close') { p.style.display = 'none'; return; }
         const d = { e, t: NET.TS ? NET.TS() : Date.now(), by: String(NET.name()).slice(0, 20) };
         if (e === 'speech') { const inp = p.querySelector('input'); const v = inp.value.trim(); if (!v) return; d.txt = v.slice(0, 140); inp.value = ''; }
+        if (e === 'memo' || e === 'podium' || e === 'onair') {
+          const inp = p.querySelector('input'), v = inp.value.trim();
+          if (!(NET.uid && NET.ref)) return;
+          if (e === 'memo') { if (!v) { this.cityToast('Écris « Pseudo | Jour | épitaphe » dans le champ.'); return; } const [n, dd, ep] = v.split('|').map(x => x.trim()); NET.ref('amg/memorial').push({ n: (n || '').slice(0, 20), d: (dd || '').slice(0, 14), e: (ep || '').slice(0, 60), t: NET.TS() }).catch(() => {}); inp.value = ''; this.cityToast('Gravé au Mémorial des Craqueurs.'); }
+          if (e === 'podium') { const [a, b, c] = v.split(',').map(x => x.trim().slice(0, 18)); NET.ref('amg/podium').set({ a: a || '', b: b || '', c: c || '' }).catch(() => {}); inp.value = ''; this.cityToast('Podium mis à jour au Stade des Kheys.'); }
+          if (e === 'onair') { const on = !(this.ex && this.ex.onAir); NET.ref('amg/studio').set({ on }).catch(() => {}); this.cityToast(on ? '🔴 ON AIR : le studio est en direct.' : 'Studio : hors antenne.'); }
+          SFX.ui && SFX.ui('click'); return;
+        }
         if (NET.uid && NET.ref) NET.ref('amg/fete_ev').push(d).catch(() => this.cityToast('Événement non envoyé (réessaie).'));
         else this.feEvent('local' + Date.now(), { ...d, t: Date.now() }, 0);
         SFX.ui && SFX.ui('click');
@@ -31739,6 +31749,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       else if (v.e === 'fw') this.feFireworks(40);
       else if (v.e === 'parade') { F.parade = { t0: +v.t || now }; this.feBanner('DÉFILÉ DES RÉGIMENTS', 'Rendez-vous sur l\'avenue du Quartier du Peuple !', 5000); }
       else if (v.e === 'lant') this.feLanterns();
+      else if (v.e === 'tourney') { this.feBanner('🏆 TOURNOI', `${by} convoque tout le monde au Stade des Kheys !`, 6000); if (this.area === 'street' && !this.drive && !(this.fe && this.fe.watch) && this.game.mode === 'hub' && this.exTeleport) this.exTeleport(WX - 65 + (Math.random() - 0.5) * 6, -128 + (Math.random() - 0.5) * 3, -Math.PI / 2, 'STADE DES KHEYS'); }
       else if (v.e === 'beer') { if (this.vc) { this.vc.gl = 1; this.vc.dirty = true; } this.feBanner('🍺 TOURNÉE GÉNÉRALE', `${by} offre une bière à tout le monde ! Rendez-vous à la Place de la Victoire pour trinquer.`, 7000); SFX.cash && SFX.cash(); }
       else if (v.e === 'dawn') { F.dawnT0 = performance.now(); }
       else if (v.e === 'candles') { this.feBanner('LEVEZ VOS BOUGIES', 'Une bougie gratuite vous attend devant le temple.', 6000); }
@@ -32384,11 +32395,745 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   });
 
   // =====================================================================
+  //  LA VILLE S'AGRANDIT (v0.99.4) : deux nouveaux quartiers reliés au centre par des portiques
+  //  - LE FRONT DE MER (au sud) : fête foraine (grande roue, montagnes russes, autos tamponneuses),
+  //    plage, port (pêche, ferry pour Koh-Kheys), phare, Mémorial des Craqueurs
+  //  - LES HAUTS (au nord) : Stade des Kheys (écran géant, podium), stade d'athlétisme (courses en ligne)
+  //    et ses vestiaires (on peut s'y embrasser, si l'autre accepte), Tour des Modos (infiltration),
+  //    studio de Korochiku, quartier résidentiel (maisons à acheter et décorer)
+  // =====================================================================
+  const EX_S = { u0: -90, u1: 90, v0: 76, v1: 170 }, EX_N = { u0: -90, u1: 90, v0: -170, v1: -76 };
+  const EX_GATES = { toN: { u: 0, v: -48.5, to: [0, -82, -Math.PI / 2], label: 'Monter aux Hauts', sub: 'stades · Tour des Modos · studio · maisons' }, toS: { u: 0, v: 48.5, to: [0, 82, Math.PI / 2], label: 'Descendre au Front de Mer', sub: 'plage · port · fête foraine · mémorial' }, fromN: { u: 0, v: -78.5, to: [0, -45, Math.PI / 2], label: 'Retourner au centre-ville', sub: '' }, fromS: { u: 0, v: 78.5, to: [0, 45, -Math.PI / 2], label: 'Retourner au centre-ville', sub: '' } };
+  const EX_HOUSES = [-76, -58, -40, -22, 22, 40, 58, 76].map((u, i) => ({ i, u, v0: -96, v1: -85 }));
+  const EX_HOUSE_COLS = [0xd8c8a8, 0xa8c8e8, 0xe8a8a8, 0xa8e8b8, 0xe8d888, 0xc8a8e8];
+  const EX_HOUSE_STYLES = ['Gamer', 'Chalet', 'Luxe'];
+  const EX_HOUSE_PRICE = 300;
+  const EX_TRACK = { cu: 42, cv: -139, L: 22, R: 15 };                           // piste : deux lignes droites de 44 m, virages de rayon 15 (couloir 1)
+  const EX_TOWER = { u0: -34, u1: -12, v0: -166, v1: -140 };
+  const EX_FISH = [['une Carpe du NNN', 8], ['un Thon Ragix', 14], ['un Poisson-Issou', 10], ['une Sardine de la Brigade', 6], ['un Bar à Khey', 12], ['un Requin Modo', 22], ['une vieille manette de PS5', 5], ['un Saumon du Leader', 18], ['une Truite Craqueuse', 9]];
+  const EX_MEMO_DEF = [['Un khey inconnu', 'Jour 3', '« Juste une petite vidéo… »'], ['Un autre khey', 'Jour 7', '« J\'ai cru que c\'était une pub »'], ['Le Faible', 'Jour 12', '« Le week-end, ça compte pas »'], ['Un khey du 93', 'Jour 16', '« C\'était pour vérifier si ça marchait »'], ['Anonyme', 'Jour 21', '« Mon chat a marché sur le clavier »'], ['Le Presque', 'Jour 29', '« Si près du but… »']];
+  const EX_MODO_LINES = ['Halte ! Zone réservée aux Modos.', 'Tu crois qu\'on ne te voit pas ?', 'Ban de 30 secondes. Motif : curiosité.', 'Encore un khey qui veut la liste…'];
+  const exNow = () => (NET.now ? NET.now() : Date.now());
+
+  {
+    const HP = Hub.prototype;
+    const wrap = (name, fn) => { const o = HP[name] || function () {}; HP[name] = function (...a) { return fn.call(this, o, ...a); }; };
+    wrap('buildWorld', function (o) { o.call(this); try { this.exBuild(); } catch (e) { console.warn('[SSK] extension', e); } });
+    wrap('clampArea', function (o, m) {
+      if (this.ex && cityArea(m.x, m.z) === 'street' && Math.abs(m.z) > 74) {
+        const u = m.x - WX;
+        if (m.z > 0) { const pier = u > 9.4 && u < 16.6 && m.z > 150; m.x = WX + clamp(u, pier ? 9.6 : EX_S.u0, pier ? 16.4 : EX_S.u1); m.z = clamp(m.z, EX_S.v0 + 0.4, pier ? 199 : 157.5); }
+        else { m.x = WX + clamp(u, EX_N.u0, EX_N.u1); m.z = clamp(m.z, EX_N.v0 + 1.2, EX_N.v1 - 0.4); }
+        return;
+      }
+      return o.call(this, m);
+    });
+    wrap('update', function (o, ...a) { const r = o.apply(this, a); try { this.exStep(); } catch (e) { if (!this._exErr) { this._exErr = 1; console.warn('[SSK] extension', e); } } return r; });
+    wrap('zoneMore', function (o, ar) { return this.exZone(ar) || o.call(this, ar); });
+    wrap('interactMore', function (o, zn) { return this.exInteract(zn) || o.call(this, zn); });
+    wrap('keyMore', function (o, code) { if (this.ex && this.ex.ride && (code === 'Escape' || code === 'Backspace')) { this.exRideEnd(); return true; } return o.call(this, code); });
+    wrap('upsert', function (o, uid, v) {
+      o.call(this, uid, v); const a = this.remote && this.remote.get(uid); if (!a || !v) return;
+      a.baseY = +v.by || 0;
+      if (v.ks && v.ks !== a.exKsT) { a.exKsT = v.ks; if (exNow() - v.ks < 6000) a.exKiss = performance.now(); }
+    });
+    wrap('leaveMore', function (o) { o.call(this); if (this.ex) { if (this.ex.ride) this.exRideEnd(); if (this.ex.fish) this.ex.fish = null; } });
+    const _pose = HubAvatar.prototype.pose;
+    HubAvatar.prototype.pose = function (dtk) {
+      _pose.call(this, dtk);
+      if (this.exKiss && performance.now() - this.exKiss < 2600) { const k = Math.min(1, (performance.now() - this.exKiss) / 400); this.m.torso.rotation.z = -0.22 * k; this.m.head.rotation.z = -0.15 * k; this.m.armR.rotation.z = 0.9 * k; this.m.armL.rotation.z = 0.9 * k; }
+    };
+  }
+
+  Object.assign(Hub.prototype, {
+    // ==================================================================== construction
+    exBuild() {
+      if (!this.dx) return;
+      const E = this.ex = { seats: [], halls: [], houses: [], tombs: [], flowers: {}, memo: [], anim: [], cars: [], modos: [], course: null, kissReq: null, fr: 0 };
+      const K = cityKit(this), sc = this.scene, X = (u) => WX + u;
+      const bat = {}, B = (c) => bat[c] || (bat[c] = new GeoBatch());
+      E.flush = () => { for (const c in bat) { const m = bat[c].mesh(new T.MeshLambertMaterial({ color: +c })); sc.add(m); delete bat[c]; } };
+      E.B = B; E.K = K;
+      E.label = (t, o = {}) => K.txt(o.w || 1024, o.h || 160, (g, w, h) => { if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, w, h); } if (o.border) { g.strokeStyle = o.border; g.lineWidth = 10; g.strokeRect(6, 6, w - 12, h - 12); } let fs = o.fs || 90; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; while (g.measureText(t).width > w - 40 && fs > 18) { fs -= 4; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = o.col || '#fff'; g.fillText(t, w / 2, h / 2 + 4); });
+      // les portiques de liaison (centre-ville ↔ quartiers)
+      for (const [k, G] of Object.entries(EX_GATES)) this.exGate(X(G.u), G.v, k.startsWith('to') ? (k === 'toN' ? 'LES HAUTS ↑' : 'FRONT DE MER ↓') : 'CENTRE-VILLE');
+      this.exBuildSouth(); this.exBuildNorth();
+      E.flush();
+      // les icônes de la carte
+      const I = this.miniIcons || (this.miniIcons = []);
+      I.push(['🎡', X(-62), 112], ['🎢', X(-34), 100], ['🚗', X(-80), 92], ['🏖️', X(30), 150], ['⚓', X(13), 175], ['⛴️', X(22), 196], ['🗼', X(72), 178], ['🪦', X(67), 108], ['🏟️', X(-65), -139], ['🏃', X(42), -139], ['🚿', X(78), -111], ['🗼', X(-23), -153], ['🎙️', X(-20), -122], ['🏘️', X(-49), -90], ['🏘️', X(49), -90]);
+      if (typeof MAP_NAMES !== 'undefined') Object.assign(MAP_NAMES, { '🎡': 'Grande roue', '🎢': 'Montagnes russes', '🚗': 'Autos tamponneuses', '🏖️': 'La plage', '⚓': 'Le port', '⛴️': 'Ferry pour Koh-Kheys', '🪦': 'Mémorial des Craqueurs', '🏟️': 'Stade des Kheys', '🏃': 'Stade d\'athlétisme', '🚿': 'Vestiaires', '🎙️': 'Studio de Korochiku', '🏘️': 'Quartier résidentiel' });
+      if (typeof MAP_HALLS !== 'undefined') Object.assign(MAP_HALLS, { tour: 'Tour des Modos', studio: 'Studio de Korochiku', vest: 'Vestiaires du stade' });
+      // les données partagées
+      if (NET.uid && NET.ref) {
+        const on = (p, ev, f, lim) => { const r = NET.ref(p); (lim && r.limitToLast ? r.limitToLast(lim) : r).on(ev, f); };
+        on('amg/memorial', 'value', (s) => { E.memo = Object.values(s.val() || {}).filter(x => x && x.n).sort((a, b) => (a.t || 0) - (b.t || 0)); this.exTombsDraw(); }, 40);
+        on('amg/memo_fleurs', 'child_added', (s) => { const v = s.val(); if (v && v.i != null) { E.flowers[v.i] = (E.flowers[v.i] || 0) + 1; this.exFlower(v.i); } }, 500);
+        on('amg/podium', 'value', (s) => this.exPodiumDraw(s.val() || {}));
+        on('amg/studio', 'value', (s) => { E.onAir = !!(s.val() || {}).on; });
+        on('amg/maisons', 'value', (s) => { E.hdata = s.val() || {}; this.exHousesSync(); });
+        on('amg/course', 'child_added', (s) => this.exCourseEv(s.key, s.val()), 6);
+        on('amg/course_res', 'child_added', (s) => this.exCourseRes(s.val()), 40);
+        on('amg/course_rec', 'value', (s) => { E.rec = s.val(); this.exBoardDraw(); });
+        on('amg/bisou', 'child_added', (s) => this.exKissEv(s.key, s.val()), 20);
+      } else { E.hdata = {}; this.exHousesSync(); this.exTombsDraw(); }
+    },
+    exGate(x, z, txt) {
+      const E = this.ex, K = E.K, g = new T.Group(); g.position.set(x, 0, z); this.scene.add(g);
+      const red = K.lam(0x1e4a8a), gold = K.lam(0xd8a020, { emissive: 0x2a1a00 });
+      for (const px of [-4.8, 4.8]) { const c = new T.Mesh(new T.CylinderGeometry(0.28, 0.32, 6.2, 10), red); c.position.set(px, 3.1, 0); g.add(c); K.wallC(x + px - 0.35, z - 0.35, x + px + 0.35, z + 0.35); }
+      const be = new T.Mesh(new T.BoxGeometry(10.4, 0.8, 0.5), K.lam(0xa81c14)); be.position.y = 6.1; g.add(be);
+      const lb = new T.Mesh(new T.PlaneGeometry(7.6, 1.1), E.label(txt, { bg: '#a81c14', col: '#ffd23a', border: '#d8a020' })); lb.position.set(0, 5.0, 0.27); g.add(lb);
+      const lb2 = lb.clone(); lb2.rotation.y = Math.PI; lb2.position.z = -0.27; g.add(lb2);
+      const glow = new T.Mesh(new T.PlaneGeometry(9, 4.6), new T.MeshBasicMaterial({ color: 0x9ad8ff, transparent: true, opacity: 0.12, side: T.DoubleSide, depthWrite: false })); glow.position.y = 2.3; g.add(glow);
+      E.anim.push({ gate: glow });
+    },
+    // un bâtiment où l'on entre (même construction que les salles du Quartier du Peuple)
+    exHall(id, u1, u2, v1, v2, H, side, at, dw, wallC, roofC, inside) {
+      const K = this.ex.K;
+      this.dxHall(id, u1, u2, v1, v2, H, side, at, dw, typeof wallC === 'number' ? K.lam(wallC) : wallC, K.lam(roofC), inside);
+      const h = this.dx.halls[this.dx.halls.length - 1]; this.ex.halls.push(h); return h;
+    },
+    // ==================================================================== LE FRONT DE MER
+    exBuildSouth() {
+      const E = this.ex, K = E.K, B = E.B, sc = this.scene, X = (u) => WX + u, { plane, box, cyl, wallC } = K;
+      // le sol : promenade pavée, sable, mer
+      const gT = hubCanvas(2048, 1100, (g, w, h) => {
+        const su = w / 180, sv = h / 82, gx = (u) => (u + 90) * su, gy = (v) => (v - 76) * sv;
+        g.fillStyle = '#8a8278'; g.fillRect(0, 0, w, h);
+        for (let y = 0; y < gy(138); y += 12) for (let x = (y / 12) % 2 * 8; x < w; x += 16) { const c = 120 + Math.random() * 25; g.fillStyle = `rgb(${c},${c - 6},${c - 14})`; g.fillRect(x + 1, y + 1, 14, 10); }
+        g.fillStyle = '#5a4e46'; g.fillRect(0, gy(84), w, 8 * sv);                                                   // l'allée principale
+        g.fillStyle = '#e8d6a0'; g.fillRect(0, gy(138), w, h); for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${180 + Math.random() * 60},${160 + Math.random() * 50},100,.4)`; g.fillRect(Math.random() * w, gy(138) + Math.random() * (h - gy(138)), 3, 3); }
+        g.fillStyle = '#4a7a3a'; g.fillRect(gx(44), gy(84), 46 * su, 52 * sv);                                       // le gazon du mémorial
+        g.fillStyle = '#3a3a42'; g.fillRect(gx(-88), gy(86), 18 * su, 14 * sv);                                       // la piste des autos tamponneuses
+      });
+      gT.anisotropy = 8; plane(180, 82, K.lam(0xffffff, { map: gT }), X(0), 0.004, 117, 0, -Math.PI / 2);
+      const seaM = new T.MeshLambertMaterial({ color: 0x2a7aaa, emissive: 0x0c3a5a, transparent: true, opacity: 0.94 });
+      const sea = plane(900, 500, seaM, X(0), -0.15, 157 + 250, 0, -Math.PI / 2); E.sea = sea;
+      const foam = plane(180, 1.2, new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 }), X(0), -0.1, 157.6, 0, -Math.PI / 2); E.anim.push({ foam });
+      // limites : murets et immeubles du fond
+      const bm = 0x4a4650;
+      for (const s of [-1, 1]) { B(bm).put(new T.BoxGeometry(0.6, 2.2, 82), X(s * 90.3), 1.1, 117); wallC(X(s * 90.3) - 0.3, 76, X(s * 90.3) + 0.3, 158); }
+      for (const s of [-1, 1]) { B(bm).put(new T.BoxGeometry(84, 2.2, 0.6), X(s * 48), 1.1, 76); wallC(X(s > 0 ? 6 : -90), 75.7, X(s > 0 ? 90 : -6), 76.3); }
+      for (let i = 0; i < 16; i++) { const u = -88 + i * 11.7, hh = 12 + (i * 37) % 20; if (Math.abs(u) < 8) continue; B(0x2a2836).put(new T.BoxGeometry(10, hh, 6), X(u), hh / 2, 71); }
+      // l'arche d'arrivée et un panneau
+      plane(6, 1.2, E.label('BIENVENUE AU FRONT DE MER', { bg: '#1a6a9a', col: '#fff', border: '#ffd23a' }), X(-9), 3, 84.4, 0);
+      cyl(0.08, 0.08, 3, K.lam(0x2a2a2a), X(-9), 1.5, 84.3, sc, 6);
+      // --- la fête foraine
+      this.exWheel(X(-62), 116); this.exCoaster(); this.exBumper();
+      {
+        const g = new T.Group(); g.position.set(X(-55), 0, 84.5); sc.add(g);
+        for (const px of [-6, 6]) { const c = new T.Mesh(new T.CylinderGeometry(0.25, 0.25, 6, 8), K.lam(0xff3a9a)); c.position.set(px, 3, 0); g.add(c); }
+        const lb = new T.Mesh(new T.PlaneGeometry(12, 1.6), E.label('🎡 FÊTE FORAINE 🎢', { bg: '#ff3a9a', col: '#fff', border: '#ffd23a' })); lb.position.y = 6.2; g.add(lb);
+        const lb2 = lb.clone(); lb2.rotation.y = Math.PI; g.add(lb2);
+        for (let i = 0; i <= 24; i++) { const b = new T.Mesh(new T.SphereGeometry(0.12, 6, 4), new T.MeshBasicMaterial({ color: [0xffd23a, 0xff3a3a, 0x3ad8ff][i % 3] })); b.position.set(-6 + i * 0.5, 7.1, 0); g.add(b); }
+      }
+      for (const [u, v, col, t] of [[-24, 96, '#ff6a3a', 'BARBE À PAPA'], [-24, 106, '#3a9aff', 'CHURROS'], [-24, 116, '#7aff6a', 'TIR AUX BALLONS']]) {
+        B(0xf2ece0).put(new T.BoxGeometry(3, 2.4, 3), X(u), 1.2, v); const r = new T.Mesh(new T.ConeGeometry(2.4, 1.4, 4), K.lam(parseInt(col.slice(1), 16))); r.rotation.y = Math.PI / 4; r.position.set(X(u), 3.1, v); sc.add(r);
+        plane(2.8, 0.6, E.label(t, { bg: col, col: '#fff' }), X(u) + 1.52, 2.0, v, Math.PI / 2); wallC(X(u) - 1.5, v - 1.5, X(u) + 1.5, v + 1.5);
+      }
+      // --- la plage : transats, parasols, filet de volley
+      for (let i = 0; i < 10; i++) {
+        const u = -14 + i * 9, v = 146 + (i % 2) * 4, c = [0xff3a3a, 0x3a9aff, 0xffd23a, 0x3aff8a][i % 4];
+        B(0xe8e4d8).put(new T.CylinderGeometry(0.05, 0.05, 3), X(u), 1.5, v); const p = new T.Mesh(new T.ConeGeometry(1.8, 0.7, 10), K.lam(c)); p.position.set(X(u), 3.2, v); sc.add(p);
+        for (const s of [-1, 1]) { B(c).put(new T.BoxGeometry(0.7, 0.12, 1.9), X(u + s * 1.1), 0.35, v + 1, 0, 1, 1, 1, -0.25); E.seats.push({ x: X(u + s * 1.1), z: v + 1.2, r: -Math.PI / 2, y: 0.05, kind: 'chair', ox: X(u + s * 1.1), oz: v - 0.4, ex: 'transat' }); }
+      }
+      B(0xe8e4d8).put(new T.CylinderGeometry(0.06, 0.06, 2.4), X(60), 1.2, 144); B(0xe8e4d8).put(new T.CylinderGeometry(0.06, 0.06, 2.4), X(60), 1.2, 152);
+      { const net = plane(8, 1, new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, side: T.DoubleSide, wireframe: true }), X(60), 1.9, 148, Math.PI / 2); void net; }
+      // --- le port : la jetée, les barques, le ferry, le phare
+      for (let v = 140; v <= 200; v += 1) B(0x8a6a44).put(new T.BoxGeometry(7.4, 0.12, 0.9), X(13), 0.0, v);
+      for (let v = 142; v <= 200; v += 4) for (const s of [-1, 1]) B(0x5a4a34).put(new T.CylinderGeometry(0.16, 0.16, 2.2), X(13 + s * 3.6), -0.4, v);
+      for (let v = 160; v <= 200; v += 6) for (const s of [-1, 1]) B(0x7a5a3a).put(new T.BoxGeometry(0.12, 1, 0.12), X(13 + s * 3.65), 0.5, v);
+      E.boats = [];
+      for (const [u, v, c] of [[2, 168, 0xc8102e], [24, 176, 0x2a6ad8], [3, 186, 0xffd23a]]) { const g = new T.Group(); g.position.set(X(u), 0, v); const hull = new T.Mesh(new T.BoxGeometry(2, 0.7, 5), K.lam(c)); hull.position.y = 0.1; g.add(hull); const in2 = new T.Mesh(new T.BoxGeometry(1.6, 0.2, 4.4), K.lam(0x8a6a44)); in2.position.y = 0.38; g.add(in2); sc.add(g); E.boats.push(g); }
+      {
+        const g = new T.Group(); g.position.set(X(25), 0, 196); sc.add(g); E.ferry = g;
+        const hull = new T.Mesh(new T.BoxGeometry(7, 2.4, 20), K.lam(0xf2f2f2)); hull.position.y = 0.5; g.add(hull);
+        const band = new T.Mesh(new T.BoxGeometry(7.05, 0.5, 20.05), K.lam(0xc8102e)); band.position.y = 0.2; g.add(band);
+        const cab = new T.Mesh(new T.BoxGeometry(5.6, 2.4, 9), K.lam(0xe8e8f0)); cab.position.y = 2.9; g.add(cab);
+        const win = new T.Mesh(new T.BoxGeometry(5.7, 0.6, 8.6), K.lam(0x2a4a6a)); win.position.y = 3.3; g.add(win);
+        const ch = new T.Mesh(new T.CylinderGeometry(0.6, 0.7, 2.2, 10), K.lam(0xffd23a)); ch.position.set(0, 5.1, 2); g.add(ch);
+        const lb = new T.Mesh(new T.PlaneGeometry(9, 1.0), E.label('FERRY · KOH-KHEYS', { bg: '#c8102e', col: '#fff' })); lb.position.set(-3.53, 1.2, 0); lb.rotation.y = -Math.PI / 2; g.add(lb);
+      }
+      {
+        const g = new T.Group(); g.position.set(X(72), 0, 178); sc.add(g);
+        const rock = new T.Mesh(new T.DodecahedronGeometry(6, 0), K.lam(0x5a5a62, { flatShading: true })); rock.scale.y = 0.4; rock.position.y = 0.2; g.add(rock);
+        for (let i = 0; i < 6; i++) { const r = new T.Mesh(new T.CylinderGeometry(1.5 - i * 0.12, 1.6 - i * 0.12, 3, 14), K.lam(i % 2 ? 0xffffff : 0xc8102e)); r.position.y = 2.5 + i * 3; g.add(r); }
+        const top = new T.Mesh(new T.CylinderGeometry(1.1, 1.1, 1.6, 12), new T.MeshBasicMaterial({ color: 0xfff2b0 })); top.position.y = 21.3; g.add(top);
+        const roof = new T.Mesh(new T.ConeGeometry(1.4, 1.4, 12), K.lam(0x2a2a2a)); roof.position.y = 22.8; g.add(roof);
+        const beam = new T.Mesh(new T.ConeGeometry(4, 40, 16, 1, true), new T.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.08, side: T.DoubleSide, depthWrite: false })); beam.rotation.z = Math.PI / 2; beam.position.set(20, 21.3, 0); const piv = new T.Group(); piv.position.y = 0; piv.add(beam); g.add(piv); E.anim.push({ beam: piv });
+      }
+      // --- le Mémorial des Craqueurs
+      {
+        const u0 = 46, u1 = 88, v0 = 86, v1 = 134;
+        for (let u = u0; u <= u1; u += 1.2) { B(0x1a1a1e).put(new T.BoxGeometry(0.08, 1.6, 0.08), X(u), 0.8, v0); B(0x1a1a1e).put(new T.BoxGeometry(0.08, 1.6, 0.08), X(u), 0.8, v1); }
+        for (let v = v0; v <= v1; v += 1.2) { B(0x1a1a1e).put(new T.BoxGeometry(0.08, 1.6, 0.08), X(u0), 0.8, v); if (v > 104 && v < 112) continue; B(0x1a1a1e).put(new T.BoxGeometry(0.08, 1.6, 0.08), X(u1), 0.8, v); }
+        for (const v of [v0, v1]) B(0x1a1a1e).put(new T.BoxGeometry(u1 - u0, 0.08, 0.08), X((u0 + u1) / 2), 1.5, v);
+        wallC(X(u0), v0 - 0.2, X(u1), v0 + 0.2); wallC(X(u0), v1 - 0.2, X(u1), v1 + 0.2); wallC(X(u1) - 0.2, v0, X(u1) + 0.2, 104); wallC(X(u1) - 0.2, 112, X(u1) + 0.2, v1);
+        wallC(X(u0) - 0.2, v0, X(u0) + 0.2, 104); wallC(X(u0) - 0.2, 112, X(u0) + 0.2, v1);
+        plane(8, 1.1, E.label('MÉMORIAL DES CRAQUEURS', { bg: '#1a1a1e', col: '#e8e4d8', border: '#8a8478' }), X(u0) - 0.1, 3.2, 108, -Math.PI / 2);
+        for (const s of [-1, 1]) B(0x8a8478).put(new T.BoxGeometry(0.5, 3.6, 0.5), X(u0), 1.8, 108 + s * 4);
+        // la stèle centrale
+        B(0x8a8478).put(new T.BoxGeometry(2.6, 0.5, 2.6), X(52), 0.25, 108); B(0x6a6a70).put(new T.BoxGeometry(1.4, 3.8, 0.6), X(52), 2.4, 108);
+        plane(1.3, 3.0, K.txt(256, 600, (g, w, h) => { g.fillStyle = '#5a5a62'; g.fillRect(0, 0, w, h); g.fillStyle = '#e8e4d8'; g.textAlign = 'center'; g.font = '900 34px Georgia,serif'; ['ILS N\'ONT', 'PAS TENU', '', 'NNN 2026', '', 'Que leur', 'faiblesse', 'nous serve', 'de leçon'].forEach((l, i) => g.fillText(l, w / 2, 70 + i * 56)); }), X(52) - 0.31, 2.4, 108, -Math.PI / 2);
+        wallC(X(51), 106.7, X(53), 109.3);
+        // les cyprès
+        for (const [u, v] of [[48, 90], [48, 130], [86, 90], [86, 130], [67, 89], [67, 131]]) { B(0x5a3a22).put(new T.CylinderGeometry(0.2, 0.25, 1.2), X(u), 0.6, v); const c = new T.Mesh(new T.ConeGeometry(0.9, 6, 8), K.lam(0x1a4a2a)); c.position.set(X(u), 4, v); sc.add(c); }
+        // les tombes (4 rangées de 5)
+        E.tombSlots = []; for (let r = 0; r < 4; r++) for (let k = 0; k < 5; k++) E.tombSlots.push({ i: r * 5 + k, x: X(58 + k * 6.2), z: 92 + r * 11 + (k % 2) * 0.6 });
+        const stoneM = K.lam(0x9a968e);
+        for (const S of E.tombSlots) {
+          const g = new T.Group(); g.position.set(S.x, 0, S.z); sc.add(g);
+          const slab = new T.Mesh(new T.BoxGeometry(1.4, 0.18, 2.4), K.lam(0x7a766e)); slab.position.set(0, 0.09, 1.3); g.add(slab);
+          const st = new T.Mesh(new T.BoxGeometry(1.4, 1.6, 0.25), stoneM); st.position.y = 0.8; g.add(st);
+          const top = new T.Mesh(new T.CylinderGeometry(0.7, 0.7, 0.25, 14, 1, false, 0, Math.PI), stoneM); top.rotation.set(Math.PI / 2, Math.PI / 2, 0); top.position.y = 1.6; g.add(top);
+          const c = document.createElement('canvas'); c.width = 256; c.height = 300; const tx = new T.CanvasTexture(c);
+          const face = new T.Mesh(new T.PlaneGeometry(1.3, 1.52), new T.MeshLambertMaterial({ map: tx, transparent: true })); face.position.set(0, 0.95, 0.13); g.add(face);
+          S.c = c; S.tx = tx; S.g = g; S.fl = [];
+          wallC(S.x - 0.75, S.z - 0.2, S.x + 0.75, S.z + 0.2);
+        }
+        E.memoGate = { x: X(u1), z: 108 };
+      }
+      // le phare éclaire, un peu de lumière sur la fête
+      K.pl('street', 0xff8ad8, 1.2, 40, X(-55), 10, 108); K.pl('street', 0xffd8a0, 0.9, 40, X(30), 8, 140);
+    },
+    exWheel(x, z) {
+      const E = this.ex, K = E.K, sc = this.scene, R = 13, H = 15.5;
+      const g = new T.Group(); g.position.set(x, H, z); sc.add(g);
+      const steel = K.lam(0xe8e8f0), pink = K.lam(0xff3a9a);
+      for (const s of [-1, 1]) {
+        const rim = new T.Mesh(new T.TorusGeometry(R, 0.18, 6, 48), pink); rim.position.z = s * 1.2; g.add(rim);
+        for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; const sp = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, R, 4), steel); sp.position.set(Math.cos(a) * R / 2, Math.sin(a) * R / 2, s * 1.2); sp.rotation.z = a - Math.PI / 2; g.add(sp); }
+        // les pieds en A
+        for (const t of [-1, 1]) { const leg = new T.Mesh(new T.CylinderGeometry(0.25, 0.35, H / Math.cos(0.38), 8), steel); leg.position.set(x + t * Math.tan(0.38) * H / 2, H / 2, z + s * 2.2); leg.rotation.z = -t * 0.38; sc.add(leg); }
+      }
+      const axle = new T.Mesh(new T.CylinderGeometry(0.5, 0.5, 4.6, 12), steel); axle.rotation.x = Math.PI / 2; g.add(axle);
+      const bulbs = new T.Mesh(new T.TorusGeometry(R + 0.25, 0.12, 4, 96), new T.MeshBasicMaterial({ color: 0xffe08a })); g.add(bulbs);
+      const cabs = [];
+      for (let i = 0; i < 12; i++) {
+        const cg = new T.Group(); sc.add(cg);
+        const body = new T.Mesh(new T.BoxGeometry(2.2, 1.6, 2), K.lam([0xff3a3a, 0x3ad8ff, 0xffd23a, 0x7aff6a][i % 4])); body.position.y = -1.3; cg.add(body);
+        const roof = new T.Mesh(new T.ConeGeometry(1.6, 0.7, 4), K.lam(0xf2f2f2)); roof.rotation.y = Math.PI / 4; roof.position.y = -0.15; cg.add(roof);
+        cabs.push(cg);
+      }
+      K.wallC(x - 6, z - 3, x + 6, z + 3);
+      E.wheel = { g, cabs, R, H, x, z, a: 0 };
+      // le quai d'embarquement
+      E.B(0xd8d0c0).put(new T.BoxGeometry(5, 0.3, 4), x, 0.15, z - 4.6);
+    },
+    exCoaster() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u;
+      const P = [[-34, 90, 1.2], [-26, 92, 4], [-23, 102, 12], [-26, 112, 6], [-34, 118, 9], [-44, 128, 14], [-48, 132, 6], [-42, 136, 3], [-30, 134, 8], [-24, 126, 3], [-30, 120, 5], [-40, 112, 2.5], [-42, 100, 6], [-40, 92, 1.2]].map(([u, v, y]) => new T.Vector3(X(u), y, v));
+      const curve = new T.CatmullRomCurve3(P, true, 'centripetal');
+      const tube = new T.Mesh(new T.TubeGeometry(curve, 400, 0.35, 6, true), K.lam(0xff3a3a)); sc.add(tube);
+      const rail = new T.Mesh(new T.TubeGeometry(curve, 400, 0.08, 4, true), K.lam(0xffd23a)); rail.position.y = 0.42; sc.add(rail);
+      for (let i = 0; i < 70; i++) { const p = curve.getPointAt(i / 70); if (p.y < 1.4) continue; E.B(0xe8e8f0).put(new T.CylinderGeometry(0.12, 0.12, p.y), p.x, p.y / 2, p.z); }
+      const cart = new T.Group(); sc.add(cart);
+      for (let k = 0; k < 3; k++) { const c = new T.Mesh(new T.BoxGeometry(1.4, 0.8, 1.6), K.lam(0x3a9aff)); c.position.set(0, 0.6, -k * 1.8); cart.add(c); }
+      E.coaster = { curve, cart, L: curve.getLength(), s: 0 };
+      E.B(0xd8d0c0).put(new T.BoxGeometry(4, 0.3, 6), X(-37), 0.15, 90);
+      K.wallC(X(-39), 87, X(-35), 93);
+    },
+    exBumper() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u;
+      for (const [u, v, w, d] of [[-79, 86, 18, 0.3], [-79, 100, 18, 0.3]]) E.B(0xffd23a).put(new T.BoxGeometry(w, 0.6, d), X(u), 0.3, v);
+      for (const u of [-88, -70]) E.B(0xffd23a).put(new T.BoxGeometry(0.3, 0.6, 14), X(u), 0.3, 93);
+      K.wallC(X(-88), 85.8, X(-70), 86.2); K.wallC(X(-88), 99.8, X(-70), 100.2); K.wallC(X(-88.2), 86, X(-87.8), 100); K.wallC(X(-70.2), 86, X(-69.8), 100);
+      const roof = new T.Mesh(new T.BoxGeometry(18.6, 0.3, 14.6), K.lam(0xff3a9a)); roof.position.set(X(-79), 5.2, 93); sc.add(roof);
+      for (const [a, b] of [[-88, 86], [-70, 86], [-88, 100], [-70, 100]]) E.B(0xe8e8f0).put(new T.CylinderGeometry(0.12, 0.12, 5.2), X(a), 2.6, b);
+      for (let i = 0; i < 6; i++) {
+        const g = new T.Group(); sc.add(g);
+        const b = new T.Mesh(new T.CylinderGeometry(0.9, 1.0, 0.6, 12), K.lam([0xff3a3a, 0x3ad8ff, 0x7aff6a, 0xffd23a, 0xc88aff, 0xff8a3a][i])); b.position.y = 0.5; g.add(b);
+        const bump = new T.Mesh(new T.TorusGeometry(1.0, 0.15, 6, 16), K.lam(0x1a1a1a)); bump.rotation.x = Math.PI / 2; bump.position.y = 0.4; g.add(bump);
+        const pole = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 4.4), K.lam(0x9a9aa2)); pole.position.y = 2.7; g.add(pole);
+        const drv = npcMan({ skin: [0xe8c09a, 0xc8946a, 0xf0c8a8][i % 3], shirt: [0xff3a3a, 0x3a9aff, 0xffd23a][i % 3], pants: 0x2a2a30, hair: 0x1a1a1a }); drv.root.scale.setScalar(0.8); drv.root.position.y = 0.3; drv.legL.rotation.z = drv.legR.rotation.z = 1.4; g.add(drv.root);
+        E.cars.push({ g, x: X(-85 + (i % 3) * 6), z: 89 + Math.floor(i / 3) * 7, a: i * 1.1, v: 0.06 + (i % 3) * 0.01 });
+      }
+    },
+    // ==================================================================== LES HAUTS
+    exBuildNorth() {
+      const E = this.ex, K = E.K, B = E.B, sc = this.scene, X = (u) => WX + u, { plane, box, cyl, wallC } = K;
+      const gT = hubCanvas(2048, 1100, (g, w, h) => {
+        const su = w / 180, sv = h / 94, gx = (u) => (u + 90) * su, gy = (v) => (v + 170) * sv;
+        g.fillStyle = '#7a7672'; g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 12000; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '0,0,0' : '255,255,255'},${Math.random() * 0.05})`; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); }
+        g.fillStyle = '#2a2a31'; g.fillRect(0, gy(-104), w, 6 * sv); g.fillRect(gx(-4), gy(-104), 8 * su, (104 - 76) * sv);
+        g.strokeStyle = '#f2c84a'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, gy(-101)); g.lineTo(w, gy(-101)); g.stroke();
+        g.fillStyle = '#4a7a3a'; for (const H of EX_HOUSES) g.fillRect(gx(H.u - 8), gy(-84), 16 * su, 6 * sv);        // les jardins
+        // la piste d'athlétisme : tartan rouge et pelouse
+        const T2 = EX_TRACK, oval = (r) => { g.beginPath(); g.moveTo(gx(T2.cu - T2.L), gy(T2.cv - r)); g.lineTo(gx(T2.cu + T2.L), gy(T2.cv - r)); g.arc(gx(T2.cu + T2.L), gy(T2.cv), r * su, -Math.PI / 2, Math.PI / 2); g.lineTo(gx(T2.cu - T2.L), gy(T2.cv + r)); g.arc(gx(T2.cu - T2.L), gy(T2.cv), r * su, Math.PI / 2, Math.PI * 1.5); g.closePath(); };
+        oval(T2.R + 4.6); g.fillStyle = '#b8462e'; g.fill(); oval(T2.R - 1); g.fillStyle = '#3a8a3a'; g.fill();
+        g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; for (let k = 0; k <= 4; k++) { oval(T2.R - 1 + k * 1.4); g.stroke(); }
+        g.fillStyle = '#fff'; g.fillRect(gx(T2.cu) - 2, gy(T2.cv + T2.R - 1), 4, 5.6 * sv);
+        g.fillStyle = '#8a8a90'; g.fillRect(gx(-88), gy(-168), 46 * su, 58 * sv);                                  // le parvis du Stade des Kheys
+      });
+      gT.anisotropy = 8; plane(180, 94, K.lam(0xffffff, { map: gT }), X(0), 0.004, -123, 0, -Math.PI / 2);
+      const bm = 0x4a4650;
+      for (const s of [-1, 1]) { B(bm).put(new T.BoxGeometry(0.6, 2.2, 94), X(s * 90.3), 1.1, -123); wallC(X(s * 90.3) - 0.3, -170, X(s * 90.3) + 0.3, -76); }
+      B(bm).put(new T.BoxGeometry(181, 2.2, 0.6), X(0), 1.1, -170.3); wallC(X(-90), -170.6, X(90), -170);
+      for (const s of [-1, 1]) { B(bm).put(new T.BoxGeometry(84, 2.2, 0.6), X(s * 48), 1.1, -76); wallC(X(s > 0 ? 6 : -90), -76.3, X(s > 0 ? 90 : -6), -75.7); }
+      for (let i = 0; i < 16; i++) { const u = -88 + i * 11.7, hh = 16 + (i * 41) % 26; B(0x2a2836).put(new T.BoxGeometry(10, hh, 6), X(u), hh / 2, -176); }
+      this.exHouses(); this.exArena(); this.exTrack(); this.exTower(); this.exStudio();
+      K.pl('street', 0xffd8a0, 1.0, 50, X(0), 10, -100); K.pl('street', 0xc8e8ff, 1.2, 60, X(42), 14, -139);
+    },
+    exHouses() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u;
+      for (const H of EX_HOUSES) {
+        const u1 = H.u - 7, u2 = H.u + 7;
+        const wm = new T.MeshLambertMaterial({ color: 0xd8c8a8 });
+        const hall = this.exHall('maison' + H.i, u1, u2, H.v0, H.v1, 4.2, 'n', H.u, 1.8, wm, 0x7a3a2a, () => {});
+        if (typeof MAP_HALLS !== 'undefined') MAP_HALLS['maison' + H.i] = 'une maison';
+        const g = new T.Group(); sc.add(g);
+        const roof = new T.Mesh(new T.CylinderGeometry(0.01, 9.8, 3, 4, 1), K.lam(0x8a3a2a)); roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, 0.82); roof.position.set(X(H.u), 4.2 + 1.5 + 0.4, (H.v0 + H.v1) / 2); g.add(roof);
+        // les murs repeints à l'achat : on retrouve les boîtes de la salle
+        // la porte (bloquée quand le propriétaire ferme)
+        const door = new T.Mesh(new T.BoxGeometry(1.8, 2.6, 0.12), K.lam(0x5a3420)); door.position.set(X(H.u), 1.3, H.v0); sc.add(door);
+        const solid = K.wallC(X(H.u) - 0.9, H.v0 - 0.2, X(H.u) + 0.9, H.v0 + 0.2); const sbox = { ...solid };
+        // la boîte aux lettres et son nom
+        const mb = new T.Mesh(new T.BoxGeometry(0.5, 0.4, 0.3), K.lam(0x2a6ad8)); mb.position.set(X(H.u + 3.4), 1.2, H.v0 - 1.4); sc.add(mb); E.B(0x2a2a2a).put(new T.CylinderGeometry(0.05, 0.05, 1), X(H.u + 3.4), 0.5, H.v0 - 1.4);
+        const nc = document.createElement('canvas'); nc.width = 512; nc.height = 128; const nt = new T.CanvasTexture(nc);
+        const sign = new T.Mesh(new T.PlaneGeometry(3.2, 0.8), new T.MeshBasicMaterial({ map: nt, side: T.DoubleSide })); sign.position.set(X(H.u), 3.4, H.v0 - 0.25); sc.add(sign);
+        // l'intérieur : trois décors possibles
+        const deco = EX_HOUSE_STYLES.map(() => { const gg = new T.Group(); gg.visible = false; sc.add(gg); return gg; });
+        const cx = X(H.u), cz = (H.v0 + H.v1) / 2, Bx = (gg, w, h, d, c, x, y, z) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), K.lam(c)); m.position.set(x, y, z); gg.add(m); return m; };
+        // gamer : bureau, écrans RGB, fauteuil, canapé
+        Bx(deco[0], 3, 0.1, 1, 0x1a1a1e, cx - 4, 0.9, cz + 3.8); for (const s of [-1, 0, 1]) { const sc2 = Bx(deco[0], 0.9, 0.6, 0.05, 0x111111, cx - 4 + s, 1.4, cz + 4.2); sc2.material = new T.MeshBasicMaterial({ color: [0xff3ad8, 0x3ad8ff, 0x7aff6a][s + 1] }); }
+        Bx(deco[0], 0.7, 1.2, 0.7, 0xc8102e, cx - 4, 0.6, cz + 2.8); Bx(deco[0], 3, 0.7, 1, 0x3a3a6a, cx + 3.5, 0.35, cz + 3.8); Bx(deco[0], 12, 0.05, 0.05, 0xff3ad8, cx, 3.9, cz + 5.3).material = new T.MeshBasicMaterial({ color: 0xff3ad8 });
+        // chalet : cheminée, tapis, fauteuils en bois, peau de bête
+        Bx(deco[1], 2.4, 2.6, 0.8, 0x6a6a6a, cx, 1.3, cz + 5); const fire = Bx(deco[1], 1.2, 0.6, 0.2, 0xff6a20, cx, 0.5, cz + 4.55); fire.material = new T.MeshBasicMaterial({ color: 0xff6a20 });
+        Bx(deco[1], 5, 0.03, 3, 0x8a2a2a, cx, 0.02, cz + 1.5); Bx(deco[1], 1, 0.9, 1, 0x7a4a2a, cx - 2.5, 0.45, cz + 1.5); Bx(deco[1], 1, 0.9, 1, 0x7a4a2a, cx + 2.5, 0.45, cz + 1.5);
+        // luxe : piano noir, lustre doré, canapé blanc, statue
+        Bx(deco[2], 2, 1, 1.4, 0x0a0a0a, cx - 3.5, 0.5, cz + 3.5); Bx(deco[2], 3.6, 0.8, 1, 0xf2f2f2, cx + 3, 0.4, cz + 4); const lu = new T.Mesh(new T.SphereGeometry(0.6, 10, 8), new T.MeshStandardMaterial({ color: 0xe2b43a, metalness: 0.9, roughness: 0.2, emissive: 0x3a2400 })); lu.position.set(cx, 3.4, cz); deco[2].add(lu);
+        const stat = new T.Mesh(new T.CylinderGeometry(0.3, 0.4, 1.6, 10), new T.MeshStandardMaterial({ color: 0xe2b43a, metalness: 0.9, roughness: 0.25 })); stat.position.set(cx + 5.5, 0.8, cz - 3); deco[2].add(stat);
+        // une lampe chaude pour tous
+        const lamp = new T.Mesh(new T.SphereGeometry(0.25, 8, 6), new T.MeshBasicMaterial({ color: 0xfff0c0 })); lamp.position.set(cx, 3.8, cz); sc.add(lamp);
+        E.houses.push({ ...H, hall, wm, door, solid, sbox, nc, nt, deco, owner: null });
+      }
+    },
+    exArena() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u, cx = X(-65), cz = -139, RX = 17, RZ = 20;
+      // les tribunes en anneaux (ouvertes au sud), le toit, l'écran géant
+      for (let k = 0; k < 6; k++) for (let i = 0; i < 40; i++) {
+        const a = i / 40 * TAU; if (Math.sin(a) > 0.82) continue;                                               // l'entrée côté sud
+        const r = 1 + k * 0.06, x = cx + Math.cos(a) * RX * r, z = cz + Math.sin(a) * RZ * r;
+        E.B([0xc8102e, 0xe8e8f0, 0x2a6ad8][k % 3]).put(new T.BoxGeometry(3.6, 0.6 + k * 0.7, 1.3), x, (0.6 + k * 0.7) / 2, z, -a + Math.PI / 2);
+      }
+      for (let i = 0; i < 40; i++) { const a = i / 40 * TAU; if (Math.sin(a) > 0.82) continue; const x = cx + Math.cos(a) * RX * 1.38, z = cz + Math.sin(a) * RZ * 1.38; E.B(0x5a5a62).put(new T.BoxGeometry(4.4, 9, 0.8), x, 4.5, z, -a + Math.PI / 2); K.wallC(x - 1.6, z - 1.6, x + 1.6, z + 1.6); }
+      // la scène de combat au centre
+      E.B(0x3a3a42).put(new T.CylinderGeometry(7, 7.4, 0.3, 32), cx, 0.15, cz); E.B(0xffd23a).put(new T.TorusGeometry(7, 0.12, 6, 48), cx, 0.32, cz, 0, 1, 1, 1, Math.PI / 2);
+      // l'écran géant : la même image que la télé de l'appart (chaînes, combats en direct)
+      const tvM = (this.tvMesh && this.tvMesh.material) || new T.MeshBasicMaterial({ color: 0x111111 });
+      const scr = new T.Mesh(new T.PlaneGeometry(16, 9), tvM); scr.position.set(cx, 9.5, cz - RZ * 0.95); sc.add(scr);
+      E.B(0x1a1a1e).put(new T.BoxGeometry(17, 10, 0.6), cx, 9.5, cz - RZ * 0.95 - 0.35);
+      for (const s of [-1, 1]) E.B(0x5a5a62).put(new T.BoxGeometry(0.6, 5, 0.6), cx + s * 7, 2.5, cz - RZ * 0.95 - 0.4);
+      const ttl = new T.Mesh(new T.PlaneGeometry(14, 1.6), E.label('★ STADE DES KHEYS ★', { bg: '#1a1a3a', col: '#ffd23a', border: '#c8102e' })); ttl.position.set(cx, 15.2, cz - RZ * 0.95 - 0.02); sc.add(ttl);
+      const ent = new T.Mesh(new T.PlaneGeometry(10, 1.3), E.label('STADE DES KHEYS', { bg: '#c8102e', col: '#fff' })); ent.position.set(cx, 6.2, cz + RZ * 1.32); sc.add(ent);
+      // le podium
+      const pd = [[0, 1.5, 0xffd23a, '1'], [-2.2, 1.0, 0xd8d8e8, '2'], [2.2, 0.6, 0xc87a3a, '3']];
+      E.podium = [];
+      for (const [dx, h, c, n] of pd) {
+        const x = cx + dx, z = cz + 12; const b = new T.Mesh(new T.BoxGeometry(2.1, h, 1.8), K.lam(c)); b.position.set(x, h / 2, z); sc.add(b); K.wallC(x - 1.05, z - 0.9, x + 1.05, z + 0.9);
+        const num = new T.Mesh(new T.PlaneGeometry(0.8, 0.8), E.label(n, { col: '#1a1a1a', fs: 120, w: 256, h: 256 })); num.position.set(x, h / 2, z + 0.91); sc.add(num);
+        const c2 = document.createElement('canvas'); c2.width = 512; c2.height = 96; const t2 = new T.CanvasTexture(c2);
+        const nm = new T.Sprite(new T.SpriteMaterial({ map: t2, transparent: true })); nm.scale.set(3.4, 0.64, 1); nm.position.set(x, h + 2.6, z); sc.add(nm);
+        E.podium.push({ c: c2, t: t2 });
+      }
+      this.exPodiumDraw({});
+      K.pl('street', 0xffffff, 1.4, 50, cx, 16, cz);
+      E.arena = { x: cx, z: cz, scr };
+    },
+    exTrack() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u, T2 = EX_TRACK;
+      // tribune au nord, tableau d'affichage, ligne d'arrivée
+      for (let k = 0; k < 5; k++) E.B([0x2a6ad8, 0xe8e8f0][k % 2]).put(new T.BoxGeometry(50, 0.6 + k * 0.6, 1.4), X(T2.cu), (0.6 + k * 0.6) / 2, T2.cv - T2.R - 6.6 - k * 1.4);
+      K.wallC(X(T2.cu - 25), T2.cv - T2.R - 14, X(T2.cu + 25), T2.cv - T2.R - 5.8);
+      const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const t2 = new T.CanvasTexture(c);
+      const board = new T.Mesh(new T.PlaneGeometry(12, 6), new T.MeshBasicMaterial({ map: t2 })); board.position.set(X(T2.cu), 9, T2.cv - T2.R - 14.2); sc.add(board);
+      E.B(0x1a1a1e).put(new T.BoxGeometry(12.6, 6.6, 0.4), X(T2.cu), 9, T2.cv - T2.R - 14.5); for (const s of [-1, 1]) E.B(0x5a5a62).put(new T.BoxGeometry(0.4, 6, 0.4), X(T2.cu + s * 5), 3, T2.cv - T2.R - 14.5);
+      E.board = { c, t: t2 };
+      const arch = new T.Group(); arch.position.set(X(T2.cu), 0, T2.cv + T2.R + 1.6); sc.add(arch);
+      for (const s of [-1, 1]) { const p = new T.Mesh(new T.BoxGeometry(0.3, 4, 0.3), K.lam(0xe8e8f0)); p.position.set(0, 2, s * 3.6); arch.add(p); }
+      const ab = new T.Mesh(new T.BoxGeometry(0.3, 0.7, 7.5), K.lam(0xc8102e)); ab.position.y = 4; arch.add(ab);
+      const al = new T.Mesh(new T.PlaneGeometry(6.6, 0.6), E.label('DÉPART · ARRIVÉE', { bg: '#c8102e', col: '#fff' })); al.position.set(0.16, 4, 0); al.rotation.y = Math.PI / 2; arch.add(al);
+      const al2 = al.clone(); al2.rotation.y = -Math.PI / 2; al2.position.x = -0.16; arch.add(al2);
+      this.exBoardDraw();
+      // les vestiaires
+      this.exHall('vest', 66, 90, -118, -105, 4.4, 's', 78, 2.2, 0xd8dce4, 0x3a4a5a, () => {
+        const cz = -111.5;
+        for (let u = 67; u <= 89; u += 0.9) { const col = [0x2a6ad8, 0xc8102e][Math.floor(u) % 2]; E.B(col).put(new T.BoxGeometry(0.85, 2.2, 0.6), X(u), 1.1, -117.4); }
+        for (const u of [70, 76, 82, 88]) { E.B(0x8a6a44).put(new T.BoxGeometry(3.4, 0.12, 0.5), X(u), 0.5, cz); E.B(0x5a5a62).put(new T.BoxGeometry(0.1, 0.5, 0.4), X(u - 1.4), 0.25, cz); E.B(0x5a5a62).put(new T.BoxGeometry(0.1, 0.5, 0.4), X(u + 1.4), 0.25, cz); for (const s of [-1, 0, 1]) E.seats.push({ x: X(u + s * 1.1), z: cz + 0.15, r: -Math.PI / 2, y: 0.2, kind: 'chair', ox: X(u + s * 1.1), oz: cz + 1.2, ex: 'banc' }); }
+        // les douches au fond
+        for (let i = 0; i < 4; i++) { const u = 68 + i * 1.6; E.B(0xb8c8d8).put(new T.BoxGeometry(0.1, 2.4, 1.4), X(u), 1.2, -107); E.B(0x9a9aa2).put(new T.CylinderGeometry(0.05, 0.05, 0.4), X(u + 0.8), 2.4, -106.6); }
+        this.ex.K.plane(5.6, 0.7, this.ex.label('VESTIAIRES', { bg: '#2a6ad8', col: '#fff' }), X(78), 3.6, -104.75, 0);
+        const lt = new T.PointLight(0xe8f0ff, 0.9, 16, 1.4); lt.position.set(X(78), 3.6, cz); this.lightGroup('street').add(lt);
+      });
+    },
+    exTower() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u, Tw = EX_TOWER, cx = X((Tw.u0 + Tw.u1) / 2);
+      this.exHall('tour', Tw.u0, Tw.u1, Tw.v0, Tw.v1, 6, 's', (Tw.u0 + Tw.u1) / 2, 2.4, 0x3a3a48, 0x0a0a10, () => {});
+      K.plane(Tw.u1 - Tw.u0 - 0.6, Tw.v1 - Tw.v0 - 0.6, K.lam(0x2a2a36), cx, 0.01, (Tw.v0 + Tw.v1) / 2, 0, -Math.PI / 2);
+      // la tour au-dessus du hall
+      const body = new T.Mesh(new T.BoxGeometry(20, 54, 24), new T.MeshLambertMaterial({ color: 0x14141c })); body.position.set(cx, 6.2 + 27, (Tw.v0 + Tw.v1) / 2); sc.add(body);
+      for (let y = 10; y < 58; y += 3) { const s = new T.Mesh(new T.BoxGeometry(20.1, 0.3, 24.1), new T.MeshBasicMaterial({ color: 0xc8102e })); s.position.set(cx, y, (Tw.v0 + Tw.v1) / 2); sc.add(s); }
+      const eye = new T.Mesh(new T.SphereGeometry(2.2, 16, 12), new T.MeshBasicMaterial({ color: 0xff2020 })); eye.position.set(cx, 52, -140.8); eye.scale.z = 0.4; sc.add(eye); E.eye = eye;
+      const halo = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xff2020, transparent: true, opacity: 0.7, blending: T.AdditiveBlending, depthWrite: false })); halo.scale.set(12, 12, 1); halo.position.copy(eye.position); sc.add(halo);
+      plane(14, 1.6, E.label('TOUR DES MODOS', { bg: '#0a0a10', col: '#ff3030', border: '#c8102e' }), cx, 7.4, Tw.v1 + 0.25, 0);
+      function plane(w, h, m, x, y, z, ry) { return K.plane(w, h, m, x, y, z, ry); }
+      // dedans : le Marteau du Ban sous vitrine, le terminal de la liste des bannis, les Modos qui patrouillent
+      const hz = (Tw.v0 + Tw.v1) / 2;
+      E.B(0x2a2a32).put(new T.BoxGeometry(1.6, 1.2, 1.6), cx, 0.6, hz);
+      const ham = new T.Group(); ham.position.set(cx, 1.9, hz); sc.add(ham);
+      const handle = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 1.4, 8), K.lam(0x5a3a22)); ham.add(handle);
+      const head = new T.Mesh(new T.BoxGeometry(0.9, 0.45, 0.45), new T.MeshStandardMaterial({ color: 0x9a9aa8, metalness: 0.9, roughness: 0.25 })); head.position.y = 0.7; ham.add(head);
+      const glass = new T.Mesh(new T.BoxGeometry(1.5, 1.8, 1.5), new T.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.18, roughness: 0.05 })); glass.position.set(cx, 2.1, hz); sc.add(glass);
+      K.wallC(cx - 0.8, hz - 0.8, cx + 0.8, hz + 0.8);
+      K.plane(3.2, 0.5, E.label('LE MARTEAU DU BAN', { bg: '#c8102e', col: '#fff' }), cx, 1.0, hz + 0.81, 0);
+      E.hammer = ham;
+      const term = { x: cx + 7, z: Tw.v0 + 1.3 };
+      E.B(0x1a1a22).put(new T.BoxGeometry(1.4, 1.2, 0.6), term.x, 0.6, term.z);
+      const ts = K.plane(1.2, 0.8, new T.MeshBasicMaterial({ color: 0x3aff6a }), term.x, 1.5, term.z + 0.32, 0); ts.rotation.x = -0.3;
+      K.plane(2.6, 0.4, E.label('LISTE DES BANNIS · CONFIDENTIEL', { bg: '#0a0a10', col: '#3aff6a' }), term.x, 2.3, term.z + 0.32, 0);
+      K.wallC(term.x - 0.7, term.z - 0.3, term.x + 0.7, term.z + 0.3);
+      E.term = term;
+      // deux Modos avec leur lampe (cône de vision)
+      const coneM = new T.MeshBasicMaterial({ color: 0xff3030, transparent: true, opacity: 0.22, side: T.DoubleSide, depthWrite: false });
+      for (let i = 0; i < 2; i++) {
+        const n = npcMan({ skin: 0xe8c09a, shirt: 0x0a7a3a, pants: 0x1a1a1a, hair: 0x1a1a1a });
+        const badge = new T.Mesh(new T.PlaneGeometry(0.28, 0.16), E.label('MODO', { bg: '#0a7a3a', col: '#fff', w: 256, h: 140 })); badge.position.set(0.17, 0.25, 0.1); badge.rotation.y = Math.PI / 2; n.torso.add(badge);
+        sc.add(n.root);
+        const cone = new T.Mesh(new T.CircleGeometry(6.5, 16, -0.45, 0.9), coneM); cone.rotation.x = -Math.PI / 2; cone.position.y = 0.06; sc.add(cone);
+        const path = i ? [[Tw.u0 + 3, Tw.v1 - 3], [Tw.u1 - 3, Tw.v1 - 3], [Tw.u1 - 3, Tw.v1 - 9], [Tw.u0 + 3, Tw.v1 - 9]] : [[Tw.u1 - 3, Tw.v0 + 4], [Tw.u0 + 3, Tw.v0 + 4], [Tw.u0 + 3, Tw.v0 + 12], [Tw.u1 - 3, Tw.v0 + 12]];
+        E.modos.push({ n, cone, path: path.map(([u, v]) => [X(u), v]), i: 0, x: X(path[0][0]), z: path[0][1], a: 0, wait: 0 });
+      }
+      const lt = new T.PointLight(0xff8080, 1.6, 30, 1.2); lt.position.set(cx, 4.5, hz); this.lightGroup('street').add(lt);
+    },
+    exStudio() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u;
+      this.exHall('studio', -34, -6, -134, -110, 6, 's', -20, 3, 0x5a4a6a, 0x1a1a22, () => {
+        const cx = X(-20), cz = -126;
+        // le décor : grand logo maison, bureau, fauteuil, canapé des invités
+        K.plane(12, 4.6, K.txt(1024, 400, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#3a0a6a'); gr.addColorStop(1, '#c8102e'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffd23a'; g.lineWidth = 12; g.strokeRect(10, 10, w - 20, h - 20); g.fillStyle = '#ffd23a'; g.textAlign = 'center'; g.font = '900 120px "SSK Rodin","Arial Black",sans-serif'; g.fillText('KOROCHIKU', w / 2, 190); g.fillStyle = '#fff'; g.font = '900 70px "SSK Rodin","Arial Black",sans-serif'; g.fillText('★ LE LIVE ★', w / 2, 300); }), cx, 3.2, -133.75, 0);
+        E.B(0x1a1a2a).put(new T.BoxGeometry(4.4, 1.0, 1.4), cx, 0.5, cz - 3); E.B(0xffd23a).put(new T.BoxGeometry(4.5, 0.08, 1.5), cx, 1.04, cz - 3);
+        E.B(0x3a0a6a).put(new T.BoxGeometry(1.0, 0.5, 1.0), cx, 0.25, cz - 4.6);
+        E.seats.push({ x: cx, z: cz - 4.5, r: Math.PI / 2, y: 0.15, kind: 'chair', ox: cx + 1.4, oz: cz - 4.5, ex: 'anim' });
+        for (const s of [-1, 1]) { E.B(0xc8102e).put(new T.BoxGeometry(3.2, 0.6, 1.1), cx + s * 6, 0.3, cz - 2.6); for (const k of [-1, 1]) E.seats.push({ x: cx + s * 6 + k * 0.8, z: cz - 2.6, r: Math.PI / 2, y: 0.25, kind: 'chair', ox: cx + s * 6 + k * 0.8, oz: cz - 1.4, ex: 'invite' }); }
+        // les caméras sur trépied, les spots
+        for (const [dx, dz] of [[-4, 4], [0, 6], [4, 4]]) { const g = new T.Group(); g.position.set(cx + dx, 0, cz + dz); sc.add(g); for (let k = 0; k < 3; k++) { const l = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 1.6), K.lam(0x1a1a1a)); const a = k / 3 * TAU; l.position.set(Math.cos(a) * 0.3, 0.75, Math.sin(a) * 0.3); l.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3); g.add(l); } const cam = new T.Mesh(new T.BoxGeometry(0.5, 0.45, 0.9), K.lam(0x2a2a2a)); cam.position.y = 1.7; cam.lookAt(new T.Vector3(cx, 1.4, cz - 3).sub(g.position).add(new T.Vector3(0, 0, 0))); g.add(cam); K.wallC(cx + dx - 0.4, cz + dz - 0.4, cx + dx + 0.4, cz + dz + 0.4); }
+        // le panneau ON AIR
+        const onM = new T.MeshBasicMaterial({ color: 0x3a0a0a }); K.plane(2.4, 0.8, onM, cx, 5.4, -133.7, 0);
+        const onT = K.plane(2.2, 0.6, E.label('ON AIR', { col: '#fff', bg: 'rgba(0,0,0,0)', w: 512, h: 140 }), cx, 5.4, -133.68, 0); void onT;
+        E.onAirM = onM;
+        // les gradins du public
+        for (let k = 0; k < 3; k++) E.B(0x3a3a4a).put(new T.BoxGeometry(14, 0.4 + k * 0.4, 1.2), cx, (0.4 + k * 0.4) / 2, cz + 8 + k * 1.2);
+        for (let k = 0; k < 3; k++) for (let i = 0; i < 6; i++) E.seats.push({ x: cx - 5 + i * 2, z: cz + 8 + k * 1.2, r: -Math.PI / 2, y: 0.05 + k * 0.4, kind: 'chair', ox: cx - 5 + i * 2, oz: cz + 6.6, ex: 'public' });
+        const lt = new T.PointLight(0xffe0f0, 1.8, 30, 1.2); lt.position.set(cx, 5, cz - 2); this.lightGroup('street').add(lt);
+      });
+    },
+    // ==================================================================== dessins mis à jour par les données
+    exTombsDraw() {
+      const E = this.ex; if (!E || !E.tombSlots) return;
+      const list = E.memo.length ? E.memo.map(m => [m.n, m.d || '', m.e ? '« ' + m.e + ' »' : '']) : [];
+      const all = [...list, ...EX_MEMO_DEF].slice(0, E.tombSlots.length);
+      E.tombSlots.forEach((S, i) => {
+        const g = S.c.getContext('2d'), w = 256, h = 300, it = all[i];
+        g.fillStyle = '#9a968e'; g.fillRect(0, 0, w, h);
+        if (!it) { S.name = null; S.tx.needsUpdate = true; return; }
+        S.name = it[0];
+        g.fillStyle = '#2a2a2a'; g.textAlign = 'center'; g.font = '900 30px Georgia,serif'; g.fillText('✝ R.I.P. ✝', w / 2, 42);
+        let fs = 34; g.font = `900 ${fs}px Georgia,serif`; while (g.measureText(it[0]).width > w - 24 && fs > 14) { fs -= 2; g.font = `900 ${fs}px Georgia,serif`; } g.fillText(it[0], w / 2, 100);
+        g.font = 'italic 22px Georgia,serif'; g.fillText(('a craqué · ' + it[1]).trim(), w / 2, 140);
+        g.font = 'italic 20px Georgia,serif'; const words = String(it[2]).split(' '); let line = '', y = 190; for (const wd of words) { const tt = (line + ' ' + wd).trim(); if (g.measureText(tt).width > w - 30) { g.fillText(line, w / 2, y); y += 26; line = wd; } else line = tt; } g.fillText(line, w / 2, y);
+        S.tx.needsUpdate = true;
+      });
+    },
+    exFlower(i) {
+      const E = this.ex, S = E.tombSlots && E.tombSlots[i]; if (!S || S.fl.length >= 10) return;
+      const k = S.fl.length, g = new T.Group(); g.position.set((k % 5 - 2) * 0.26, 0.2, 0.6 + Math.floor(k / 5) * 0.45);
+      const st = new T.Mesh(new T.CylinderGeometry(0.015, 0.015, 0.35, 4), new T.MeshLambertMaterial({ color: 0x2a7a2a })); st.position.y = 0.17; g.add(st);
+      const fl = new T.Mesh(new T.SphereGeometry(0.08, 8, 6), new T.MeshLambertMaterial({ color: [0xff3a5a, 0xffffff, 0xffd23a, 0xc88aff][k % 4] })); fl.position.y = 0.37; g.add(fl);
+      S.g.add(g); S.fl.push(g);
+    },
+    exPodiumDraw(v) {
+      const E = this.ex; if (!E || !E.podium) return;
+      const names = [v.a, v.b, v.c];
+      E.podium.forEach((P, i) => { const g = P.c.getContext('2d'); g.clearRect(0, 0, 512, 96); const n = names[i]; if (n) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, 512, 96); g.fillStyle = ['#ffd23a', '#e8e8f0', '#e8a060'][i]; g.font = '900 52px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n).slice(0, 18), 256, 50); } P.t.needsUpdate = true; });
+    },
+    exBoardDraw() {
+      const E = this.ex; if (!E || !E.board) return;
+      const g = E.board.c.getContext('2d'), w = 1024, h = 512, R = E.lastRace;
+      g.fillStyle = '#0a0a14'; g.fillRect(0, 0, w, h); g.strokeStyle = '#2a6ad8'; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10);
+      g.fillStyle = '#ffd23a'; g.textAlign = 'center'; g.font = '900 54px "SSK Rodin","Arial Black",sans-serif'; g.fillText('STADE D\'ATHLÉTISME · 1 TOUR', w / 2, 70);
+      g.font = '900 34px "SSK Rodin",Arial,sans-serif'; g.fillStyle = '#7aff6a';
+      const rec = E.rec; g.fillText(rec && rec.n ? `RECORD : ${rec.n} · ${(rec.ms / 1000).toFixed(2)} s` : 'RECORD : personne encore', w / 2, 130);
+      g.fillStyle = '#fff'; g.font = '700 34px Arial'; g.textAlign = 'left';
+      if (R && R.list.length) { g.fillText('DERNIÈRE COURSE :', 80, 200); R.list.slice(0, 6).forEach((r, i) => g.fillText(`${i + 1}. ${String(r.n).slice(0, 20)}  —  ${(r.ms / 1000).toFixed(2)} s`, 100, 250 + i * 42)); }
+      else { g.textAlign = 'center'; g.fillText('Va sur la ligne de départ et appuie sur E', w / 2, 260); g.fillText('pour lancer une course (tout le monde peut rejoindre)', w / 2, 310); }
+      E.board.t.needsUpdate = true;
+    },
+    exHousesSync() {
+      const E = this.ex; if (!E || !E.houses) return;
+      const D = E.hdata || {};
+      for (const H of E.houses) {
+        const v = D[H.i] || null; H.owner = v;
+        H.wm.color.setHex(v ? EX_HOUSE_COLS[v.c || 0] : 0xb8b0a0);
+        H.deco.forEach((g, k) => { g.visible = !!v && (v.s || 0) === k; });
+        const mine = v && v.u === NET.uid, open = !v || v.o !== false;
+        H.door.visible = !open; H.door.material.color.setHex(open ? 0x5a3420 : 0x3a2010);
+        if (open || mine) { H.solid.x1 = H.solid.x2 = -9999; } else Object.assign(H.solid, H.sbox);
+        if (!H.door.visible) H.door.position.y = 1.3; else H.door.position.y = 1.3;
+        const g = H.nc.getContext('2d'); g.clearRect(0, 0, 512, 128); g.fillStyle = v ? '#f2ece0' : '#c8102e'; g.fillRect(0, 0, 512, 128); g.strokeStyle = '#2a2a2a'; g.lineWidth = 8; g.strokeRect(4, 4, 504, 120);
+        g.fillStyle = v ? '#2a2a2a' : '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 52px "SSK Rodin","Arial Black",sans-serif'; g.fillText(v ? 'Chez ' + String(v.n).slice(0, 16) : `À VENDRE · ${EX_HOUSE_PRICE} R$`, 256, 66); H.nt.needsUpdate = true;
+      }
+    },
+    // ==================================================================== zones
+    exWhere(x, z) { const u = x - WX; if (z > 74) return 'S'; if (z < -74) return 'N'; void u; return null; },
+    exHallAt(x, z) { const E = this.ex; return E && E.halls.find(h => x > h.x1 && x < h.x2 && z > h.z1 && z < h.z2); },
+    exZone(ar) {
+      const E = this.ex; if (!E || ar !== 'street') return null;
+      const m = this.me, near = (x, z, r) => Math.hypot(m.x - x, m.z - z) < r, X = (u) => WX + u;
+      // une demande de bisou pour moi : prioritaire
+      const KR = E.kissReq;
+      if (KR && exNow() - KR.t < 15000) return { id: 'ex-kiss-ok', label: `${KR.fn} veut t'embrasser 💋 — Accepter`, sub: 'dans les vestiaires', alt: { id: 'ex-kiss-no', label: 'Refuser' } };
+      if (E.ride) return { id: 'ex-ride-end', label: 'Descendre', sub: 'Échap aussi' };
+      if (E.fish) return E.fish.bite ? { id: 'ex-fish-hook', label: '❗ FERRE ! (E)', sub: 'vite !' } : { id: 'ex-fish-stop', label: 'Arrêter de pêcher', sub: 'attends que ça morde…' };
+      if (E.heist && E.heist.t > 0) return { id: 'ex-heist', label: `Copier la liste des bannis… ${Math.ceil(E.heist.t / 60)} s`, sub: 'ne bouge pas, ne te fais pas voir' };
+      for (const [k, G] of Object.entries(EX_GATES)) if (near(X(G.u), G.v, 3.4)) return { id: 'ex-gate', gate: k, label: G.label, sub: G.sub };
+      if (Math.abs(m.z) < 74) return null;
+      // les sièges (transats, bancs, studio)
+      { let best = null, bd = 1.1; for (const s of E.seats) { const d = Math.hypot(m.x - s.x, m.z - s.z); if (d < bd && ![...this.remote.values()].some(a => a.a === 'sit' && Math.hypot(a.x - s.x, a.z - s.z) < 0.5)) { bd = d; best = s; } } if (best) return { id: 'ex-sit', seat: best, label: best.ex === 'transat' ? 'S\'allonger sur le transat' : best.ex === 'anim' ? 'S\'asseoir dans le fauteuil de l\'animateur' : 'S\'asseoir', sub: '' }; }
+      if (m.z > 0) {
+        const W = E.wheel; if (near(W.x, W.z - 4.6, 2.6)) return { id: 'ex-wheel', label: 'Monter dans la grande roue 🎡', sub: 'un tour complet, vue sur toute la ville' };
+        if (near(X(-37), 92.6, 2.6)) return { id: 'ex-coaster', label: 'Monter dans les montagnes russes 🎢', sub: 'accroche-toi !' };
+        const u = m.x - WX;
+        if (u > 9.4 && u < 16.6 && m.z > 190) return { id: 'ex-ferry', label: 'Prendre le ferry pour Koh-Kheys ⛴️', sub: 'l\'île du mode Histoire', alt: { id: 'ex-fish', label: 'Pêcher 🎣' } };
+        if (u > 9.4 && u < 16.6 && m.z > 158) return { id: 'ex-fish', label: 'Pêcher 🎣', sub: 'les poissons se vendent au marché (R$)' };
+        for (const S of E.tombSlots || []) if (S.name && near(S.x, S.z + 1.2, 1.3)) return { id: 'ex-flower', tomb: S.i, label: `Déposer une fleur sur la tombe de ${S.name} 🌹`, sub: `${E.flowers[S.i] || 0} fleur(s)` };
+      } else {
+        // les maisons
+        for (const H of E.houses) {
+          const inside = m.x > X(H.u - 7) && m.x < X(H.u + 7) && m.z > H.v0 && m.z < H.v1, atDoor = near(X(H.u), H.v0 - 0.9, 1.6);
+          if (!inside && !atDoor) continue;
+          const v = H.owner;
+          if (!v) return atDoor ? { id: 'ex-house-buy', h: H.i, label: `Acheter cette maison (${EX_HOUSE_PRICE} R$)`, sub: 'tu pourras la peindre et la décorer' } : null;
+          if (v.u === NET.uid) return { id: 'ex-house-col', h: H.i, label: 'Repeindre ta maison 🎨', sub: `décor : ${EX_HOUSE_STYLES[v.s || 0]} · porte ${v.o === false ? 'fermée' : 'ouverte'}`, alt: { id: 'ex-house-deco', h: H.i, label: inside ? 'Changer le décor' : (v.o === false ? 'Ouvrir la porte' : 'Fermer la porte') } };
+          if (atDoor) return { id: 'ex-none', label: `Maison de ${v.n}`, sub: v.o === false ? 'porte fermée à clé' : 'porte ouverte : entre !' };
+        }
+        // le stade des Kheys : l'écran géant
+        if (E.arena && near(E.arena.x, E.arena.z - 10, 7)) return { id: 'ex-tv', label: 'Changer de chaîne sur l\'écran géant 📺', sub: 'les combats en direct passent ici' };
+        // la piste : la ligne de départ
+        const T2 = EX_TRACK, C = E.course;
+        if (near(X(T2.cu), T2.cv + T2.R + 1.6, 3.2)) {
+          if (C && C.t0 > exNow() && !C.joined) return { id: 'ex-race-join', label: `Rejoindre la course (départ dans ${Math.ceil((C.t0 - exNow()) / 1000)} s) 🏃`, sub: 'un tour de piste' };
+          if (!C || C.done) return { id: 'ex-race-new', label: 'Lancer une course 🏁', sub: 'les autres ont 12 s pour rejoindre · ou cours seul contre le record' };
+        }
+        // les vestiaires : un bisou ?
+        const h = this.exHallAt(m.x, m.z);
+        if (h && h.id === 'vest') {
+          let tgt = null, bd = 1.8; for (const [uid, a] of this.remote) { const d = Math.hypot(a.x - m.x, a.z - m.z); if (d < bd && this.exHallAt(a.x, a.z) === h) { bd = d; tgt = [uid, a]; } }
+          if (tgt) return { id: 'ex-kiss-ask', uid: tgt[0], label: `Proposer un bisou à ${tgt[1].name} 💋`, sub: 'il ou elle peut accepter ou refuser' };
+        }
+        // la tour des Modos : le terminal
+        if (h && h.id === 'tour' && E.term && near(E.term.x, E.term.z + 1.1, 1.3)) return { id: 'ex-heist-go', label: 'Copier la liste des bannis 💾', sub: 'reste 4 s au terminal sans te faire voir' };
+        if (h && h.id === 'tour' && near(E.hammer.position.x, E.hammer.position.z + 1.3, 1.3)) return { id: 'ex-none', label: 'Le Marteau du Ban', sub: '« Qu\'il s\'abatte sur les craqueurs »' };
+        if (h && h.id === 'studio') return { id: 'ex-clap', label: 'Applaudir 👏', sub: E.onAir ? 'ON AIR : le live est en cours' : 'le plateau du Leader' };
+      }
+      return null;
+    },
+    exInteract(zn) {
+      if (!zn || !String(zn.id).startsWith('ex-')) return false;
+      const E = this.ex, m = this.me, X = (u) => WX + u;
+      if (zn.id === 'ex-none') return true;
+      if (zn.id === 'ex-gate') { const G = EX_GATES[zn.gate]; this.exTeleport(X(G.to[0]), G.to[1], G.to[2], G.label.toUpperCase()); return true; }
+      if (zn.id === 'ex-sit') { this.sitAt(zn.seat); this.send && this.send(true); return true; }
+      if (zn.id === 'ex-wheel') { this.exRide('wheel'); return true; }
+      if (zn.id === 'ex-coaster') { this.exRide('coaster'); return true; }
+      if (zn.id === 'ex-ride-end') { this.exRideEnd(); return true; }
+      if (zn.id === 'ex-ferry') {
+        this.fade && this.fade(1, 'EN ROUTE POUR KOH-KHEYS', 'Le ferry largue les amarres…'); SFX.honk && SFX.honk();
+        setTimeout(() => { const g = this.game; this.fade && this.fade(0); try { g.exitHub(true); if (g.online && g.online.close) g.online.close(); if (g.online && g.online.el) g.online.el.style.display = 'none'; g.storyEnter(); } catch (e) { console.warn('[SSK] ferry', e); } }, 1600);
+        return true;
+      }
+      if (zn.id === 'ex-fish') { E.fish = { t: 0, bite: 0, at: 120 + Math.floor(Math.random() * 300) }; this.freeze = true; m.r = -Math.PI / 2 * (m.z > 190 ? 1 : 1); this.cityToast('Tu lances ta ligne… 🎣'); this.exRod(true); return true; }
+      if (zn.id === 'ex-fish-stop') { E.fish = null; this.freeze = false; this.exRod(false); return true; }
+      if (zn.id === 'ex-fish-hook') { const f = EX_FISH[Math.floor(Math.random() * EX_FISH.length)]; E.fish = null; this.freeze = false; this.exRod(false); SFX.fanfare && SFX.fanfare(); this.bigText && this.bigText('🎣 PRISE !', `Tu as pêché ${f[0]} (+${f[1]} R$)`); this.missionPay && this.missionPay(f[1], 'Pêche'); return true; }
+      if (zn.id === 'ex-flower') { if (NET.uid && NET.ref) NET.ref('amg/memo_fleurs').push({ i: zn.tomb, t: NET.TS() }).catch(() => {}); else { E.flowers[zn.tomb] = (E.flowers[zn.tomb] || 0) + 1; this.exFlower(zn.tomb); } SFX.place && SFX.place(); this.cityToast('Tu déposes une fleur. Repose en paix, craqueur.'); return true; }
+      if (zn.id === 'ex-house-buy') {
+        if (Object.values(E.hdata || {}).some(v => v && v.u === NET.uid)) { this.cityToast('Tu as déjà une maison dans le quartier.'); return true; }
+        if (!this.spend(EX_HOUSE_PRICE, 'cette maison')) return true;
+        this.ecoSave && this.ecoSave();
+        const val = { u: NET.uid, n: String(NET.name()).slice(0, 20), c: Math.floor(Math.random() * EX_HOUSE_COLS.length), s: 0, o: true };
+        if (NET.uid && NET.ref) { const ref = NET.ref('amg/maisons/' + zn.h); ref.once('value').then(sn => sn.exists() ? { committed: false } : ref.set(val).then(() => ({ committed: true }))).then(r => { if (r && r.committed) { this.bigText && this.bigText('🏠 BIENVENUE CHEZ TOI', 'Repeins-la, change le décor, ferme la porte à clé.'); } else this.cityToast('Trop tard, quelqu\'un vient de l\'acheter.'); }).catch(() => {}); }
+        else { E.hdata = { ...(E.hdata || {}), [zn.h]: val }; this.exHousesSync(); }
+        return true;
+      }
+      if (zn.id === 'ex-house-col' || zn.id === 'ex-house-deco') {
+        const cur = (E.hdata || {})[zn.h]; if (!cur) return true; const nv = { ...cur };
+        if (zn.id === 'ex-house-col') nv.c = ((cur.c || 0) + 1) % EX_HOUSE_COLS.length;
+        else { const H = E.houses[zn.h], inside = m.x > X(H.u - 7) && m.x < X(H.u + 7) && m.z > H.v0 && m.z < H.v1; if (inside) nv.s = ((cur.s || 0) + 1) % EX_HOUSE_STYLES.length; else nv.o = cur.o === false; }
+        if (NET.uid && NET.ref) NET.ref('amg/maisons/' + zn.h).set(nv).catch(() => {}); else { E.hdata[zn.h] = nv; this.exHousesSync(); }
+        SFX.ui && SFX.ui('pick'); return true;
+      }
+      if (zn.id === 'ex-tv') { const list = this.tvList && this.tvList.length ? this.tvList : (this.tvList = this.channels ? this.channels() : []); if (list.length && this.setChannel) { this.setChannel(((this.tvCh || 0) + 1) % list.length); this.cityToast('Écran géant : ' + (list[this.tvCh] ? list[this.tvCh].name : '')); } return true; }
+      if (zn.id === 'ex-race-new') { const t0 = exNow() + 12000; if (NET.uid && NET.ref) NET.ref('amg/course').push({ t0, by: String(NET.name()).slice(0, 20), t: NET.TS() }).catch(() => {}); else this.exCourseEv('l' + t0, { t0, by: 'toi' }); setTimeout(() => this.exRaceJoin(), 300); return true; }
+      if (zn.id === 'ex-race-join') { this.exRaceJoin(); return true; }
+      if (zn.id === 'ex-kiss-ask') { if (NET.uid && NET.ref) NET.ref('amg/bisou').push({ k: 'req', f: NET.uid, fn: String(NET.name()).slice(0, 20), to: zn.uid, t: NET.TS() }).catch(() => {}); this.cityToast('Demande envoyée… 💌'); E.kissAsk = { to: zn.uid, t: exNow() }; return true; }
+      if (zn.id === 'ex-kiss-ok' || zn.id === 'ex-kiss-no') { const R = E.kissReq; E.kissReq = null; if (R && NET.uid && NET.ref) NET.ref('amg/bisou').push({ k: zn.id === 'ex-kiss-ok' ? 'ok' : 'no', f: NET.uid, fn: String(NET.name()).slice(0, 20), to: R.f, t: NET.TS() }).catch(() => {}); if (zn.id === 'ex-kiss-ok' && R) this.exKissDo(R.f); return true; }
+      if (zn.id === 'ex-heist-go') { E.heist = { t: 240 }; this.freeze = true; SFX.ui && SFX.ui('pick'); return true; }
+      if (zn.id === 'ex-heist') return true;
+      if (zn.id === 'ex-clap') { SFX.clap ? SFX.clap() : SFX.pop && SFX.pop(); this.avatar && this.avatar.say && this.avatar.say('👏👏👏'); return true; }
+      return false;
+    },
+    exTeleport(x, z, r, title) {
+      this.fade && this.fade(1, title || '', ''); this.freeze = true; SFX.door && SFX.door();
+      setTimeout(() => { const m = this.me; m.x = x; m.z = z; m.r = r; m.a = 'idle'; this.camYaw = r - Math.PI / 2; this.camPos = null; if (this.avatar) { this.avatar.x = x; this.avatar.z = z; } this.freeze = false; this.send && this.send(true); this.fade && this.fade(0); const wq = z > 74 ? 'S' : z < -74 ? 'N' : null; if (wq && !this.ex['w' + wq]) { this.ex['w' + wq] = 1; this.bigText && this.bigText(wq === 'S' ? 'LE FRONT DE MER' : 'LES HAUTS', wq === 'S' ? 'Fête foraine · Plage · Port · Phare · Mémorial des Craqueurs' : 'Stade des Kheys · Athlétisme · Tour des Modos · Studio · Maisons'); } }, 500);
+    },
+    exRod(on) {
+      const E = this.ex, a = this.avatar; if (!a || !a.m) return;
+      if (E.rod) { E.rod.parent && E.rod.parent.remove(E.rod); E.rod = null; } if (E.bob) { this.scene.remove(E.bob); E.bob = null; }
+      if (!on) return;
+      const arm = a.m.armR, piv = (a.m.elbows && a.m.elbows[0]) || arm, y = -(arm.userData.reach || 0.6) - (piv === arm ? 0 : piv.position.y);
+      const g = new T.Group(); g.position.set(0.05, y, 0); piv.add(g);
+      const rod = new T.Mesh(new T.CylinderGeometry(0.02, 0.03, 2.4, 6), new T.MeshLambertMaterial({ color: 0x5a3a22 })); rod.position.set(0.9, 0.6, 0); rod.rotation.z = -1.0; g.add(rod); E.rod = g;
+      const bob = new T.Mesh(new T.SphereGeometry(0.12, 8, 6), new T.MeshLambertMaterial({ color: 0xff3a3a })); const m = this.me; const side = (m.x - WX) < 13 ? -1 : 1; bob.position.set(m.x + side * 3.4, 0, m.z + 0.5); this.scene.add(bob); E.bob = bob;
+      m.r = side < 0 ? Math.PI : 0;
+    },
+    // ==================================================================== manèges
+    exRide(kind) {
+      const E = this.ex; if (E.ride) return;
+      E.ride = { kind, t: 0, back: { x: this.me.x, z: this.me.z } };
+      if (kind === 'wheel') { const W = E.wheel; let best = 0, by = 1e9; W.cabs.forEach((c, i) => { if (c.position.y < by) { by = c.position.y; best = i; } }); E.ride.cab = best; E.ride.dur = 60 * 45; }
+      else { E.ride.s = 0; E.ride.dur = 0; }
+      this.freeze = true; this.me.a = 'sit'; this.me.sy = 0.1; this.me.sk = 'chair'; SFX.ui && SFX.ui('pick');
+    },
+    exRideEnd() {
+      const E = this.ex, R = E.ride; if (!R) return; E.ride = null;
+      const m = this.me; m.a = 'idle'; m.sk = ''; this.freeze = false; if (this.avatar) this.avatar.baseY = 0;
+      m.x = R.kind === 'wheel' ? E.wheel.x : WX - 37; m.z = R.kind === 'wheel' ? E.wheel.z - 6.6 : 94.6; this.camPos = null; this.camFree = false;
+      if (NET.uid && NET.isKept && NET.isKept('hub/' + NET.uid)) NET.patch('hub/' + NET.uid, { by: 0 }); this.send && this.send(true);
+    },
+    // ==================================================================== courses
+    exCourseEv(key, v) {
+      const E = this.ex; if (!v || !v.t0) return; const now = exNow();
+      if (v.t0 < now - 60000) return;
+      if (!E.course || E.course.t0 !== v.t0) { E.course = { t0: v.t0, by: v.by, joined: false, done: false, key }; const m = this.me; if (Math.hypot(m.x - (WX + EX_TRACK.cu), m.z - EX_TRACK.cv) < 70 && m.z < -74) this.cityToast(`🏁 ${v.by} lance une course ! Départ dans ${Math.max(1, Math.round((v.t0 - now) / 1000))} s sur la ligne.`); }
+    },
+    exRaceJoin() {
+      const E = this.ex, C = E.course; if (!C || C.joined || C.t0 < exNow()) return;
+      C.joined = true; C.lane = Math.floor(Math.random() * 4);
+      const m = this.me, T2 = EX_TRACK; m.x = WX + T2.cu - 0.6; m.z = T2.cv + T2.R + 0.6 + C.lane * 1.2; m.r = Math.PI; this.camYaw = m.r - Math.PI / 2; this.camPos = null; this.freeze = true; this.send && this.send(true);
+      this.cityToast('Prêt ? Un tour complet en partant vers la gauche, sans couper par la pelouse ! Maj pour sprinter.');
+    },
+    exCourseRes(v) {
+      const E = this.ex; if (!v || !v.t0) return;
+      if (!E.lastRace || E.lastRace.t0 !== v.t0) { if (E.lastRace && v.t0 < E.lastRace.t0) return; E.lastRace = { t0: v.t0, list: [] }; }
+      if (!E.lastRace.list.some(r => r.n === v.n)) { E.lastRace.list.push({ n: v.n, ms: v.ms }); E.lastRace.list.sort((a, b) => a.ms - b.ms); }
+      this.exBoardDraw();
+    },
+    exRaceStep(now) {
+      const E = this.ex, C = E.course, m = this.me, T2 = EX_TRACK; if (!C || !C.joined || C.done) return;
+      if (now < C.t0) { const s = Math.ceil((C.t0 - now) / 1000); if (s !== C.lastS) { C.lastS = s; if (s <= 3) { this.floatText && this.floatText(String(s), '#ffd23a'); SFX.ui && SFX.ui('move'); } } return; }
+      if (!C.started) { C.started = true; this.freeze = false; this.bigText && this.bigText('PARTEZ !', 'Un tour de piste'); SFX.gong && SFX.gong(); C.q = 0; C.ms0 = now; }
+      // progression : quatre quarts dans l'ordre, puis la ligne
+      const a = Math.atan2(m.z - T2.cv, (m.x - WX) - T2.cu), q = a > Math.PI / 2 ? 0 : a > 0 ? 3 : a > -Math.PI / 2 ? 2 : 1;
+      { const du = Math.max(0, Math.abs((m.x - WX) - T2.cu) - T2.L), dv = m.z - T2.cv; if (Math.hypot(du, dv) < T2.R - 2.2) { C.done = true; this.bigText && this.bigText('DISQUALIFIÉ', 'Tu as coupé par la pelouse !'); SFX.deny2 && SFX.deny2(); return; } }
+      const next = [1, 2, 3, 0][C.q % 4]; if (q === next && C.q < 4) C.q++;
+      if (C.q >= 4 && (m.x - WX) <= T2.cu - 0.6 && m.z > T2.cv) {
+        C.done = true; const ms = now - C.ms0; SFX.fanfare && SFX.fanfare(); this.bigText && this.bigText('ARRIVÉE !', `${(ms / 1000).toFixed(2)} s`);
+        const n = String(NET.name()).slice(0, 20);
+        if (NET.uid && NET.ref) { NET.ref('amg/course_res').push({ t0: C.t0, n, ms, t: NET.TS() }).catch(() => {}); if (!E.rec || !E.rec.ms || ms < E.rec.ms) NET.ref('amg/course_rec').set({ n, ms, t: NET.TS() }).catch(() => {}); }
+        else { this.exCourseRes({ t0: C.t0, n, ms }); if (!E.rec || ms < E.rec.ms) { E.rec = { n, ms }; this.exBoardDraw(); } }
+      }
+      if (now - C.t0 > 180000) C.done = true;
+    },
+    // ==================================================================== bisous (seulement si l'autre accepte)
+    exKissEv(key, v) {
+      const E = this.ex; if (!v || exNow() - (+v.t || 0) > 20000) return;
+      if (v.to !== NET.uid) return;
+      if (v.k === 'req') { E.kissReq = { f: v.f, fn: v.fn, t: exNow() }; SFX.ding && SFX.ding(); }
+      else if (v.k === 'ok' && E.kissAsk && E.kissAsk.to === v.f) { E.kissAsk = null; this.exKissDo(v.f); }
+      else if (v.k === 'no' && E.kissAsk && E.kissAsk.to === v.f) { E.kissAsk = null; this.cityToast(`${v.fn} a refusé. Pas de souci, on reste potes. 🤝`); }
+    },
+    exKissDo(uid) {
+      const a = this.remote.get(uid), m = this.me; if (!a) return;
+      m.r = Math.atan2(-(a.z - m.z), a.x - m.x); m.a = 'idle';
+      if (this.avatar) this.avatar.exKiss = performance.now();
+      if (NET.uid && NET.isKept && NET.isKept('hub/' + NET.uid)) NET.patch('hub/' + NET.uid, { ks: exNow() });
+      SFX.pop && SFX.pop(); setTimeout(() => SFX.pop && SFX.pop(), 180);
+      for (let i = 0; i < 8; i++) setTimeout(() => this.puff((m.x + a.x) / 2 + (Math.random() - 0.5) * 0.6, 2.2 + Math.random() * 0.6, (m.z + a.z) / 2 + (Math.random() - 0.5) * 0.6, 0xff5aa8, 0.22, 0.03), i * 120);
+      this.floatText && this.floatText('💋', '#ff5aa8');
+      this.send && this.send(true);
+    },
+    // ==================================================================== chaque image
+    exStep() {
+      const E = this.ex; if (!E) return;
+      const t = ++E.fr, now = exNow(), m = this.me, X = (u) => WX + u, inN = m.z < -74, inS = m.z > 74;
+      for (const A of E.anim) { if (A.gate) A.gate.material.opacity = 0.08 + Math.sin(t * 0.05) * 0.05; if (A.beam) A.beam.rotation.y += 0.01; if (A.foam) A.foam.material.opacity = 0.4 + Math.sin(t * 0.03) * 0.2; }
+      // la grande roue tourne (un tour en 60 s), les cabines restent droites
+      const W = E.wheel; W.a = (now / 60000 * TAU) % TAU; W.g.rotation.z = W.a;
+      W.cabs.forEach((c, i) => { const a = W.a + i / 12 * TAU; c.position.set(W.x + Math.cos(a) * W.R, W.H + Math.sin(a) * W.R, W.z); });
+      // les montagnes russes : un tour en 30 s
+      const CO = E.coaster, k = (now / 30000) % 1, p = CO.curve.getPointAt(k), p2 = CO.curve.getPointAt((k + 0.004) % 1);
+      CO.cart.position.copy(p); CO.cart.position.y += 0.5; CO.cart.lookAt(p2.x, p2.y + 0.5, p2.z);
+      // les autos tamponneuses
+      if (inS) for (const c of E.cars) { c.a += (Math.random() - 0.5) * 0.08; c.x += Math.cos(c.a) * c.v; c.z += Math.sin(c.a) * c.v; if (c.x < X(-86.5) || c.x > X(-71.5)) { c.a = Math.PI - c.a; c.x = clamp(c.x, X(-86.5), X(-71.5)); } if (c.z < 87.5 || c.z > 98.5) { c.a = -c.a; c.z = clamp(c.z, 87.5, 98.5); } for (const o of E.cars) if (o !== c && Math.hypot(o.x - c.x, o.z - c.z) < 2) { c.a += Math.PI * 0.7; if (Math.random() < 0.02 && Math.hypot(m.x - c.x, m.z - c.z) < 20) SFX.punch && SFX.punch(); } c.g.position.set(c.x, 0, c.z); c.g.rotation.y = -c.a; }
+      // les bateaux bercés
+      if (inS) { E.boats.forEach((b, i) => { b.position.y = Math.sin(t * 0.03 + i) * 0.12; b.rotation.z = Math.sin(t * 0.025 + i) * 0.05; }); E.ferry.position.y = Math.sin(t * 0.02) * 0.08; }
+      if (E.arena && this.tvMesh && E.arena.scr.material !== this.tvMesh.material) E.arena.scr.material = this.tvMesh.material;
+      // l'œil de la tour, le marteau, les Modos
+      if (E.eye) E.eye.scale.y = 0.6 + Math.abs(Math.sin(t * 0.01)) * 0.4;
+      if (inN) { E.hammer.rotation.y += 0.01; this.exModoStep(t); }
+      if (E.onAirM) E.onAirM.color.setHex(E.onAir ? (Math.floor(t / 30) % 2 ? 0xff1010 : 0xc80808) : 0x3a0a0a);
+      // la hauteur de caméra dans nos bâtiments
+      const h = (inN || inS) && this.exHallAt(m.x, m.z); if (h) this.camMaxY = h.H - 0.8;
+      // les manèges : on suit la cabine ou le wagon
+      if (E.ride) {
+        const R = E.ride, a = this.avatar; R.t++;
+        let px, py, pz, lx, ly, lz;
+        if (R.kind === 'wheel') { const c = W.cabs[R.cab]; px = c.position.x; py = c.position.y - 2.1; pz = c.position.z; lx = WX; ly = 4; lz = 0; if (R.t > R.dur) { this.exRideEnd(); return; } }
+        else { const kk = ((now / 30000) % 1); if (R.k0 == null) R.k0 = kk; if (R.t > 60 && Math.abs(kk - R.k0) < 0.01) { this.exRideEnd(); return; } px = CO.cart.position.x; py = CO.cart.position.y - 0.3; pz = CO.cart.position.z; const q = CO.curve.getPointAt((kk + 0.03) % 1); lx = q.x; ly = q.y + 0.6; lz = q.z; }
+        m.x = px; m.z = pz; if (a) { a.x = px; a.z = pz; a.baseY = py; }
+        const cam = this.camera; if (R.kind === 'wheel') { cam.position.set(px - 1.5, py + 3.2, pz - 6); cam.lookAt(px + 10, py - 2, pz - 40); } else { const d = new T.Vector3(lx - px, ly - py, lz - pz).normalize(); cam.position.set(px - d.x * 4, py + 2.6, pz - d.z * 4); cam.lookAt(lx, ly + 0.4, lz); }
+        this.camPos = cam.position.clone();
+        if (t % 20 === 0 && NET.uid && NET.isKept && NET.isKept('hub/' + NET.uid)) NET.patch('hub/' + NET.uid, { by: +py.toFixed(2), x: +px.toFixed(2), z: +pz.toFixed(2) });
+      }
+      // la pêche
+      if (E.fish) { const F = E.fish; F.t++; if (E.bob) E.bob.position.y = Math.sin(t * 0.08) * 0.05 - (F.bite ? 0.12 : 0); if (!F.bite && F.t > F.at) { F.bite = 60; SFX.ding && SFX.ding(); this.floatText && this.floatText('❗', '#ffd23a'); } else if (F.bite && --F.bite <= 0) { this.cityToast('Raté… il s\'est décroché. Recommence !'); E.fish = { t: 0, bite: 0, at: 120 + Math.floor(Math.random() * 300) }; } }
+      // le vol de la liste
+      if (E.heist && E.heist.t > 0) { E.heist.t--; if (E.heist.t % 60 === 0) SFX.ui && SFX.ui('move'); if (E.heist.t === 0) { this.freeze = false; E.heist = null; SFX.fanfare && SFX.fanfare(); this.bigText && this.bigText('💾 LISTE DES BANNIS COPIÉE', 'Elle contient 4 812 pseudos… dont le tien.'); this.missionPay && this.missionPay(40, 'Infiltration de la Tour des Modos'); } }
+      // la course
+      this.exRaceStep(now);
+      // une demande de bisou périmée
+      if (E.kissReq && now - E.kissReq.t > 15000) E.kissReq = null;
+    },
+    exModoStep(t) {
+      const E = this.ex, m = this.me, h = this.exHallAt(m.x, m.z), inTower = h && h.id === 'tour';
+      for (const M of E.modos) {
+        const [tx, tz] = M.path[M.i], dx = tx - M.x, dz = tz - M.z, d = Math.hypot(dx, dz);
+        if (M.wait > 0) { M.wait--; M.a += Math.sin(t * 0.05) * 0.03; }
+        else if (d < 0.1) { M.i = (M.i + 1) % M.path.length; M.wait = 90; }
+        else { M.x += dx / d * 0.035; M.z += dz / d * 0.035; M.a = Math.atan2(dz, dx); M.n.legL.rotation.z = Math.sin(t * 0.25) * 0.45; M.n.legR.rotation.z = -Math.sin(t * 0.25) * 0.45; }
+        if (M.wait > 0) M.n.legL.rotation.z = M.n.legR.rotation.z = 0;
+        M.n.root.position.set(M.x, 0, M.z); M.n.root.rotation.y = -M.a; M.n.armR.rotation.z = 1.2;
+        M.cone.position.set(M.x, 0.06, M.z); M.cone.rotation.z = -M.a;
+        if (inTower && !E.caught) {
+          const vx = m.x - M.x, vz = m.z - M.z, dd = Math.hypot(vx, vz);
+          let da = Math.atan2(vz, vx) - M.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+          if (dd < 6.3 && Math.abs(da) < 0.45) {
+            E.caught = true; E.heist = null; this.freeze = true; SFX.siren ? SFX.siren() : SFX.deny2 && SFX.deny2();
+            this.bigText && this.bigText('🔨 BANNI !', EX_MODO_LINES[Math.floor(Math.random() * EX_MODO_LINES.length)]);
+            setTimeout(() => { const T0 = EX_TOWER; m.x = WX + (T0.u0 + T0.u1) / 2; m.z = T0.v1 + 4; m.r = -Math.PI / 2; this.camPos = null; this.freeze = false; E.caught = false; this.send && this.send(true); }, 2500);
+          }
+        }
+      }
+    },
+  });
+
+  // =====================================================================
   //  LA CARTE (v0.99.2) : la mini-carte couvre maintenant toute la ville (Quartier du Peuple compris),
   //  et elle s'ouvre en plein écran (touche C, bouton CARTE ou tap sur la mini-carte) avec la position
   //  et le nom de tous les kheys connectés, zoom, déplacement, liste des joueurs.
   // =====================================================================
-  const MAP_U1 = 182, MAP_U0 = -178;                                              // la carte va de u -178 à 182
+  const MAP_U1 = 182, MAP_U0 = -178, MAP_V0 = -172;                                              // la carte va de u -178 à 182
   const MAP_NAMES = { '🏦': 'Risibank', '🏙️': 'Khey Tower', '💋': 'NNN Paradise', '💻': 'Cyber Kheys', '🔧': 'Garage', '🍔': "McKhey's", '💪': 'Muscle Khey', '⛩️': 'Temple du NNN', '🚕': 'Taxis', '🏠': 'Résidence des Kheys', '🛒': 'Kiosque', '🏪': 'Khey Mart', '🏛️': 'Musée des Kheys', '🧪': 'Site-19', '🏯': 'Temple de Korochiku', '⚙️': 'QG du Régiment 0', '🚐': 'Le van', '🎬': 'Cinéma du Peuple', '⛓️': 'Pénitencier du Peuple' };
   const MAP_HALLS = { palais: 'Temple de Korochiku', cinema: 'Cinéma du Peuple', musee: 'Musée des Kheys', scp: 'Site-19', reg0: 'QG du Régiment 0', prison: 'Pénitencier du Peuple' };
   const MAP_INT = { strip: 'NNN Paradise', cyber: 'Cyber Kheys', lobby: 'Khey Tower', tapt: 'Khey Tower (appart)', mck: "McKhey's", gym: 'Muscle Khey', bank: 'Risibank', temple: 'Temple du NNN' };
@@ -32428,11 +33173,18 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     mapBuild() {
       if (!this.miniBase || this.mapBig) return;
       if (!document.getElementById('sk-map-css')) { const s = document.createElement('style'); s.id = 'sk-map-css'; s.textContent = SKMAP_CSS; document.head.appendChild(s); }
-      const k = 2, base = this.miniBase, W = Math.round((MAP_U1 - MAP_U0) * k), H = base.height;
+      const k = 2, base = this.miniBase, W = Math.round((MAP_U1 - MAP_U0) * k), H = this.ex ? (202 - MAP_V0) * k : base.height, V0 = this.ex ? MAP_V0 : GEO_V0;
       // la carte étendue : la ville d'origine + le Quartier du Peuple
       const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
-      g.fillStyle = '#3a3842'; g.fillRect(0, 0, W, H); g.drawImage(base, (GEO_U0 - MAP_U0) * k, 0);
-      const U = (u) => (u - MAP_U0) * k, V = (v) => (v - GEO_V0) * k;
+      g.fillStyle = '#3a3842'; g.fillRect(0, 0, W, H); g.drawImage(base, (GEO_U0 - MAP_U0) * k, (GEO_V0 - V0) * k);
+      const U = (u) => (u - MAP_U0) * k, V = (v) => (v - V0) * k;
+      if (this.ex) {
+        g.fillStyle = '#7a7268'; g.fillRect(U(-90), V(76), 180 * k, 62 * k); g.fillStyle = '#e8d6a0'; g.fillRect(U(-90), V(138), 180 * k, 20 * k); g.fillStyle = '#1a6a9a'; g.fillRect(U(-178), V(158), 360 * k, 44 * k);
+        g.fillStyle = '#8a6a44'; g.fillRect(U(9.3), V(140), 7.4 * k, 61 * k); g.fillStyle = '#f2f2f2'; g.fillRect(U(21.5), V(186), 7 * k, 20 * k); g.fillStyle = '#4a7a3a'; g.fillRect(U(44), V(84), 46 * k, 52 * k);
+        g.fillStyle = '#7a7672'; g.fillRect(U(-90), V(-170), 180 * k, 94 * k); g.fillStyle = '#2a2a31'; g.fillRect(U(-90), V(-104), 180 * k, 6 * k); g.fillRect(U(-4), V(-104), 8 * k, 28 * k);
+        g.fillStyle = '#b8462e'; g.beginPath(); g.ellipse(U(42), V(-139), 42 * k, 20 * k, 0, 0, TAU); g.fill(); g.fillStyle = '#3a8a3a'; g.beginPath(); g.ellipse(U(42), V(-139), 34 * k, 13 * k, 0, 0, TAU); g.fill();
+        g.fillStyle = '#5a5a62'; g.beginPath(); g.ellipse(U(-65), V(-139), 23 * k, 27 * k, 0, 0, TAU); g.fill(); g.fillStyle = '#3a3a42'; g.beginPath(); g.ellipse(U(-65), V(-139), 15 * k, 18 * k, 0, 0, TAU); g.fill();
+      }
       if (this.vc) {
         g.fillStyle = '#6a625a'; g.fillRect(U(-176), V(-34), 84 * k, 68 * k);
         g.fillStyle = '#76747e'; g.fillRect(U(-100), V(-5), 12 * k, 10 * k);
@@ -32450,14 +33202,14 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       // les bâtiments et les murs (les blocs de collision de la ville)
       g.fillStyle = '#5c5668'; g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1;
       for (const r of this.solids || []) {
-        const u1 = r.x1 - WX, u2 = r.x2 - WX; if (u2 < MAP_U0 || u1 > MAP_U1 || r.z2 < GEO_V0 || r.z1 > -GEO_V0) continue;
+        const u1 = r.x1 - WX, u2 = r.x2 - WX; if (u2 < MAP_U0 || u1 > MAP_U1 || r.z2 < V0 || r.z1 > -V0) continue;
         if (cityArea((r.x1 + r.x2) / 2, (r.z1 + r.z2) / 2) !== 'street') continue;
         const inOld = u1 < 88 && u1 > -92; if ((u2 - u1) * (r.z2 - r.z1) < 0.6 && inOld) continue;                                        // petits objets de la ville d'origine (déjà dessinée)
         if (inOld && (u2 - u1) * (r.z2 - r.z1) < 30) continue;
         g.fillRect(U(u1), V(r.z1), Math.max(1, (u2 - u1) * k), Math.max(1, (r.z2 - r.z1) * k));
       }
       if (this.dx) for (const h of this.dx.halls || []) { g.fillStyle = h.id === 'palais' ? '#8a2024' : '#5c5668'; g.fillRect(U(h.x1 - WX), V(h.z1), (h.x2 - h.x1) * k, (h.z2 - h.z1) * k); g.strokeStyle = '#ffd979'; g.lineWidth = 1; g.strokeRect(U(h.x1 - WX) + 0.5, V(h.z1) + 0.5, (h.x2 - h.x1) * k - 1, (h.z2 - h.z1) * k - 1); }
-      this.mapBig = c; this.miniBase = c; this.miniU0 = MAP_U0;
+      this.mapBig = c; this.miniBase = c; this.miniU0 = MAP_U0; this.miniV0 = V0;
       if (this.miniIcons && this.dx && !this.miniIcons.some(i => i[0] === '🎬')) this.miniIcons.push(['🎬', WX + 174.75, -12], ['⛓️', WX + 153, 33]);
       // l'interface
       const ov = this.game.ov;
@@ -32487,7 +33239,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     mapShow(on) {
       if (!this.mapEl) return;
       this.mapOpen = on; this.mapEl.style.display = on ? 'block' : 'none';
-      if (on) { this.mapPrevFreeze = this.freeze; this.freeze = true; const M = this.mapV; M.zoom = 1; M.follow = false; M.cu = ((this.vc ? MAP_U0 : GEO_U0) + (this.dx ? MAP_U1 : 95)) / 2; M.cv = 0; SFX.ui && SFX.ui('move'); this.mapDraw(); }
+      if (on) { this.mapPrevFreeze = this.freeze; this.freeze = true; const M = this.mapV; M.zoom = 1; M.follow = false; M.cu = ((this.vc ? MAP_U0 : GEO_U0) + (this.dx ? MAP_U1 : 95)) / 2; M.cv = this.miniV0 ? (202 + this.miniV0) / 2 : 0; SFX.ui && SFX.ui('move'); this.mapDraw(); }
       else { this.freeze = !!this.mapPrevFreeze; SFX.ui && SFX.ui('back'); }
     },
     mapZoom(f) { const M = this.mapV; M.zoom = clamp(M.zoom * f, 0.8, 8); },
@@ -32505,6 +33257,8 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       let best = null, bd = 18;
       for (const [ic, x, z] of this.miniIcons || []) { const d = Math.hypot(x - WX - u, z - v); if (d < bd && MAP_NAMES[ic]) { bd = d; best = MAP_NAMES[ic]; } }
       if (best) return 'près de ' + best;
+      if (v > 74) return u > 44 && u < 90 && v < 136 ? 'au Mémorial des Craqueurs' : u < -20 && v < 138 ? 'à la fête foraine' : v > 158 ? 'sur la jetée du port' : v > 136 ? 'à la plage' : 'Front de Mer';
+      if (v < -74) return 'Les Hauts';
       if (u < -92) return Math.abs(v) < 2.5 && u > -152 && u < -122 ? 'à la grande table' : u < -158 ? 'au Grand Comptoir' : 'Place de la Victoire';
       return u > 88 ? 'Quartier du Peuple' : 'En ville';
     },
@@ -32518,11 +33272,11 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       const CW = el.clientWidth, CH = el.clientHeight; if (!CW) return;
       if (cv.width !== Math.round(CW * dpr) || cv.height !== Math.round(CH * dpr)) { cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); }
       const g = cv.getContext('2d'), M = this.mapV, U0 = this.vc ? MAP_U0 : GEO_U0, U1 = this.dx ? MAP_U1 : 95;
-      const fit = Math.min(CW / (U1 - U0), CH / 150) * 0.94; M.ppu = fit * M.zoom;
+      const fit = Math.min(CW / (U1 - U0), CH / (this.miniV0 ? 202 - this.miniV0 : 150)) * 0.94; M.ppu = fit * M.zoom;
       const ppu = M.ppu, sx = (u) => CW / 2 + (u - M.cu) * ppu, sy = (v) => CH / 2 + (v - M.cv) * ppu;
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = '#0c0a14'; g.fillRect(0, 0, CW, CH);
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      const B = this.mapBig || this.miniBase; g.drawImage(B, sx(this.miniU0 ?? GEO_U0), sy(GEO_V0), B.width / 2 * ppu, B.height / 2 * ppu);
+      const B = this.mapBig || this.miniBase; g.drawImage(B, sx(this.miniU0 ?? GEO_U0), sy(this.miniV0 ?? GEO_V0), B.width / 2 * ppu, B.height / 2 * ppu);
       // les lieux
       const fs = clamp(ppu * 4, 18, 34); g.textAlign = 'center'; g.textBaseline = 'middle';
       const boxes = [], free = (x1, y1, x2, y2) => { for (const b of boxes) if (x1 < b[2] && x2 > b[0] && y1 < b[3] && y2 > b[1]) return false; boxes.push([x1, y1, x2, y2]); return true; };

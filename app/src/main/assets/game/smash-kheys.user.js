@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.98.1
+// @version      0.98.2
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.98.1';
+  const SSK_VER = '0.98.2';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -30377,7 +30377,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
 
   // ------------------------------------------------------------------ interface (dialogues façon Undertale, barres, menus FF7, écrans méta)
   const FB_CSS = `
-  .fb-ui{position:absolute;inset:0;z-index:60;pointer-events:none;font-family:"SSK Rodin","Arial Black",sans-serif}
+  .fb-ui{position:absolute;inset:0;z-index:2147483100;pointer-events:none;font-family:"SSK Rodin","Arial Black",sans-serif}
   .fb-ui *{box-sizing:border-box}
   .fb-dlg{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(860px,92%);min-height:132px;background:#000;border:5px solid #fff;padding:16px 22px 16px 22px;color:#fff;font:700 22px/1.35 "Courier New",monospace;letter-spacing:.5px;pointer-events:auto;cursor:pointer;display:none;box-shadow:0 0 0 3px #000}
   .fb-dlg b{display:block;font:900 15px "SSK Rodin","Arial Black",sans-serif;letter-spacing:2px;margin-bottom:6px;color:#ffd23a}
@@ -30397,7 +30397,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   .fb-flash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .25s}
   .fb-menu{position:absolute;left:3%;bottom:4%;width:min(520px,60%);background:linear-gradient(#2a3ab8,#0c1450);border:3px solid #e8e8f4;border-radius:8px;padding:10px 14px;pointer-events:auto;box-shadow:0 6px 20px rgba(0,0,0,.6);display:none}
   .fb-menu h4{margin:0 0 6px;color:#fff;font:italic 900 14px "SSK Rodin",sans-serif;letter-spacing:2px;opacity:.8}
-  .fb-menu button{display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px 8px 30px;background:none;border:0;color:#fff;font:700 18px "Courier New",monospace;cursor:pointer;position:relative;text-shadow:2px 2px 0 #000}
+  .fb-menu button{display:block;width:100%;text-align:left;margin:4px 0;padding:10px 10px 10px 30px;min-height:44px;touch-action:manipulation;background:none;border:0;color:#fff;font:700 18px "Courier New",monospace;cursor:pointer;position:relative;text-shadow:2px 2px 0 #000}
   .fb-menu button.on::before{content:'☛';position:absolute;left:4px;top:6px;color:#fff;font-size:20px}
   .fb-menu button[disabled]{color:#8a8ab0}
   .fb-menu.limit{background:linear-gradient(#b82a2a,#500c0c);left:50%;transform:translateX(-50%);text-align:center}
@@ -30436,10 +30436,10 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   .fb-vision p{max-width:80%;text-align:center;color:#ffd23a;font:700 24px/1.45 "Courier New",monospace;text-shadow:2px 2px 0 #000;margin:0}
   @keyframes fbFloat{50%{transform:translateY(-8px)}}
   .fb-quit{position:absolute;right:12px;top:52px;pointer-events:auto;background:rgba(0,0,0,.55);color:#bbb;border:1px solid #666;font:700 11px "SSK Rodin",sans-serif;padding:4px 9px;border-radius:6px;cursor:pointer;letter-spacing:1px}
-  .fb-tear{position:absolute;inset:0;z-index:59;pointer-events:none}
+  .fb-tear{position:absolute;inset:0;z-index:2147483090;pointer-events:none}
   .fb-tear>div{position:absolute;inset:0;transition:transform 1.1s cubic-bezier(.5,0,.6,1),opacity 1.1s}
   .fb-tear .snap{position:absolute;inset:0;width:100%;height:100%}
-  .fb-pick{position:absolute;inset:0;z-index:61;background:rgba(6,4,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto}
+  .fb-pick{position:absolute;inset:0;z-index:2147483110;background:rgba(6,4,10,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;pointer-events:auto}
   .fb-pick h2{margin:0;color:#ff3a4a;font:italic 900 34px "SSK Rodin","Arial Black",sans-serif;letter-spacing:4px;text-shadow:3px 3px 0 #000;animation:fbShake .2s infinite}
   .fb-pick p{margin:0;color:#ccc;font:14px "Courier New",monospace;text-align:center;max-width:640px}
   .fb-pick .g{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:860px;max-height:52vh;overflow:auto}
@@ -30447,9 +30447,17 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   .fb-pick .g button img{width:84px;height:72px;object-fit:cover;display:block;margin:0 auto 3px}
   .fb-pick .g button:hover{border-color:#ff3a4a}
   .fb-pick .back{background:none;border:1px solid #777;color:#aaa;padding:6px 16px;cursor:pointer;font:700 12px "SSK Rodin",sans-serif}
+  .fb-break{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:rgba(0,0,0,.88);pointer-events:auto;cursor:pointer}
+  .fb-break .ic{position:relative;width:150px;height:150px}
+  .fb-break .ic div{position:absolute;inset:0;background-size:100% 100%;transition:transform .9s cubic-bezier(.2,.8,.3,1),opacity .9s,filter .6s}
+  .fb-break.glow .ic div{filter:drop-shadow(0 0 18px #ffd23a) brightness(1.25)}
+  .fb-break p{margin:0;max-width:86%;text-align:center;color:#fff;font:700 28px/1.4 "Courier New",monospace;min-height:80px}
+  .fb-break p em{color:#ffd23a;font-style:normal}
   .sk-mm.fb-mm b{animation:fbShake .25s infinite;color:#fff;text-shadow:2px 0 #f00,-2px 0 #0ff}
   `;
 
+  // clic souris ET toucher (sur téléphone, le « click » peut être avalé par les commandes tactiles)
+  const fbTap = (el, fn) => { let last = 0; const go = (e) => { const now = Date.now(); if (now - last < 400) return; last = now; if (e && e.cancelable) e.preventDefault(); if (e) e.stopPropagation(); fn(e); }; el.addEventListener('pointerup', go); el.addEventListener('click', go); };
   class FinalBoss {
     constructor(g, def) {
       this.g = g; this.def = def; this.on = true; this.mode = 'cine'; this.t = 0; this.aborted = false;
@@ -30466,7 +30474,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         <div class="fb-flash"></div><button class="fb-quit">ABANDONNER</button>`;
       g.ov.appendChild(ui);
       this.$ = (s) => ui.querySelector(s);
-      this.$('.fb-quit').onclick = () => this.exit();
+      fbTap(this.$('.fb-quit'), () => this.exit());
       this.onKey = (e) => {
         if (!this.wantAdv) return;
         if (['Enter', 'Space', 'KeyF', 'KeyE', 'KeyK', 'NumpadEnter'].includes(e.code)) { e.preventDefault(); e.stopPropagation(); this.adv(); }
@@ -30510,8 +30518,8 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       return new Promise((res) => {
         const m = this.$('.fb-menu'); m.className = 'fb-menu ' + cls; m.style.display = 'block';
         let idx = opts.findIndex(o => !o.off); if (idx < 0) idx = 0;
-        const draw = () => { m.innerHTML = (title ? `<h4>${esc(title)}</h4>` : '') + opts.map((o, i) => `<button data-i="${i}" class="${i === idx ? 'on' : ''}" ${o.off ? 'disabled' : ''}>${esc(o.t)}</button>`).join(''); m.querySelectorAll('button').forEach(b => { b.onclick = () => pick(+b.dataset.i); b.onmouseenter = () => { if (!opts[+b.dataset.i].off) { idx = +b.dataset.i; draw(); } }; }); };
-        const pick = (i) => { if (opts[i].off) return; FBS.pick(); window.removeEventListener('keydown', key, true); m.style.display = 'none'; res(i); };
+        const draw = () => { m.innerHTML = (title ? `<h4>${esc(title)}</h4>` : '') + opts.map((o, i) => `<button data-i="${i}" class="${i === idx ? 'on' : ''}" ${o.off ? 'disabled' : ''}>${esc(o.t)}</button>`).join(''); m.querySelectorAll('button').forEach(b => { fbTap(b, () => pick(+b.dataset.i)); b.onmouseenter = () => { if (!opts[+b.dataset.i].off) { idx = +b.dataset.i; draw(); } }; }); };
+        let picked = false; const pick = (i) => { if (picked || opts[i].off) return; picked = true; FBS.pick(); window.removeEventListener('keydown', key, true); m.style.display = 'none'; res(i); };
         const key = (e) => {
           if (e.code === 'ArrowDown' || e.code === 'KeyS') { do { idx = (idx + 1) % opts.length; } while (opts[idx].off); FBS.menu(); draw(); }
           else if (e.code === 'ArrowUp' || e.code === 'KeyZ' || e.code === 'KeyW') { do { idx = (idx + opts.length - 1) % opts.length; } while (opts[idx].off); FBS.menu(); draw(); }
@@ -30704,7 +30712,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       this.showBar(true, 'LA FUSION'); this.bossHit = true; this.level = 2;
       this.cam = null; this.camFixed = true; this.mode = 'fight';
       this.me.reset(-3); this.me.stocks = this.me.maxStocks; this.me.invuln = 60;
-      await this.until(() => this.hp <= 0);
+      await this.until(() => !this.breaking && this.hp <= 0);
       // il s'effondre
       this.mode = 'cine'; this.bossHit = false; this.clearHz();
       this.F.face = 'dead'; this.F.faceT = 99999; this.sinkT = 1; FBS.rumble(2); this.g.shake = 1;
@@ -30778,7 +30786,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     async phase3() {
       this.level = 3; this.bossHit = true; this.mode = 'fight'; this.camFixed = true; this.me.invuln = 60;
       // jusqu'à la moitié de la première vie
-      await this.until(() => this.hp <= this.hpMax / 2);
+      await this.until(() => !this.breaking && this.hp <= this.hpMax / 2);
       this.mode = 'cine'; this.clearHz(); this.bossHit = false;
       await this.say('LA FUSION', 'Tu ne te débrouilles pas trop mal…', { boss: true });
       await this.say('LA FUSION', '… mais il est temps que je te montre la réelle étendue de mes pouvoirs.', { boss: true });
@@ -30789,7 +30797,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       await this.say('LA FUSION', 'Tu fais pitié, putain. Tu crois vraiment pouvoir me battre ?', { boss: true });
       // il le retue
       this.mode = 'fight'; this.bossHit = true; this.me.invuln = 60;
-      const t1 = this.t; await this.until(() => this.t - t1 > 600 || this.me.percent > 110);
+      const t1 = this.t; await this.until(() => !this.breaking && (this.t - t1 > 600 || this.me.percent > 110));
       await this.totalBeam();
       await this.riseUp('[J] est prêt à tout pour ne pas perdre le NNN.');
       this.F.face = 'hurt'; this.F.faceT = 90;
@@ -30797,7 +30805,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       await this.say('LA FUSION', 'Mais la finalité ne change pas : j\'ai gagné, et tu as perdu. Accepte-le.', { boss: true });
       // il est sur le point de gagner…
       this.mode = 'fight'; this.bossHit = true; this.me.invuln = 60;
-      const t2 = this.t; await this.until(() => this.t - t2 > 720 || this.me.percent > 120);
+      const t2 = this.t; await this.until(() => !this.breaking && (this.t - t2 > 720 || this.me.percent > 120));
       this.mode = 'cine'; this.clearHz(); this.bossHit = false;
       await this.vision();
       await this.actMenu();
@@ -30830,9 +30838,39 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       me.stocks = 0; g.updateHUD && g.updateHUD();
       await this.wait(900);
     }
+    async lifeBreak(txt) {
+      const g = this.g, si = (g.cards && g.cards[0] && g.cards[0].art && g.cards[0].art.stock) || (g.cards && g.cards[0] && g.cards[0].art && g.cards[0].art.face) || '';
+      const el = document.createElement('div'); el.className = 'fb-break';
+      const N = 9, cut = []; for (let i = 0; i < N; i++) { const a0 = i / N * TAU, a1 = (i + 1) / N * TAU, p = (a) => `${50 + Math.cos(a) * 75}% ${50 + Math.sin(a) * 75}%`; cut.push(`polygon(50% 50%,${p(a0)},${p((a0 + a1) / 2)},${p(a1)})`); }
+      el.innerHTML = `<div class="ic">${cut.map(c => `<div style="background-image:url('${si}');clip-path:${c};-webkit-clip-path:${c}"></div>`).join('')}</div><p></p>`;
+      this.ui.appendChild(el);
+      const parts = [...el.querySelectorAll('.ic div')], p = el.querySelector('p');
+      await this.wait(700);
+      FBS.shatter();
+      parts.forEach((d, i) => { const a = (i + 0.5) / N * TAU; d.style.transform = `translate(${Math.cos(a) * (120 + Math.random() * 80)}px,${Math.sin(a) * (120 + Math.random() * 80) + 60}px) rotate(${(Math.random() - 0.5) * 300}deg)`; d.style.opacity = '0.75'; });
+      await this.wait(1500);
+      FBS.determ();
+      parts.forEach(d => { d.style.transform = ''; d.style.opacity = '1'; });
+      await this.wait(950);
+      el.classList.add('glow'); FBS.heal();
+      const full = txt.replace(/\[J\]/g, '\u0001');
+      for (let i = 1; i <= full.length; i++) { p.innerHTML = esc(full.slice(0, i)).replace(/\u0001/g, '<em>' + esc(this.pname) + '</em>'); if (i % 2) FBS.blip(0.9); await this.wait(/[.!…]/.test(full[i - 1]) ? 160 : 34); }
+      await new Promise((res) => { let done = false; const end = () => { if (done) return; done = true; this.advFn = null; this.wantAdv = false; res(); }; this.wantAdv = true; this.advFn = end; el.addEventListener('pointerdown', (e) => { e.preventDefault(); end(); }); setTimeout(end, 4500); });
+      this.chk();
+      el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 450);
+    }
+    // mort « normale » après la fusion : une vie de moins, et à zéro, l'icône se brise… puis se recolle
+    async outOfLives() {
+      const me = this.me, back = this.mode; this.mode = 'cine'; this.clearHz(); const bh = this.bossHit; this.bossHit = false;
+      await this.wait(500);
+      await this.lifeBreak('[J] est prêt à tout pour ne pas perdre le NNN.');
+      me.stocks = me.maxStocks || 1; this.g.updateHUD && this.g.updateHUD();
+      if (me.dead) { me.respawnT = Math.min(me.respawnT || 0, 20); }
+      this.koSeen = false; this.breaking = false; this.bossHit = bh; this.mode = back === 'cine' ? 'fight' : back; me.invuln = Math.max(me.invuln, 90);
+    }
     async riseUp(txt) {
       const me = this.me;
-      await this.narrate(`<p>${esc(txt).replace(/\[J\]/g, '<em>' + esc(this.pname) + '</em>')}</p>`, 5000);
+      await this.lifeBreak(txt);
       me.reset(-3); me.stocks = 1; me.model.root.visible = true; me.invuln = 90; this.puppets.add(me);
       // il se relève lentement
       const t0 = this.t; this.riseAnim = (t) => { const k = Math.min(1, (t - t0) / 90); me.model.body.rotation.z = (1 - k) * 1.45; me.model.root.position.y = me.y + (1 - k) * 0.25; if (k >= 1) { this.riseAnim = null; me.model.body.rotation.z = 0; } };
@@ -30887,7 +30925,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       await new Promise((res) => {
         const go = () => { window.removeEventListener('keydown', key, true); res(); };
         const key = (e) => { if (['Enter', 'Space', 'KeyF', 'KeyE'].includes(e.code)) { e.preventDefault(); e.stopPropagation(); go(); } };
-        del.onclick = go; window.addEventListener('keydown', key, true);
+        fbTap(del, go); window.addEventListener('keydown', key, true);
       });
       // le bouton se brise
       const r = del.getBoundingClientRect(), wr = b.getBoundingClientRect();
@@ -31222,7 +31260,12 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         this.bossAI(); this.stepHz(); this.stepZones(); this.stepGrab();
         // la Fusion ne te laisse pas mourir : elle te ramène pour t'humilier encore
         g.checkKO();
-        if (me.dead && !this.koSeen) { this.koSeen = true; g.endT = 0; g.banner.style.opacity = 0; me.stocks = Math.max(1, me.maxStocks || 1); if (me.infinite) {} else setTimeout(() => { if (this.mode === 'fight') this.shout(this.koMsg, 2600); }, 400); }
+        if (me.dead && !this.koSeen && !this.breaking) {
+          this.koSeen = true; g.endT = 0; g.banner.style.opacity = 0;
+          if (me.infinite) me.stocks = Math.max(1, me.stocks);
+          else if (me.stocks <= 0) { this.breaking = true; this.outOfLives().catch(() => {}); }
+          else setTimeout(() => { if (this.mode === 'fight') this.shout(this.koMsg, 2600); }, 400);
+        }
         if (!me.dead) this.koSeen = false;
         if (g.endT > 0) { g.endT = 0; g.banner.style.opacity = 0; }
       } else if (this.mode === 'cine' || this.mode === 'frozen') {
@@ -31389,14 +31432,14 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       const close = () => { el.remove(); window.removeEventListener('keydown', key, true); };
       const key = (e) => { if (e.code === 'Escape' || e.code === 'Backspace') { e.preventDefault(); e.stopPropagation(); close(); } };
       window.addEventListener('keydown', key, true);
-      el.querySelector('.back').onclick = close;
-      el.querySelectorAll('.g button').forEach(b => b.onclick = () => {
+      fbTap(el.querySelector('.back'), close);
+      el.querySelectorAll('.g button').forEach(b => fbTap(b, () => {
         close(); SFX.ui && SFX.ui('click');
         const d = findDef(b.dataset.id); if (!d) return;
         g.homeEl.style.display = 'none';
         g.mode = 'play';
         const fb = g.fb = new FinalBoss(g, d); fb.run();
-      });
+      }));
     };
   }
 

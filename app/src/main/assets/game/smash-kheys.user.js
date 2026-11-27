@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.98.0
+// @version      0.98.1
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.98.0';
+  const SSK_VER = '0.98.1';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -29175,7 +29175,7 @@
           const gm = new T.BufferGeometry(); gm.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); gm.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); gm.setIndex(idx); gm.computeVertexNormals();
           sc.add(new T.Mesh(gm, tileM));
           // dessous du toit : chevrons peints en vert
-          box(W - 0.6, 0.12, D - 0.6, lam(0x1e5a4a), PX, y - 0.02, PZ);
+          if (y > 11) box(W - 0.6, 0.12, D - 0.6, lam(0x1e5a4a), PX, y - 0.02, PZ); else for (const [w2, d2, x2, z2] of [[W - 0.6, (D - 34.6) / 2, 0, (D / 2 - 0.3 + 17.3) / 2], [W - 0.6, (D - 34.6) / 2, 0, -(D / 2 - 0.3 + 17.3) / 2], [(W - 40.6) / 2, 34.6, (W / 2 - 0.3 + 20.3) / 2, 0], [(W - 40.6) / 2, 34.6, -(W / 2 - 0.3 + 20.3) / 2, 0]]) box(w2, 0.12, d2, lam(0x1e5a4a), PX + x2, y - 0.02, PZ + z2);
           // épis de faîtage dorés aux quatre coins
           for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const o = new T.Mesh(new T.ConeGeometry(0.18, 0.9, 6), gold); o.position.set(PX + sx * W * 0.527, y + up + 0.25, PZ + sz * D * 0.527); o.rotation.set(sz * 0.5, 0, -sx * 0.5); sc.add(o); }
         };
@@ -29241,13 +29241,113 @@
         }
         // lanternes rouges suspendues sous l'avant-toit
         for (let u = 132; u <= 164; u += 8) { if (Math.abs(u - 148) < 6) continue; cyl(0.02, 0.02, 1.0, lam(0x2a1a10), X(u), 9.0, -9.9, sc, 4); const ln = new T.Mesh(new T.SphereGeometry(0.45, 12, 10), lam(0xff3020, { emissive: 0xd01010, emissiveIntensity: 0.9 })); ln.scale.y = 0.8; ln.position.set(X(u), 8.2, -9.9); sc.add(ln); box(0.4, 0.1, 0.4, gold, X(u), 8.6, -9.9); }
-        // l'intérieur : tapis rouge, colonnes, portraits partout, slogans, statue du Grand Timonier sur l'estrade
-        plane(4, 30, lam(0xc8102e), X(148), 0.02, -28, 0, -Math.PI / 2);
-        for (let i = 0; i < 6; i++) for (const s of [-1, 1]) { const x = X(148 + s * 6.5), z = -16 - i * 4.8; cyl(0.45, 0.5, 10, red, x, 5, z, sc, 14); wallC(x - 0.5, z - 0.5, x + 0.5, z + 0.5); }
-        const frame = (x, z, ry, w = 3.2) => { const g = new T.Group(); g.position.set(x, 4.8, z); g.rotation.y = ry; sc.add(g); const f = new T.Mesh(new T.BoxGeometry(w + 0.3, w * 0.8 + 0.3, 0.12), gold); g.add(f); const p = new T.Mesh(new T.PlaneGeometry(w, w * 0.8), koroM); p.position.z = 0.07; g.add(p); const b = new T.Mesh(new T.PlaneGeometry(w + 0.3, 0.5), label('伟大领袖 · LEADER SUPRÊME', { bg: '#c8102e', col: '#ffd23a' })); b.position.set(0, -(w * 0.8) / 2 - 0.45, 0.07); g.add(b); };
+        // ================= l'intérieur : une grande salle impériale (temples chinois, palais nord-coréens)
+        const PXi = X(148), ZC = -29;
+        const stdM = (o) => new T.MeshStandardMaterial({ roughness: 0.5, metalness: 0.1, ...o });
+        const goldS = stdM({ color: 0xe0b040, metalness: 0.85, roughness: 0.28, emissive: 0x2a1a00 });
+        // sol de marbre poli, damier crème et rouge veiné
+        const marbleT = K.tex(512, 512, (g, w, h) => {
+          for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) { g.fillStyle = (x + y) % 2 ? '#e8dcc6' : '#8a2a22'; g.fillRect(x * 256, y * 256, 256, 256); }
+          for (let i = 0; i < 70; i++) { g.strokeStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '60,20,10'},${0.08 + Math.random() * 0.15})`; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); let x = Math.random() * w, y = Math.random() * h; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (Math.random() - 0.5) * 90; y += (Math.random() - 0.5) * 90; g.lineTo(x, y); } g.stroke(); }
+          g.strokeStyle = '#c8a040'; g.lineWidth = 4; g.strokeRect(2, 2, 252, 252); g.strokeRect(258, 258, 252, 252); g.strokeRect(258, 2, 252, 252); g.strokeRect(2, 258, 252, 252);
+        }, [10, 8]);
+        plane(39.6, 33.6, stdM({ map: marbleT, roughness: 0.16, metalness: 0.15 }), PXi, 0.015, ZC, 0, -Math.PI / 2);
+        // tapis rouge impérial bordé d'or
+        const carpetT = K.tex(128, 512, (g, w, h) => { g.fillStyle = '#b0101a'; g.fillRect(0, 0, w, h); g.fillStyle = '#e2b43a'; g.fillRect(6, 0, 8, h); g.fillRect(w - 14, 0, 8, h); g.fillStyle = '#7a0a10'; g.fillRect(18, 0, 6, h); g.fillRect(w - 24, 0, 6, h); g.fillStyle = 'rgba(226,180,58,.55)'; for (let y = 40; y < h; y += 128) { g.beginPath(); g.arc(w / 2, y, 22, 0, TAU); g.fill(); g.fillStyle = '#b0101a'; g.beginPath(); g.arc(w / 2, y, 14, 0, TAU); g.fill(); g.fillStyle = 'rgba(226,180,58,.55)'; } }, [1, 6]);
+        plane(4.4, 27, lam(0xffffff, { map: carpetT }), PXi, 0.03, -25.6, 0, -Math.PI / 2);
+        // murs : soubassement laqué, panneaux de nuages, frise de consoles peintes
+        const wainT = K.tex(256, 128, (g, w, h) => { g.fillStyle = '#5a0a0c'; g.fillRect(0, 0, w, h); g.strokeStyle = '#e2b43a'; g.lineWidth = 5; g.strokeRect(12, 14, w - 24, h - 28); g.lineWidth = 2; g.strokeRect(22, 24, w - 44, h - 48); g.fillStyle = '#e2b43a'; g.beginPath(); g.arc(w / 2, h / 2, 14, 0, TAU); g.fill(); g.fillStyle = '#5a0a0c'; g.beginPath(); g.arc(w / 2, h / 2, 8, 0, TAU); g.fill(); });
+        const cloudT = K.tex(256, 256, (g, w, h) => { g.fillStyle = '#9a1414'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(240,190,80,.55)'; g.lineWidth = 3; for (let k = 0; k < 4; k++) { const cx = 40 + (k % 2) * 140 + Math.random() * 30, cy = 50 + Math.floor(k / 2) * 130; for (let r = 10; r < 40; r += 9) { g.beginPath(); g.arc(cx, cy, r, Math.PI, TAU * 0.95); g.stroke(); } g.beginPath(); g.moveTo(cx - 40, cy); g.bezierCurveTo(cx - 10, cy + 30, cx + 40, cy + 10, cx + 70, cy + 25); g.stroke(); } });
+        const friezeT = K.tex(256, 64, (g, w, h) => { g.fillStyle = '#123a4a'; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 32) { g.fillStyle = '#1e7a5a'; g.fillRect(x + 3, 5, 26, 24); g.fillStyle = '#2a4a9a'; g.fillRect(x + 3, 35, 26, 24); g.fillStyle = '#e2b43a'; g.beginPath(); g.arc(x + 16, 17, 6, 0, TAU); g.fill(); g.beginPath(); g.moveTo(x + 16, 38); g.lineTo(x + 26, 47); g.lineTo(x + 16, 56); g.lineTo(x + 6, 47); g.fill(); } g.fillRect(0, 0, w, 3); g.fillRect(0, h - 3, w, 3); });
+        const wallRep = (map, n, m = 1) => { const t = map.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(n, m); return lam(0xffffff, { map: t }); };
+        for (const [ry, len, ox, oz] of [[Math.PI / 2, 33.6, 128.22, ZC], [-Math.PI / 2, 33.6, 167.78, ZC], [0, 39.6, 148, -45.78], [Math.PI, 39.6, 148, -12.22]]) {
+          const x = X(ox) - (ox === 148 ? PXi - PXi : 0), px = ox === 148 ? PXi : X(ox);
+          plane(len, 2.2, wallRep(wainT, Math.round(len / 2.4)), px, 1.1, oz, ry);
+          plane(len, 3.6, wallRep(cloudT, Math.round(len / 3.6)), px, 4.0, oz, ry);
+          plane(len, 1.0, wallRep(friezeT, Math.round(len / 2.2)), px, 6.5, oz, ry);
+          plane(len, 2.9, wallRep(cloudT, Math.round(len / 3.6)), px, 8.45, oz, ry);
+          plane(len, 0.18, goldS, px, 2.25, oz, ry); plane(len, 0.18, goldS, px, 5.95, oz, ry); plane(len, 0.18, goldS, px, 7.05, oz, ry);
+          void x;
+        }
+        // plafond à caissons peints (bleu, vert, or) et poutres dorées
+        const coffT = K.tex(256, 256, (g, w, h) => { g.fillStyle = '#0e3a3a'; g.fillRect(0, 0, w, h); g.fillStyle = '#e2b43a'; g.fillRect(0, 0, w, 10); g.fillRect(0, 0, 10, h); g.fillStyle = '#1c3c8a'; g.fillRect(26, 26, w - 42, h - 42); g.strokeStyle = '#e2b43a'; g.lineWidth = 4; g.strokeRect(26, 26, w - 42, h - 42); g.fillStyle = '#1e7a5a'; g.beginPath(); g.arc(w / 2 + 5, h / 2 + 5, 62, 0, TAU); g.fill(); g.fillStyle = '#e2b43a'; for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; g.beginPath(); g.ellipse(w / 2 + 5 + Math.cos(a) * 36, h / 2 + 5 + Math.sin(a) * 36, 16, 8, a, 0, TAU); g.fill(); } g.fillStyle = '#c8102e'; g.beginPath(); g.arc(w / 2 + 5, h / 2 + 5, 18, 0, TAU); g.fill(); g.fillStyle = '#ffd23a'; g.beginPath(); g.arc(w / 2 + 5, h / 2 + 5, 8, 0, TAU); g.fill(); }, [13, 11]);
+        plane(39.6, 33.6, new T.MeshBasicMaterial({ color: 0xb8b0a8, map: coffT, side: T.DoubleSide }), PXi, 9.86, ZC, 0, Math.PI / 2);
+        const beamM = wallRep(friezeT, 14);
+        for (let i = 0; i < 7; i++) { const z = -14 - i * 5; box(39.6, 0.45, 0.55, beamM, PXi, 9.7, z); }
+        for (const s of [-1, 1]) box(0.55, 0.45, 33.6, beamM, PXi + s * 6.5, 9.68, ZC);
+        // le caisson central doré au-dessus de la statue (zaojing)
+        for (let k = 0; k < 4; k++) { const r = new T.Mesh(new T.CylinderGeometry(3.4 - k * 0.7, 3.4 - k * 0.7, 0.18, 8, 1, true), stdM({ color: k % 2 ? 0x1e7a5a : 0xe0b040, metalness: k % 2 ? 0.1 : 0.85, roughness: 0.3, side: T.DoubleSide })); r.position.set(PXi, 9.85 - k * 0.12, -40); sc.add(r); }
+        const pearl = new T.Mesh(new T.SphereGeometry(0.45, 18, 14), stdM({ color: 0xfff2c8, emissive: 0xffd890, emissiveIntensity: 0.8, roughness: 0.1 })); pearl.position.set(PXi, 9.1, -40); sc.add(pearl);
+        // colonnes laquées, dragons d'or en spirale, socles de marbre et chapiteaux
+        const colT = K.tex(256, 512, (g, w, h) => { g.fillStyle = '#b0141a'; g.fillRect(0, 0, w, h); g.strokeStyle = '#e8b83a'; g.lineCap = 'round'; for (let k = 0; k < 2; k++) { g.lineWidth = 22 - k * 10; g.beginPath(); for (let y = 0; y <= h; y += 4) { const x = (y * 1.1 + k * 4) % w; if (y === 0 || x < 6) g.moveTo(x, y); else g.lineTo(x, y); } g.stroke(); } g.fillStyle = '#e8b83a'; for (let y = 30; y < h; y += 90) for (let x = 20; x < w; x += 80) { g.beginPath(); g.arc(x + (y % 40), y, 6, 0, TAU); g.fill(); } }, [1, 1]);
+        const colM = stdM({ map: colT, roughness: 0.35 });
+        for (let i = 0; i < 6; i++) for (const s of [-1, 1]) {
+          const x = X(148 + s * 6.5), z = -16 - i * 4.8;
+          cyl(0.48, 0.5, 9.2, colM, x, 4.8, z, sc, 18);
+          cyl(0.78, 0.86, 0.5, stdM({ color: 0xf0ece2, roughness: 0.2 }), x, 0.25, z, sc, 12);
+          cyl(0.62, 0.5, 0.35, goldS, x, 9.25, z, sc, 12);
+          box(1.5, 0.3, 0.5, goldS, x, 9.5, z);
+          wallC(x - 0.6, z - 0.6, x + 0.6, z + 0.6);
+          // lanterne de palais rouge entre les colonnes
+          if (i < 5) {
+            const lz = z - 2.4, lx = X(148 + s * 6.5);
+            cyl(0.02, 0.02, 2.2, goldS, lx, 8.6, lz, sc, 4);
+            const l = new T.Mesh(new T.SphereGeometry(0.42, 14, 10), stdM({ color: 0xe8202e, emissive: 0xd01010, emissiveIntensity: 1.0, roughness: 0.4 })); l.scale.y = 1.25; l.position.set(lx, 7.2, lz); sc.add(l);
+            cyl(0.22, 0.26, 0.12, goldS, lx, 7.74, lz, sc, 10); cyl(0.26, 0.22, 0.12, goldS, lx, 6.66, lz, sc, 10);
+            for (let k = 0; k < 5; k++) cyl(0.012, 0.012, 0.5, stdM({ color: 0xffd23a }), lx + Math.cos(k) * 0.12, 6.35, lz + Math.sin(k) * 0.12, sc, 3);
+          }
+        }
+        // trois grands lustres de cristal au-dessus de la nef
+        for (const z of [-17.5, -26.5, -35.5]) {
+          const ch = new T.Group(); ch.position.set(PXi, 8.0, z); sc.add(ch);
+          cyl(0.03, 0.03, 1.6, goldS, 0, 0.9, 0, ch, 6);
+          for (const [r, y] of [[1.3, 0], [0.85, -0.45], [0.45, -0.85]]) { const t = new T.Mesh(new T.TorusGeometry(r, 0.05, 6, 32), goldS); t.rotation.x = Math.PI / 2; t.position.y = y; ch.add(t); for (let k = 0; k < Math.round(r * 12); k++) { const a = k / Math.round(r * 12) * TAU, d = new T.Mesh(new T.OctahedronGeometry(0.07, 0), stdM({ color: 0xfff6e0, emissive: 0xffe8b0, emissiveIntensity: 0.9, roughness: 0.05, metalness: 0.3 })); d.position.set(Math.cos(a) * r, y - 0.18, Math.sin(a) * r); d.scale.y = 1.8; ch.add(d); } }
+          const bulb = new T.Mesh(new T.SphereGeometry(0.22, 12, 10), new T.MeshBasicMaterial({ color: 0xfff0c0 })); bulb.position.y = -1.05; ch.add(bulb);
+          K.pl('street', 0xffd8a0, 0.85, 16, PXi, 7.2, z);
+        }
+        // la fresque du fond : soleil levant sur les montagnes sacrées
+        const muralT = K.tex(1024, 560, (g, w, h) => {
+          const sky = g.createLinearGradient(0, 0, 0, h * 0.7); sky.addColorStop(0, '#c8102e'); sky.addColorStop(0.45, '#ff6a2a'); sky.addColorStop(1, '#ffd88a'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
+          g.save(); g.translate(w / 2, h * 0.58); for (let k = 0; k < 28; k++) { g.rotate(TAU / 28); g.fillStyle = k % 2 ? 'rgba(255,240,160,.25)' : 'rgba(255,200,80,.12)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(900, -60); g.lineTo(900, 60); g.fill(); } g.restore();
+          const sun = g.createRadialGradient(w / 2, h * 0.58, 10, w / 2, h * 0.58, 120); sun.addColorStop(0, '#fffbe0'); sun.addColorStop(0.5, '#ffe060'); sun.addColorStop(1, 'rgba(255,200,60,0)'); g.fillStyle = sun; g.beginPath(); g.arc(w / 2, h * 0.58, 130, 0, TAU); g.fill();
+          const mount = (pts, col, snow) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, h); pts.forEach(([x, y]) => g.lineTo(x * w, y * h)); g.lineTo(w, h); g.fill(); if (snow) { g.fillStyle = '#f4f2f0'; pts.forEach(([x, y], i) => { if (i && i < pts.length - 1 && y < 0.6) { g.beginPath(); g.moveTo(x * w, y * h); g.lineTo(x * w - 34, y * h + 46); g.lineTo(x * w + 30, y * h + 42); g.fill(); } }); } };
+          mount([[0, 0.72], [0.12, 0.5], [0.22, 0.62], [0.34, 0.44], [0.46, 0.6], [0.56, 0.48], [0.68, 0.64], [0.8, 0.42], [0.92, 0.58], [1, 0.52]], '#5a3a5a', true);
+          mount([[0, 0.8], [0.15, 0.7], [0.3, 0.78], [0.5, 0.68], [0.7, 0.8], [0.85, 0.7], [1, 0.76]], '#2a4a3a', false);
+          g.fillStyle = 'rgba(160,210,240,.9)'; g.fillRect(0, h * 0.86, w, h * 0.06);
+          g.fillStyle = '#1a3a2a'; for (let x = 10; x < w; x += 48) { const y = h * 0.84 + Math.sin(x) * 6; g.beginPath(); g.moveTo(x, y - 60); g.lineTo(x - 18, y); g.lineTo(x + 18, y); g.fill(); }
+          g.fillStyle = '#c8102e'; for (const fx of [0.08, 0.92]) { g.fillRect(fx * w, h * 0.3, 4, h * 0.5); g.beginPath(); g.moveTo(fx * w + 4, h * 0.3); g.quadraticCurveTo(fx * w + 60, h * 0.27, fx * w + 104, h * 0.32); g.lineTo(fx * w + 104, h * 0.4); g.quadraticCurveTo(fx * w + 60, h * 0.36, fx * w + 4, h * 0.38); g.fill(); }
+          g.fillStyle = '#ffd23a'; g.font = '900 34px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.fillText('伟大领袖 · LE SOLEIL DU NNN', w / 2, 56);
+        });
+        box(14.8, 8.2, 0.25, goldS, PXi, 4.9, -45.8); plane(14, 7.6, lam(0xffffff, { map: muralT }), PXi, 4.9, -45.64, 0);
+        for (const s of [-1, 1]) for (const k of [0, 1]) { const fx = X(148 + s * (8.2 + k * 1.6)); cyl(0.06, 0.06, 7.4, goldS, fx, 3.7, -44.8, sc, 6); const fl = plane(1.5, 2.2, lam(0xc8102e, { side: T.DoubleSide }), fx + s * 0.78, 6.1, -44.8); D.anim.push({ flag: fl, ph: s * 3 + k }); const tip = new T.Mesh(new T.ConeGeometry(0.12, 0.35, 8), goldS); tip.position.set(fx, 7.6, -44.8); sc.add(tip); }
+        // l'estrade de marbre à trois marches, la statue dorée du Grand Timonier
+        for (let k = 0; k < 3; k++) box(15 - k * 1.2, 0.3, 7 - k * 0.9, stdM({ color: k === 2 ? 0xf6f2ea : 0xe8e2d6, roughness: 0.18 }), PXi, 0.15 + k * 0.3, -42.2 - k * 0.35);
+        box(4.2, 1.7, 3.0, stdM({ color: 0xf6f2ea, roughness: 0.2 }), PXi, 1.75, -42.8); box(4.4, 0.15, 3.2, goldS, PXi, 2.65, -42.8); box(4.4, 0.15, 3.2, goldS, PXi, 0.95, -42.8);
+        plane(3.4, 0.5, label('KOROCHIKU · GRAND TIMONIER', { bg: '#7a0a10', col: '#ffd23a', border: '#e2b43a' }), PXi, 1.8, -41.28);
+        wallC(X(141), -46, X(155), -39.4);
+        const kd = findDef('korochiku');
+        if (kd) {
+          const km = kd.build(palFor(kd, 0, 2)); km.root.position.set(PXi, 2.72, -42.8); km.root.scale.setScalar(2.2); km.body.rotation.y = -Math.PI / 2; km.armR.rotation.set(0.3, 0, 2.9); km.armL.rotation.z = 0.3; sc.add(km.root); D.koroStatue = km;
+          const gm = stdM({ color: 0xd8a838, metalness: 0.92, roughness: 0.24, emissive: 0x3a2400 });
+          km.root.traverse(o => { if (o.isMesh && o.material && !(o.material.side === T.BackSide)) o.material = gm; });
+          const sp = new T.SpotLight(0xffe8b0, 2.2, 22, 0.4, 0.5, 1.2); sp.position.set(PXi, 9.3, -36); sp.target.position.set(PXi, 4, -42.8); this.lightGroup('street').add(sp); this.lightGroup('street').add(sp.target);
+        }
+        // parterres de « korochikias » magenta le long de l'estrade et du tapis
+        {
+          const n = 260, petal = new T.InstancedMesh(new T.SphereGeometry(0.1, 7, 5), stdM({ color: 0xe02a9a, roughness: 0.6, emissive: 0x3a0020 }), n), leaf = new T.InstancedMesh(new T.ConeGeometry(0.08, 0.3, 4), stdM({ color: 0x2a7a3a }), n);
+          const m4 = new T.Matrix4(); let i = 0;
+          const bed = (cx, cz, w, d) => { box(w + 0.3, 0.45, d + 0.3, goldS, cx, 0.22, cz); box(w, 0.06, d, stdM({ color: 0x3a2414 }), cx, 0.46, cz); for (let k = 0; k < Math.round(w * d * 9) && i < n; k++, i++) { const x = cx + (Math.random() - 0.5) * w, z = cz + (Math.random() - 0.5) * d, y = 0.62 + Math.random() * 0.25; m4.makeTranslation(x, y, z); petal.setMatrixAt(i, m4); m4.makeTranslation(x + 0.05, y - 0.15, z); leaf.setMatrixAt(i, m4); } wallC(cx - w / 2 - 0.2, cz - d / 2 - 0.2, cx + w / 2 + 0.2, cz + d / 2 + 0.2); };
+          bed(X(148 - 9.5), -41.6, 4.4, 2.2); bed(X(148 + 9.5), -41.6, 4.4, 2.2);
+          for (const s of [-1, 1]) for (const z of [-19.5, -28.5]) bed(X(148 + s * 3.4), z, 0.9, 3.2);
+          petal.count = leaf.count = i; sc.add(petal); sc.add(leaf);
+        }
+        // brûle-parfums de bronze (la fumée monte doucement)
+        D.incense = [];
+        for (const s of [-1, 1]) { const ix = X(148 + s * 4.2), iz = -38.4; const bz = stdM({ color: 0x6a4a2a, metalness: 0.7, roughness: 0.4 }); cyl(0.55, 0.42, 0.7, bz, ix, 1.05, iz, sc, 14); for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; cyl(0.06, 0.04, 0.75, bz, ix + Math.cos(a) * 0.35, 0.37, iz + Math.sin(a) * 0.35, sc, 6); } for (const z2 of [-0.45, 0.45]) { const hnd = new T.Mesh(new T.TorusGeometry(0.15, 0.04, 6, 12, Math.PI), bz); hnd.position.set(ix, 1.45, iz + z2); sc.add(hnd); } wallC(ix - 0.6, iz - 0.6, ix + 0.6, iz + 0.6); D.incense.push({ x: ix, z: iz }); }
+        // portraits du Leader tout autour, et les calligraphies sur les colonnes
+        const frame = (x, z, ry, w = 3.2) => { const g = new T.Group(); g.position.set(x, 4.2, z); g.rotation.y = ry; sc.add(g); const f = new T.Mesh(new T.BoxGeometry(w + 0.4, w * 0.8 + 0.4, 0.14), goldS); g.add(f); const p = new T.Mesh(new T.PlaneGeometry(w, w * 0.8), koroM); p.position.z = 0.08; g.add(p); const b = new T.Mesh(new T.PlaneGeometry(w + 0.3, 0.5), label('伟大领袖 · LEADER SUPRÊME', { bg: '#c8102e', col: '#ffd23a' })); b.position.set(0, -(w * 0.8) / 2 - 0.5, 0.08); g.add(b); };
         for (let i = 0; i < 4; i++) { frame(X(128.4), -17 - i * 7.5, Math.PI / 2); frame(X(167.6), -17 - i * 7.5, -Math.PI / 2); }
-        for (const s of [-1, 1]) frame(X(148 + s * 9), -45.6, 0, 4.2);
-        DX_SLOGANS.forEach((t2, i) => { const v = plane(1.3, 6, txtM(160, 740, (g, w, h) => { g.fillStyle = '#c8102e'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12); const words = t2.replace(/[·!]/g, '').split(' ').filter(Boolean); g.fillStyle = '#ffd23a'; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = 40; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; const step = (h - 60) / words.length; words.forEach((wd, k) => { let f2 = fs; g.font = `900 ${f2}px "SSK Rodin",sans-serif`; while (g.measureText(wd).width > w - 24 && f2 > 14) { f2 -= 2; g.font = `900 ${f2}px "SSK Rodin",sans-serif`; } g.fillText(wd, w / 2, 30 + step * (k + 0.5)); }); }), X(148 + (i % 2 ? 6.5 : -6.5)) + (i % 2 ? -0.52 : 0.52), 5.6, -18.4 - i * 4.8, i % 2 ? -Math.PI / 2 : Math.PI / 2); void v; });
+        DX_SLOGANS.forEach((t2, i) => { const v = plane(1.3, 6, txtM(160, 740, (g, w, h) => { g.fillStyle = '#c8102e'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12); const words = t2.replace(/[·!]/g, '').split(' ').filter(Boolean); g.fillStyle = '#ffd23a'; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = 40; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; const step = (h - 60) / words.length; words.forEach((wd, k) => { let f2 = fs; g.font = `900 ${f2}px "SSK Rodin",sans-serif`; while (g.measureText(wd).width > w - 24 && f2 > 14) { f2 -= 2; g.font = `900 ${f2}px "SSK Rodin",sans-serif`; } g.fillText(wd, w / 2, 30 + step * (k + 0.5)); }); }), X(148 + (i % 2 ? 6.5 : -6.5)) + (i % 2 ? -0.53 : 0.53), 5.0, -18.4 - i * 4.8, i % 2 ? -Math.PI / 2 : Math.PI / 2); void v; });
         // le Petit Livre Rouge, sur un pupitre doré, sous un projecteur
         {
           const bx = X(143.4), bz = -37.6;
@@ -29264,10 +29364,8 @@
           K.pl('street', 0xffd890, 0.9, 5, bx, 3.2, bz + 0.4);
           D.book = { g: bg, halo, x: bx, z: bz };
         }
-        // l'estrade et la statue
-        box(10, 1.0, 5, gold, X(148), 0.5, -42.5); box(12, 0.5, 6, red, X(148), 0.25, -42.3); wallC(X(143), -45.2, X(153), -39.6);
-        const kd = findDef('korochiku');
-        if (kd) { const km = kd.build(palFor(kd, 0, 2)); km.root.position.set(X(148), 1.0, -42.6); km.root.scale.setScalar(1.7); km.body.rotation.y = -Math.PI / 2; km.armR.rotation.set(0.3, 0, 2.9); km.armL.rotation.z = 0.3; sc.add(km.root); D.koroStatue = km; }
+        // garde d'honneur le long du tapis
+        for (const z of [-22, -31]) for (const sx of [-1, 1]) { const g3 = npcMan({ skin: 0xe8c09a, shirt: 0x3a4a2e, pants: 0x2a3420, hair: 0x1a1a1a }); g3.root.position.set(X(148 + sx * 2.6), 0, z); g3.root.rotation.y = sx > 0 ? Math.PI : 0; sc.add(g3.root); const cap = new T.Mesh(new T.CylinderGeometry(0.24, 0.22, 0.12, 12), lam(0x3a4a2e)); cap.position.set(0.02, 0.2, 0); g3.head.add(cap); const st2 = new T.Mesh(new T.CircleGeometry(0.06, 5), new T.MeshBasicMaterial({ color: 0xe8101e })); st2.position.set(0.25, 0.2, 0); st2.rotation.y = Math.PI / 2; g3.head.add(st2); wallC(X(148 + sx * 2.6) - 0.3, z - 0.3, X(148 + sx * 2.6) + 0.3, z + 0.3); }
         for (const s of [-1, 1]) { const g2 = npcMan({ skin: 0xe8c09a, shirt: 0x4a5a3a, pants: 0x4a5a3a, hair: 0x1a1a1a }); g2.root.position.set(X(148 + s * 3.2), 0, -13.6); g2.root.rotation.y = -Math.PI / 2; g2.armR.rotation.z = 0.1; sc.add(g2.root); }
         K.pl('street', 0xffb070, 1.1, 26, X(148), 7, -30);
       });
@@ -29533,6 +29631,7 @@
       // animations
       for (const A of D.anim) { if (A.spin) A.spin.rotation.y += 0.01; if (A.flag) { A.flag.rotation.y = Math.sin(t * 0.05 + A.ph) * 0.25; } if (A.star) A.star.rotation.y = A.ph * 0.35 + Math.sin(t * 0.012) * 0.6; }
       if (D.book && here) { D.book.g.position.y = 1.42 + Math.sin(t * 0.04) * 0.03; D.book.halo.material.opacity = 0.35 + Math.sin(t * 0.06) * 0.2; }
+      if (here && D.hall === 'palais' && D.incense && t % 22 === 0) for (const c of D.incense) this.puff(c.x + (Math.random() - 0.5) * 0.2, 1.5, c.z, 0xe8dcc8, 0.3, 0.012);
       if (D.koroStatue && t % 2 === 0) D.koroStatue.root.rotation.y = 0;
       if (D.rec && here) D.rec.head.rotation.y = Math.sin(t * 0.01) * 0.4;
       // haut-parleurs de propagande
@@ -30468,7 +30567,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     // ---------------------------------------------------------------- PHASE 1 : trois CPU, tout simple
     phase1() {
       return new Promise((res) => {
-        this.setupFight(); CPU_LVL = 1; this.mode = 'fight1'; this.p1done = res;
+        this.setupFight(); CPU_LVL = 1; this.mode = 'fight1'; this.p1done = res; this.music('modos');
         const el = document.createElement('div'); el.className = 'sk-lv-intro'; el.innerHTML = '<small>LE BOSS FINAL</small><b>VS ISSSOUFLE · MODOS JVC · BRIGADEANTIPORN</b>'; this.g.ov.appendChild(el); setTimeout(() => el.remove(), 2600);
       }).then(() => this.chk());
     }
@@ -30589,6 +30688,9 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       await this.say('LA FUSION', 'Allez. Montre-moi ce que vaut un khey quand il n\'y a plus de règles.', { boss: true });
     }
     music(k) {
+      if (k && k === this.musK && this.mus && !this.mus.paused) return;
+      this.musK = k;
+      if (this.g.music) { try { this.g.music.pause(); } catch (e) {} }
       const g = this.g, src = k === 'hymn' ? (typeof KORO_HYMN !== 'undefined' ? KORO_HYMN : null) : STAGE_MUSIC[k];
       if (g.bgms) for (const id in g.bgms) { try { g.bgms[id].pause(); } catch (e) {} }
       if (this.mus) { try { this.mus.pause(); } catch (e) {} this.mus = null; }
@@ -30606,7 +30708,6 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       // il s'effondre
       this.mode = 'cine'; this.bossHit = false; this.clearHz();
       this.F.face = 'dead'; this.F.faceT = 99999; this.sinkT = 1; FBS.rumble(2); this.g.shake = 1;
-      this.music(null);
       await this.wait(1800);
       this.me.stocks = this.me.maxStocks; this.me.percent = 0; FBS.heal(); this.g.fx.ring(this.me.x, this.me.y + 1, 0x7dff6a, 3, 24);
       this.g.say(this.me, 'Toutes mes vies !', true, 90);

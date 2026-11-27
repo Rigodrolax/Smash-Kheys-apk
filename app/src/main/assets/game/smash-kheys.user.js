@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.4
+// @version      0.99.5
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.4';
+  const SSK_VER = '0.99.5';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -32692,7 +32692,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         // la boîte aux lettres et son nom
         const mb = new T.Mesh(new T.BoxGeometry(0.5, 0.4, 0.3), K.lam(0x2a6ad8)); mb.position.set(X(H.u + 3.4), 1.2, H.v0 - 1.4); sc.add(mb); E.B(0x2a2a2a).put(new T.CylinderGeometry(0.05, 0.05, 1), X(H.u + 3.4), 0.5, H.v0 - 1.4);
         const nc = document.createElement('canvas'); nc.width = 512; nc.height = 128; const nt = new T.CanvasTexture(nc);
-        const sign = new T.Mesh(new T.PlaneGeometry(3.2, 0.8), new T.MeshBasicMaterial({ map: nt, side: T.DoubleSide })); sign.position.set(X(H.u), 3.4, H.v0 - 0.25); sc.add(sign);
+        const sign = new T.Mesh(new T.PlaneGeometry(3.2, 0.8), new T.MeshBasicMaterial({ map: nt, side: T.DoubleSide })); sign.position.set(X(H.u), 3.4, H.v0 - 0.25); sign.rotation.y = Math.PI; sc.add(sign);
         // l'intérieur : trois décors possibles
         const deco = EX_HOUSE_STYLES.map(() => { const gg = new T.Group(); gg.visible = false; sc.add(gg); return gg; });
         const cx = X(H.u), cz = (H.v0 + H.v1) / 2, Bx = (gg, w, h, d, c, x, y, z) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), K.lam(c)); m.position.set(x, y, z); gg.add(m); return m; };
@@ -33122,6 +33122,321 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
             E.caught = true; E.heist = null; this.freeze = true; SFX.siren ? SFX.siren() : SFX.deny2 && SFX.deny2();
             this.bigText && this.bigText('🔨 BANNI !', EX_MODO_LINES[Math.floor(Math.random() * EX_MODO_LINES.length)]);
             setTimeout(() => { const T0 = EX_TOWER; m.x = WX + (T0.u0 + T0.u1) / 2; m.z = T0.v1 + 4; m.r = -Math.PI / 2; this.camPos = null; this.freeze = false; E.caught = false; this.send && this.send(true); }, 2500);
+          }
+        }
+      }
+    },
+  });
+
+  // =====================================================================
+  //  EMBELLISSEMENTS (v0.99.5) : la grande roue refaite (cabines vitrées, milliers d'ampoules animées),
+  //  la fête foraine (carrousel qui tourne, guirlandes, stands rayés, ampoules le long des montagnes russes,
+  //  ballons, arche lumineuse), les maisons (façades à fenêtres, perron, jardin, cheminée, parquet,
+  //  papier peint et vrais meubles selon le décor) et le studio de Korochiku (mur LED animé, scène,
+  //  projecteurs mobiles, néons, bureau éclairé, écrans).
+  // =====================================================================
+  const BX_COLS = [0xff3a5a, 0xffd23a, 0x3ad8ff, 0x7aff6a, 0xff6ae0, 0xffffff, 0xff8a2a];
+  const bxStripes = (c1, c2, n = 8) => hubCanvas(256, 64, (g, w, h) => { for (let i = 0; i < n; i++) { g.fillStyle = i % 2 ? c2 : c1; g.fillRect(i * w / n, 0, w / n + 1, h); } });
+  const bxBulbs = (pts, size = 0.13) => {                                         // un nuage d'ampoules en une seule instance
+    const im = new T.InstancedMesh(new T.SphereGeometry(size, 6, 4), new T.MeshBasicMaterial({ color: 0xffffff, fog: false }), pts.length), d = new T.Object3D();
+    pts.forEach((p, i) => { d.position.copy(p); d.updateMatrix(); im.setMatrixAt(i, d.matrix); im.setColorAt(i, new T.Color(0xffffff)); });
+    im.instanceMatrix.needsUpdate = true; return im;
+  };
+  {
+    const HP = Hub.prototype;
+    const wrap = (name, fn) => { const o = HP[name] || function () {}; HP[name] = function (...a) { return fn.call(this, o, ...a); }; };
+    wrap('exBuildSouth', function (o) { o.call(this); try { this.bxFair(); } catch (e) { console.warn('[SSK] fête foraine', e); } });
+    wrap('exHouses', function (o) { o.call(this); try { this.bxHouses(); } catch (e) { console.warn('[SSK] maisons', e); } });
+    wrap('exHousesSync', function (o) { o.call(this); try { this.bxHousesSync(); } catch (e) {} });
+    wrap('exStep', function (o) { o.call(this); try { this.bxStep(); } catch (e) { if (!this._bxErr) { this._bxErr = 1; console.warn('[SSK] embellissements', e); } } });
+  }
+
+  Object.assign(Hub.prototype, {
+    // ------------------------------------------------------------------ la grande roue (remplace l'ancienne)
+    exWheel(x, z) {
+      const E = this.ex, K = E.K, sc = this.scene, R = 13, H = 15.5;
+      const BX = E.bx || (E.bx = { chase: [] });
+      const g = new T.Group(); g.position.set(x, H, z); sc.add(g);
+      const white = new T.MeshStandardMaterial({ color: 0xf4f4fa, metalness: 0.6, roughness: 0.35 }), pink = new T.MeshStandardMaterial({ color: 0xff3a9a, metalness: 0.4, roughness: 0.4, emissive: 0x3a0820 });
+      const bulbP = [];
+      for (const s of [-1, 1]) {
+        const rim = new T.Mesh(new T.TorusGeometry(R, 0.22, 8, 72), pink); rim.position.z = s * 1.3; g.add(rim);
+        const rim2 = new T.Mesh(new T.TorusGeometry(R * 0.62, 0.12, 6, 56), white); rim2.position.z = s * 1.3; g.add(rim2);
+        for (let i = 0; i < 24; i++) {
+          const a = i / 24 * TAU;
+          const sp = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, R, 4), white); sp.position.set(Math.cos(a) * R / 2, Math.sin(a) * R / 2, s * 1.3); sp.rotation.z = a - Math.PI / 2; g.add(sp);
+          for (let k = 1; k <= 9; k++) bulbP.push(new T.Vector3(Math.cos(a) * R * k / 9, Math.sin(a) * R * k / 9, s * 1.42));
+          // un croisillon entre deux rayons
+          const a2 = (i + 0.5) / 24 * TAU, cr = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 2 * R * 0.62 * Math.sin(Math.PI / 24), 4), white); cr.position.set(Math.cos(a2) * R * 0.81, Math.sin(a2) * R * 0.81, s * 1.3); cr.rotation.z = a2; g.add(cr);
+        }
+        for (let i = 0; i < 120; i++) { const a = i / 120 * TAU; bulbP.push(new T.Vector3(Math.cos(a) * (R + 0.3), Math.sin(a) * (R + 0.3), s * 1.3)); }
+        // les pieds en A, avec traverses
+        for (const t of [-1, 1]) { const L = H / Math.cos(0.36); const leg = new T.Mesh(new T.CylinderGeometry(0.28, 0.42, L, 10), white); leg.position.set(x + t * Math.tan(0.36) * H / 2, H / 2, z + s * 2.6); leg.rotation.z = -t * 0.36; sc.add(leg); }
+        for (const yy of [4, 9]) { const w = 2 * Math.tan(0.36) * (H - yy); const tr = new T.Mesh(new T.CylinderGeometry(0.1, 0.1, w, 6), white); tr.rotation.z = Math.PI / 2; tr.position.set(x, yy, z + s * 2.6); sc.add(tr); }
+      }
+      const bulbs = bxBulbs(bulbP, 0.11); g.add(bulbs); BX.wheelBulbs = { m: bulbs, n: bulbP.length };
+      const axle = new T.Mesh(new T.CylinderGeometry(0.55, 0.55, 5.4, 16), white); axle.rotation.x = Math.PI / 2; g.add(axle);
+      for (const s of [-1, 1]) { const hub = new T.Mesh(new T.CylinderGeometry(1.6, 1.6, 0.3, 24), pink); hub.rotation.x = Math.PI / 2; hub.position.z = s * 1.5; g.add(hub); const st = new T.Mesh(new T.CircleGeometry(1.2, 5), new T.MeshBasicMaterial({ color: 0xffd23a })); st.position.z = s * 1.66; st.rotation.y = s > 0 ? 0 : Math.PI; g.add(st); }
+      // les cabines : boules vitrées colorées avec toit, banquette et lumière
+      const cabs = [], cols = [0xff3a5a, 0x3ad8ff, 0xffd23a, 0x7aff6a, 0xff6ae0, 0xff8a2a];
+      for (let i = 0; i < 12; i++) {
+        const cg = new T.Group(); sc.add(cg);
+        const col = cols[i % cols.length], cm = new T.MeshStandardMaterial({ color: col, metalness: 0.3, roughness: 0.4 });
+        const bottom = new T.Mesh(new T.CylinderGeometry(1.15, 0.9, 0.9, 16), cm); bottom.position.y = -2.05; cg.add(bottom);
+        const glass = new T.Mesh(new T.CylinderGeometry(1.15, 1.15, 1.2, 16, 1, true), new T.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, roughness: 0.05, side: T.DoubleSide, depthWrite: false })); glass.position.y = -1.0; cg.add(glass);
+        for (let k = 0; k < 6; k++) { const a = k / 6 * TAU, p = new T.Mesh(new T.BoxGeometry(0.08, 1.2, 0.08), cm); p.position.set(Math.cos(a) * 1.13, -1.0, Math.sin(a) * 1.13); cg.add(p); }
+        const roof = new T.Mesh(new T.ConeGeometry(1.35, 0.7, 16), cm); roof.position.y = -0.05; cg.add(roof);
+        const top = new T.Mesh(new T.SphereGeometry(0.16, 8, 6), new T.MeshBasicMaterial({ color: 0xffd23a })); top.position.y = 0.38; cg.add(top);
+        const hang = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 0.5, 4), white); hang.position.y = 0.55; cg.add(hang);
+        const lamp = new T.Mesh(new T.SphereGeometry(0.18, 8, 6), new T.MeshBasicMaterial({ color: 0xfff2c0 })); lamp.position.y = -0.5; cg.add(lamp);
+        cabs.push(cg);
+      }
+      K.wallC(x - 6.5, z - 3.4, x + 6.5, z + 3.4);
+      // le quai d'embarquement, la guérite et l'enseigne
+      E.B(0xd8d0c0).put(new T.BoxGeometry(7, 0.35, 4.6), x, 0.17, z - 5.4); for (let k = 0; k < 3; k++) E.B(0xb8b0a0).put(new T.BoxGeometry(3, 0.12, 0.5), x, 0.06 + k * 0.1, z - 7.9 + k * 0.4);
+      const booth = new T.Group(); booth.position.set(x + 5.2, 0, z - 6.4); sc.add(booth);
+      const bb = new T.Mesh(new T.BoxGeometry(1.8, 2.2, 1.6), K.lam(0xff3a9a)); bb.position.y = 1.1; booth.add(bb);
+      const bw = new T.Mesh(new T.PlaneGeometry(1.2, 0.8), new T.MeshBasicMaterial({ color: 0xfff2c0 })); bw.position.set(0, 1.4, -0.81); bw.rotation.y = Math.PI; booth.add(bw);
+      const br = new T.Mesh(new T.ConeGeometry(1.5, 0.8, 4), new T.MeshBasicMaterial({ map: bxStripes('#ff3a9a', '#ffffff') })); br.rotation.y = Math.PI / 4; br.position.y = 2.6; booth.add(br);
+      K.wallC(x + 4.2, z - 7.3, x + 6.2, z - 5.5);
+      const sg = new T.Group(); sg.position.set(x, 0, z - 8.4); sc.add(sg);
+      for (const px of [-3.6, 3.6]) { const c = new T.Mesh(new T.CylinderGeometry(0.15, 0.15, 4.8, 8), pink); c.position.set(px, 2.4, 0); sg.add(c); }
+      const lab = new T.Mesh(new T.PlaneGeometry(7.6, 1.2), E.label('🎡 LA GRANDE ROUE 🎡', { bg: '#ff3a9a', col: '#fff', border: '#ffd23a' })); lab.position.y = 4.9; lab.rotation.y = Math.PI; sg.add(lab); const lab2 = lab.clone(); lab2.rotation.y = 0; lab2.position.z = 0.02; sg.add(lab2);
+      const sgP = []; for (let i = 0; i <= 30; i++) sgP.push(new T.Vector3(-3.8 + i * 7.6 / 30, 5.6, 0), new T.Vector3(-3.8 + i * 7.6 / 30, 4.2, 0)); const sgb = bxBulbs(sgP, 0.09); sg.add(sgb); BX.chase.push({ m: sgb, n: sgP.length });
+      const lt = new T.PointLight(0xff8ad8, 1.8, 46, 1.3); lt.position.set(x, H, z - 6); this.lightGroup('street').add(lt);
+      E.wheel = { g, cabs, R, H, x, z, a: 0 };
+    },
+    // ------------------------------------------------------------------ la fête foraine
+    bxFair() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u, BX = E.bx || (E.bx = { chase: [] });
+      // le carrousel
+      {
+        const cx = X(-80), cz = 124, g = new T.Group(); g.position.set(cx, 0, cz); sc.add(g);
+        const gold = new T.MeshStandardMaterial({ color: 0xe2b43a, metalness: 0.85, roughness: 0.3 });
+        const base = new T.Mesh(new T.CylinderGeometry(5.2, 5.4, 0.5, 32), K.lam(0xf2ece0)); base.position.y = 0.25; g.add(base);
+        const rimB = new T.Mesh(new T.TorusGeometry(5.3, 0.1, 6, 48), gold); rimB.rotation.x = Math.PI / 2; rimB.position.y = 0.5; g.add(rimB);
+        const rot = new T.Group(); g.add(rot);
+        const col = new T.Mesh(new T.CylinderGeometry(0.9, 0.9, 4.6, 16), new T.MeshLambertMaterial({ map: bxStripes('#ff3a5a', '#ffd23a', 12) })); col.position.y = 2.8; rot.add(col);
+        const mir = new T.Mesh(new T.CylinderGeometry(0.95, 0.95, 1.4, 12), new T.MeshStandardMaterial({ color: 0xd8e8ff, metalness: 1, roughness: 0.05 })); mir.position.y = 3.6; rot.add(mir);
+        const canopy = new T.Mesh(new T.ConeGeometry(5.8, 2.2, 24), new T.MeshLambertMaterial({ map: bxStripes('#ff3a5a', '#ffffff', 24), side: T.DoubleSide })); canopy.position.y = 6.2; rot.add(canopy);
+        const valance = new T.Mesh(new T.CylinderGeometry(5.8, 5.8, 0.6, 24, 1, true), new T.MeshLambertMaterial({ map: bxStripes('#ffd23a', '#ff3a5a', 24), side: T.DoubleSide })); valance.position.y = 4.85; rot.add(valance);
+        const tip = new T.Mesh(new T.SphereGeometry(0.35, 10, 8), gold); tip.position.y = 7.5; rot.add(tip);
+        const horses = [], hc = [0xffffff, 0x2a1a12, 0xd8a060, 0xf2e8d0, 0x6a3a22, 0xffffff, 0xd8a060, 0x2a1a12];
+        for (let i = 0; i < 8; i++) {
+          const a = i / 8 * TAU, r = 3.8, h = new T.Group(); h.position.set(Math.cos(a) * r, 1.5, Math.sin(a) * r); h.rotation.y = -a; rot.add(h);
+          const pole = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 4.2, 6), gold); pole.position.y = 1.3; h.add(pole);
+          const hm = K.lam(hc[i]), body = new T.Mesh(new T.BoxGeometry(0.5, 0.55, 1.4), hm); h.add(body);
+          const neck = new T.Mesh(new T.BoxGeometry(0.35, 0.8, 0.35), hm); neck.position.set(0, 0.45, 0.62); neck.rotation.x = 0.4; h.add(neck);
+          const head = new T.Mesh(new T.BoxGeometry(0.32, 0.32, 0.6), hm); head.position.set(0, 0.85, 0.9); h.add(head);
+          const mane = new T.Mesh(new T.BoxGeometry(0.1, 0.6, 0.5), K.lam([0xff3a5a, 0x3ad8ff, 0xffd23a, 0xff6ae0][i % 4])); mane.position.set(0, 0.62, 0.48); mane.rotation.x = 0.4; h.add(mane);
+          const saddle = new T.Mesh(new T.BoxGeometry(0.56, 0.12, 0.5), K.lam([0xc8102e, 0x2a6ad8][i % 2])); saddle.position.y = 0.32; h.add(saddle);
+          for (const [lx, lz] of [[-0.15, 0.5], [0.15, 0.5], [-0.15, -0.5], [0.15, -0.5]]) { const l = new T.Mesh(new T.BoxGeometry(0.1, 0.6, 0.1), hm); l.position.set(lx, -0.5, lz); l.rotation.x = lz > 0 ? -0.6 : 0.6; h.add(l); }
+          horses.push({ h, ph: i * 0.8 });
+        }
+        const cp = []; for (let i = 0; i < 64; i++) { const a = i / 64 * TAU; cp.push(new T.Vector3(Math.cos(a) * 5.85, 4.55, Math.sin(a) * 5.85)); } const cb = bxBulbs(cp, 0.11); rot.add(cb); BX.chase.push({ m: cb, n: cp.length });
+        K.wallC(cx - 5.4, cz - 5.4, cx + 5.4, cz + 5.4);
+        const lt = new T.PointLight(0xffd8a0, 1.6, 22, 1.3); lt.position.set(cx, 4, cz); this.lightGroup('street').add(lt);
+        BX.carousel = { rot, horses };
+      }
+      // les stands : auvents rayés, comptoirs éclairés, peluches et ballons
+      for (const [u, v, c1] of [[-24, 96, '#ff6a3a'], [-24, 106, '#3a9aff'], [-24, 116, '#7aff6a']]) {
+        const aw = new T.Mesh(new T.CylinderGeometry(0.01, 2.6, 1.4, 4, 1, true), new T.MeshLambertMaterial({ map: bxStripes(c1, '#ffffff', 8), side: T.DoubleSide })); aw.rotation.y = Math.PI / 4; aw.position.set(X(u), 3.12, v); sc.add(aw);
+        const pp = []; for (let i = 0; i < 4; i++) for (let k = 0; k <= 8; k++) { const a = i * Math.PI / 2 + Math.PI / 4, b = a + Math.PI / 2, t = k / 8; pp.push(new T.Vector3(X(u) + (Math.cos(a) * (1 - t) + Math.cos(b) * t) * 2.55, 2.42, v + (Math.sin(a) * (1 - t) + Math.sin(b) * t) * 2.55)); }
+        const pb = bxBulbs(pp, 0.08); sc.add(pb); BX.chase.push({ m: pb, n: pp.length });
+        for (let k = 0; k < 5; k++) { const pl = new T.Mesh(new T.SphereGeometry(0.2, 8, 6), K.lam([0xff9ad8, 0x9ad8ff, 0xffe08a, 0xb8ff9a, 0xd8b8ff][k])); pl.position.set(X(u) + 1.52, 1.75, v - 1 + k * 0.5); sc.add(pl); }
+      }
+      // le grand marchand de ballons, la barbe à papa
+      { const bx2 = X(-40), bz = 86.5; E.B(0xe8e4d8).put(new T.CylinderGeometry(0.05, 0.05, 1.4), bx2, 0.7, bz);
+        for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, r = 0.3 + (i % 3) * 0.25, y = 3.4 + (i % 4) * 0.4; const b = new T.Mesh(new T.SphereGeometry(0.32, 10, 8), new T.MeshStandardMaterial({ color: BX_COLS[i % BX_COLS.length], roughness: 0.25, metalness: 0.1 })); b.scale.y = 1.2; b.position.set(bx2 + Math.cos(a) * r, y, bz + Math.sin(a) * r); sc.add(b); const s = new T.Mesh(new T.CylinderGeometry(0.008, 0.008, y - 1.4, 3), K.lam(0xffffff)); s.position.set(bx2 + Math.cos(a) * r / 2, (y + 1.4) / 2, bz + Math.sin(a) * r / 2); sc.add(s); } }
+      // les guirlandes guinguette en zigzag au-dessus de l'allée de la fête
+      {
+        const posts = [[-88, 104], [-72, 104], [-56, 104], [-46, 102], [-88, 138], [-72, 138], [-56, 138]];
+        for (const [u, v] of posts) { E.B(0x2a2a2a).put(new T.CylinderGeometry(0.08, 0.1, 6), X(u), 3, v); K.wallC(X(u) - 0.15, v - 0.15, X(u) + 0.15, v + 0.15); const lp = new T.Mesh(new T.SphereGeometry(0.22, 8, 6), new T.MeshBasicMaterial({ color: 0xfff0c0 })); lp.position.set(X(u), 6.05, v); sc.add(lp); }
+        const P = []; const seg = (a, b) => { for (let i = 0; i <= 18; i++) { const t = i / 18; P.push(new T.Vector3(X(a[0] + (b[0] - a[0]) * t), 5.9 - Math.sin(t * Math.PI) * 1.1, a[1] + (b[1] - a[1]) * t)); } };
+        seg(posts[0], posts[1]); seg(posts[1], posts[2]); seg(posts[2], posts[3]); seg(posts[0], posts[5]); seg(posts[1], posts[4]); seg(posts[1], posts[6]); seg(posts[2], posts[5]); seg(posts[4], posts[5]); seg(posts[5], posts[6]);
+        const gb = bxBulbs(P, 0.12); sc.add(gb); BX.chase.push({ m: gb, n: P.length });
+        // les fanions
+        const fl = new T.InstancedMesh(new T.ConeGeometry(0.22, 0.45, 3), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }), Math.floor(P.length / 2)), d = new T.Object3D();
+        for (let i = 0; i < fl.count; i++) { const p = P[i * 2]; d.position.set(p.x, p.y - 0.35, p.z); d.rotation.set(Math.PI, i, 0); d.updateMatrix(); fl.setMatrixAt(i, d.matrix); fl.setColorAt(i, new T.Color(BX_COLS[i % BX_COLS.length])); } sc.add(fl);
+      }
+      // les montagnes russes : une rangée d'ampoules qui court le long du rail, et des barrières
+      if (E.coaster) { const C = E.coaster, P = []; for (let i = 0; i < 260; i++) { const p = C.curve.getPointAt(i / 260); P.push(new T.Vector3(p.x, p.y - 0.45, p.z)); } const cb = bxBulbs(P, 0.11); sc.add(cb); BX.chase.push({ m: cb, n: P.length, fast: true }); }
+      // l'arche d'entrée lumineuse : des cercles d'ampoules
+      { const g = new T.Group(); g.position.set(X(-55), 0, 84.5); sc.add(g); const P = []; for (let i = 0; i <= 40; i++) { const a = Math.PI * i / 40; P.push(new T.Vector3(Math.cos(a) * 6, 7.1 + Math.sin(a) * 2.6, 0)); } const ab = bxBulbs(P, 0.14); g.add(ab); BX.chase.push({ m: ab, n: P.length }); }
+      // les autos tamponneuses : plafond à étincelles, néon
+      { const P = []; for (let i = 0; i < 80; i++) P.push(new T.Vector3(X(-88 + (i % 16) * 1.2), 5.0, 87 + Math.floor(i / 16) * 3)); const ab = bxBulbs(P, 0.1); sc.add(ab); BX.chase.push({ m: ab, n: P.length });
+        const nl = K.plane(8, 1.2, E.label('⚡ AUTOS TAMPONNEUSES ⚡', { bg: '#1a1a2a', col: '#7affff', border: '#ff3a9a' }), X(-79), 6.2, 100.3, Math.PI); void nl; }
+    },
+    // ------------------------------------------------------------------ les maisons
+    bxHouses() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u;
+      const sideT = hubCanvas(512, 512, (g, w, h) => {
+        g.fillStyle = '#f4f0e8'; g.fillRect(0, 0, w, h);
+        for (let y = 0; y < h; y += 24) { g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(0, y, w, 2); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(0, y + 2, w, 2); }
+      }); sideT.wrapS = sideT.wrapT = T.RepeatWrapping; sideT.repeat.set(3, 1);
+      const parquet = hubCanvas(512, 512, (g, w, h) => { g.fillStyle = '#8a6a44'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 32) for (let x = (y / 32) % 2 * 64 - 128; x < w; x += 128) { const c = 120 + Math.random() * 30; g.fillStyle = `rgb(${c + 30},${c},${c - 40})`; g.fillRect(x, y, 126, 30); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x, y + 30, 128, 2); } }); parquet.wrapS = parquet.wrapT = T.RepeatWrapping; parquet.repeat.set(3, 2);
+      const papers = [
+        hubCanvas(256, 256, (g, w, h) => { g.fillStyle = '#1a1030'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ff3ad8'; g.lineWidth = 3; for (let i = -h; i < w; i += 40) { g.beginPath(); g.moveTo(i, h); g.lineTo(i + h, 0); g.stroke(); } g.strokeStyle = '#3ad8ff'; for (let i = -h + 20; i < w; i += 40) { g.beginPath(); g.moveTo(i, h); g.lineTo(i + h, 0); g.stroke(); } }),
+        hubCanvas(256, 256, (g, w, h) => { for (let x = 0; x < w; x += 32) { const c = 110 + Math.random() * 30; g.fillStyle = `rgb(${c + 40},${c + 5},${c - 40})`; g.fillRect(x, 0, 31, h); g.fillStyle = 'rgba(60,30,10,.4)'; g.fillRect(x + 31, 0, 1, h); } }),
+        hubCanvas(256, 256, (g, w, h) => { g.fillStyle = '#f2ece0'; g.fillRect(0, 0, w, h); g.strokeStyle = '#d8b860'; g.lineWidth = 2; for (let y = 0; y < h; y += 64) for (let x = 0; x < w; x += 64) { g.beginPath(); g.moveTo(x + 32, y + 6); g.lineTo(x + 58, y + 32); g.lineTo(x + 32, y + 58); g.lineTo(x + 6, y + 32); g.closePath(); g.stroke(); } }),
+      ].map(t => { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(4, 1); return t; });
+      const winM = new T.MeshBasicMaterial({ color: 0xffe2a0 }), frameM = K.lam(0xffffff), shutM = K.lam(0x2a5a8a);
+      for (const H of E.houses) {
+        const cx = X(H.u), cz = (H.v0 + H.v1) / 2, front = H.v0 - 0.22, back = H.v1 + 0.22;
+        H.wm.map = sideT; H.wm.needsUpdate = true;
+        // fenêtres de façade et de l'arrière, volets
+        for (const [fz, ry] of [[front, Math.PI], [back, 0]]) for (const dx of [-4.2, 4.2]) {
+          K.plane(1.6, 1.3, winM, cx + dx, 2.1, fz + (ry ? -0.01 : 0.01), ry); const fr = new T.Mesh(new T.BoxGeometry(1.8, 1.5, 0.08), frameM); fr.position.set(cx + dx, 2.1, fz + (ry ? 0.02 : -0.02)); sc.add(fr);
+          const cr = new T.Mesh(new T.BoxGeometry(0.08, 1.3, 0.1), frameM); cr.position.set(cx + dx, 2.1, fz + (ry ? -0.03 : 0.03)); sc.add(cr);
+          for (const s of [-1, 1]) { const sh = new T.Mesh(new T.BoxGeometry(0.6, 1.5, 0.06), shutM); sh.position.set(cx + dx + s * 1.25, 2.1, fz + (ry ? -0.03 : 0.03)); sc.add(sh); }
+          if (ry) { const box = new T.Mesh(new T.BoxGeometry(1.7, 0.3, 0.35), K.lam(0x6a3a22)); box.position.set(cx + dx, 1.35, fz - 0.2); sc.add(box); for (let k = 0; k < 6; k++) { const f = new T.Mesh(new T.SphereGeometry(0.12, 6, 4), K.lam(BX_COLS[(k + H.i) % BX_COLS.length])); f.position.set(cx + dx - 0.7 + k * 0.28, 1.56, fz - 0.2); sc.add(f); } }
+        }
+        // le perron : marches, auvent, lanterne
+        E.B(0xb8b0a0).put(new T.BoxGeometry(3.2, 0.16, 1.4), cx, 0.08, H.v0 - 0.9); E.B(0xb8b0a0).put(new T.BoxGeometry(2.6, 0.16, 0.9), cx, 0.24, H.v0 - 0.65);
+        const aw = new T.Mesh(new T.BoxGeometry(3.0, 0.12, 1.4), K.lam(0x8a3a2a)); aw.position.set(cx, 3.0, H.v0 - 0.75); aw.rotation.x = 0.25; sc.add(aw);
+        for (const s of [-1, 1]) { const p = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 2.9, 8), frameM); p.position.set(cx + s * 1.35, 1.45, H.v0 - 1.35); sc.add(p); }
+        const lan = new T.Mesh(new T.BoxGeometry(0.25, 0.35, 0.25), new T.MeshBasicMaterial({ color: 0xffd890 })); lan.position.set(cx + 1.2, 2.3, front - 0.1); sc.add(lan);
+        const df = new T.Mesh(new T.BoxGeometry(2.2, 2.9, 0.1), frameM); df.position.set(cx, 1.45, front + 0.05); sc.add(df);
+        // haies et buissons devant, cheminée sur le toit
+        for (const s of [-1, 1]) { for (let k = 0; k < 3; k++) { const b = new T.Mesh(new T.SphereGeometry(0.55, 8, 6), K.lam(0x2a6a2a)); b.scale.y = 0.8; b.position.set(cx + s * (2.4 + k * 1.3), 0.45, H.v0 - 0.7); sc.add(b); } }
+        E.B(0x7a3a2a).put(new T.BoxGeometry(0.9, 2.4, 0.9), cx + 3.6, 6.2, cz + 2); E.B(0x3a2a2a).put(new T.BoxGeometry(1.1, 0.2, 1.1), cx + 3.6, 7.45, cz + 2);
+        // le jardin derrière : un arbre et une clôture blanche
+        const tr = new T.Mesh(new T.CylinderGeometry(0.2, 0.28, 2, 8), K.lam(0x5a3a22)); tr.position.set(cx - 4, 1, -81); sc.add(tr);
+        const crown = new T.Mesh(new T.IcosahedronGeometry(1.6, 0), K.lam(0x3a8a3a, { flatShading: true })); crown.position.set(cx - 4, 3, -81); sc.add(crown);
+        for (let u = -7.5; u <= 7.5; u += 0.6) E.B(0xffffff).put(new T.BoxGeometry(0.1, 0.9, 0.1), cx + u, 0.45, -78.6); E.B(0xffffff).put(new T.BoxGeometry(15, 0.1, 0.08), cx, 0.7, -78.6);
+        // dedans : parquet, papier peint, plafond, plinthes, un plafonnier
+        K.plane(13.4, 10.4, K.lam(0xffffff, { map: parquet }), cx, 0.012, cz, 0, -Math.PI / 2);
+        const wp = new T.MeshLambertMaterial({ map: papers[0] }); H.wp = wp; H.papers = papers;
+        K.plane(13.5, 4.0, wp, cx, 2.0, H.v1 - 0.21, Math.PI); K.plane(10.4, 4.0, wp, X(H.u - 7) + 0.21, 2.0, cz, Math.PI / 2); K.plane(10.4, 4.0, wp, X(H.u + 7) - 0.21, 2.0, cz, -Math.PI / 2);
+        K.plane(5.2, 4.0, wp, cx - 4.2, 2.0, H.v0 + 0.21, 0); K.plane(5.2, 4.0, wp, cx + 4.2, 2.0, H.v0 + 0.21, 0);
+        K.plane(13.6, 10.6, K.lam(0xf8f4ec), cx, 4.15, cz, 0, Math.PI / 2);
+        const cl = new T.Mesh(new T.CylinderGeometry(0.5, 0.3, 0.2, 14), new T.MeshBasicMaterial({ color: 0xfff4d0 })); cl.position.set(cx, 4.0, cz); sc.add(cl);
+        const il = new T.PointLight(0xffe8c0, 0.9, 12, 1.4); il.position.set(cx, 3.6, cz); this.lightGroup('street').add(il);
+        // les meubles de chaque décor
+        for (const gg of H.deco) gg.clear();
+        const D = H.deco, M = (gg, geo, c, x, y, z, ry = 0, basic) => { const m = new T.Mesh(geo, basic ? new T.MeshBasicMaterial({ color: c }) : K.lam(c)); m.position.set(x, y, z); m.rotation.y = ry; gg.add(m); return m; }, Bx = (gg, w, h, d, c, x, y, z, ry, basic) => M(gg, new T.BoxGeometry(w, h, d), c, x, y, z, ry, basic);
+        const bed = (gg, c1, c2) => { Bx(gg, 2.2, 0.5, 3.0, c1, cx + 4.8, 0.3, cz - 2.6); Bx(gg, 2.2, 0.2, 2.2, c2, cx + 4.8, 0.62, cz - 2.2); Bx(gg, 1.8, 0.25, 0.6, 0xffffff, cx + 4.8, 0.66, cz - 3.7); Bx(gg, 2.2, 1.0, 0.15, c1, cx + 4.8, 0.8, cz - 4.1); };
+        const tv = (gg, w) => { Bx(gg, w, w * 0.56, 0.08, 0x0a0a0a, cx - 6.7, 2.0, cz + 0.5, Math.PI / 2); M(gg, new T.PlaneGeometry(w - 0.15, w * 0.56 - 0.15), 0x3a6aff, cx - 6.64, 2.0, cz + 0.5, Math.PI / 2, true); Bx(gg, 0.6, 0.5, 2.6, 0x2a2a2a, cx - 6.5, 0.25, cz + 0.5); };
+        const plant = (gg, x, z) => { M(gg, new T.CylinderGeometry(0.28, 0.22, 0.5, 10), 0xc86a3a, x, 0.25, z); for (let k = 0; k < 6; k++) { const l = M(gg, new T.SphereGeometry(0.25, 6, 4), 0x2f8a3a, x + Math.cos(k) * 0.2, 0.8 + (k % 2) * 0.2, z + Math.sin(k) * 0.2); l.scale.set(0.6, 1.6, 0.4); } };
+        const rug = (gg, c, w, d) => Bx(gg, w, 0.02, d, c, cx, 0.03, cz + 0.5);
+        const frame = (gg, x, z, ry, c) => { Bx(gg, 1.2, 0.9, 0.06, 0xd8a838, x, 2.4, z, ry); M(gg, new T.PlaneGeometry(1.0, 0.7), c, x + Math.sin(ry) * 0.04, 2.4, z + Math.cos(ry) * 0.04, ry, true); };
+        // gamer
+        bed(D[0], 0x1a1a2a, 0x7a3aff); tv(D[0], 2.4); rug(D[0], 0x2a1a4a, 4, 3); plant(D[0], cx + 6.2, cz + 4.3);
+        Bx(D[0], 2.2, 0.08, 1.0, 0x0a0a0a, cx - 1, 0.95, cz + 4.4); for (const s of [-1, 1]) Bx(D[0], 0.08, 0.9, 0.9, 0x0a0a0a, cx - 1 + s, 0.5, cz + 4.4);
+        for (const [s, c] of [[-0.55, 0xff3ad8], [0.55, 0x3ad8ff]]) { Bx(D[0], 0.95, 0.6, 0.05, 0x0a0a0a, cx - 1 + s, 1.45, cz + 4.75); M(D[0], new T.PlaneGeometry(0.88, 0.52), c, cx - 1 + s, 1.45, cz + 4.72, Math.PI, true); }
+        Bx(D[0], 0.4, 0.5, 0.2, 0x111111, cx - 2.2, 1.2, cz + 4.6); const led = Bx(D[0], 0.42, 0.04, 0.22, 0x3aff8a, cx - 2.2, 1.0, cz + 4.6, 0, true); void led;
+        Bx(D[0], 0.7, 0.1, 0.7, 0x111111, cx - 1, 0.55, cz + 3.4); Bx(D[0], 0.7, 1.0, 0.12, 0xc8102e, cx - 1, 1.05, cz + 3.05);
+        for (const y of [3.85]) { Bx(D[0], 13.4, 0.05, 0.05, 0xff3ad8, cx, y, H.v1 - 0.3, 0, true); Bx(D[0], 0.05, 0.05, 10.4, 0x3ad8ff, X(H.u - 7) + 0.3, y, cz, 0, true); }
+        frame(D[0], cx + 1.5, H.v1 - 0.28, Math.PI, 0xff6a3a);
+        // chalet
+        bed(D[1], 0x7a4a2a, 0xc8102e); rug(D[1], 0x8a2a2a, 5, 3.4); plant(D[1], cx - 6.2, cz + 4.3);
+        Bx(D[1], 3.0, 3.6, 1.0, 0x8a8a8a, cx, 1.8, H.v1 - 0.8); M(D[1], new T.PlaneGeometry(1.6, 0.9), 0xff7a20, cx, 0.7, H.v1 - 1.32, Math.PI, true); Bx(D[1], 3.4, 0.2, 1.2, 0x5a3a22, cx, 1.6, H.v1 - 0.8);
+        for (let k = 0; k < 3; k++) Bx(D[1], 0.25, 0.25, 1.0, 0x6a4022, cx - 0.4 + k * 0.4, 0.5, H.v1 - 1.2, 0.3);
+        Bx(D[1], 1.4, 0.9, 1.2, 0x7a4a2a, cx - 2.6, 0.45, cz + 1.4); Bx(D[1], 1.4, 0.9, 1.2, 0x7a4a2a, cx + 2.6, 0.45, cz + 1.4); Bx(D[1], 1.4, 0.4, 0.9, 0x5a3420, cx, 0.4, cz + 0.6);
+        const ant = M(D[1], new T.TorusGeometry(0.4, 0.06, 4, 10, Math.PI), 0xe8dcc0, cx, 3.0, H.v1 - 0.32); ant.rotation.z = Math.PI; frame(D[1], X(H.u - 7) + 0.28, cz + 2, Math.PI / 2, 0x3a7a5a);
+        // luxe
+        bed(D[2], 0xf2f2f2, 0xd8a838); rug(D[2], 0xd8d0c0, 5, 3.6); plant(D[2], cx + 6.2, cz + 4.3); plant(D[2], cx - 6.2, cz + 4.3); tv(D[2], 3.0);
+        frame(D[2], cx + 2.6, H.v1 - 0.28, Math.PI, 0x3a6aff); frame(D[2], cx - 2.6, H.v1 - 0.28, Math.PI, 0xff3a5a);
+        Bx(D[2], 1.4, 0.06, 1.4, 0xd8e8f8, cx, 0.6, cz + 0.6); M(D[2], new T.CylinderGeometry(0.06, 0.06, 0.55, 6), 0xd8a838, cx, 0.3, cz + 0.6);
+        const ch = M(D[2], new T.SphereGeometry(0.5, 12, 8), 0xffe8a0, cx, 3.5, cz, 0, true); void ch;
+      }
+      this.bxHousesSync();
+    },
+    bxHousesSync() {
+      const E = this.ex; if (!E || !E.houses) return;
+      for (const H of E.houses) if (H.wp) { const s = H.owner ? (H.owner.s || 0) : 1; if (H.wp.map !== H.papers[s]) { H.wp.map = H.papers[s]; H.wp.needsUpdate = true; } }
+    },
+    // ------------------------------------------------------------------ le studio de Korochiku (remplace l'ancien)
+    exStudio() {
+      const E = this.ex, K = E.K, sc = this.scene, X = (u) => WX + u, BX = E.bx || (E.bx = { chase: [] });
+      this.exHall('studio', -34, -6, -134, -110, 6, 's', -20, 3, 0x2a2238, 0x1a1a22, () => {
+        const cx = X(-20), cz = -126;
+        // sol noir brillant et la scène ronde éclairée
+        K.plane(27.4, 23.4, new T.MeshStandardMaterial({ color: 0x0c0a14, metalness: 0.6, roughness: 0.25 }), cx, 0.012, -122, 0, -Math.PI / 2);
+        const stage = new T.Mesh(new T.CylinderGeometry(7.5, 7.7, 0.12, 48), new T.MeshStandardMaterial({ color: 0x1a1428, metalness: 0.4, roughness: 0.3 })); stage.position.set(cx, 0.06, cz - 2); sc.add(stage);
+        const ring = new T.Mesh(new T.TorusGeometry(7.6, 0.08, 6, 64), new T.MeshBasicMaterial({ color: 0xff3ad8 })); ring.rotation.x = Math.PI / 2; ring.position.set(cx, 0.13, cz - 2); sc.add(ring);
+        // le mur LED animé (dessiné en direct)
+        const lc = document.createElement('canvas'); lc.width = 1024; lc.height = 384; const lt2 = new T.CanvasTexture(lc);
+        const led = K.plane(16, 6, new T.MeshBasicMaterial({ map: lt2 }), cx, 3.2, -133.72, 0);
+        E.B(0x0a0a10).put(new T.BoxGeometry(16.6, 6.6, 0.3), cx, 3.2, -133.95);
+        BX.led = { c: lc, t: lt2, mesh: led, img: (() => { const im = new Image(); try { im.src = DX_KORO; } catch (e) {} return im; })() };
+        // néons sur les murs latéraux
+        for (const [x, ry, col, txt] of [[X(-33.75), Math.PI / 2, '#ff3ad8', 'LIVE'], [X(-6.25), -Math.PI / 2, '#3ad8ff', 'NNN']]) K.plane(5, 1.6, new T.MeshBasicMaterial({ map: neonTex(txt, col), transparent: true, depthWrite: false }), x, 4, -124, ry);
+        // le bureau de l'animateur : façade lumineuse avec logo
+        const desk = new T.Group(); desk.position.set(cx, 0.12, cz - 3); sc.add(desk);
+        const top = new T.Mesh(new T.BoxGeometry(5, 0.12, 1.6), new T.MeshStandardMaterial({ color: 0xffffff, metalness: 0.2, roughness: 0.1 })); top.position.y = 0.95; desk.add(top);
+        const front = new T.Mesh(new T.BoxGeometry(4.8, 0.9, 0.12), new T.MeshBasicMaterial({ map: hubCanvas(512, 96, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#ff3ad8'); gr.addColorStop(0.5, '#7a3aff'); gr.addColorStop(1, '#3ad8ff'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = '900 54px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('KOROCHIKU', w / 2, h / 2 + 3); }) })); front.position.set(0, 0.48, 0.76); desk.add(front);
+        for (const s of [-1, 1]) { const leg = new T.Mesh(new T.BoxGeometry(0.12, 0.9, 1.5), K.lam(0x1a1a22)); leg.position.set(s * 2.3, 0.45, 0); desk.add(leg); }
+        const mic = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 0.5, 6), K.lam(0x2a2a2a)); mic.position.set(0.6, 1.25, 0.2); mic.rotation.x = -0.4; desk.add(mic); const mh = new T.Mesh(new T.SphereGeometry(0.1, 8, 6), K.lam(0x3a3a3a)); mh.position.set(0.6, 1.5, 0.3); desk.add(mh);
+        const mug = new T.Mesh(new T.CylinderGeometry(0.1, 0.09, 0.22, 10), K.lam(0xc8102e)); mug.position.set(-1.2, 1.12, 0.1); desk.add(mug);
+        const lap = new T.Mesh(new T.BoxGeometry(0.8, 0.04, 0.55), K.lam(0x9a9aa2)); lap.position.set(-0.3, 1.04, 0); desk.add(lap); const scr = new T.Mesh(new T.PlaneGeometry(0.78, 0.5), new T.MeshBasicMaterial({ color: 0x7a3aff })); scr.position.set(-0.3, 1.3, -0.26); scr.rotation.x = -0.25; desk.add(scr);
+        K.wallC(cx - 2.6, cz - 3.9, cx + 2.6, cz - 2.1);
+        // le fauteuil de l'animateur (gamer, rouge et or)
+        const chair = new T.Group(); chair.position.set(cx, 0.12, cz - 4.6); sc.add(chair);
+        const seat = new T.Mesh(new T.BoxGeometry(1.0, 0.25, 1.0), K.lam(0xc8102e)); seat.position.y = 0.45; chair.add(seat);
+        const back = new T.Mesh(new T.BoxGeometry(1.0, 1.6, 0.2), K.lam(0xc8102e)); back.position.set(0, 1.3, -0.45); chair.add(back);
+        const stripe = new T.Mesh(new T.BoxGeometry(0.3, 1.6, 0.21), K.lam(0xffd23a)); stripe.position.set(0, 1.3, -0.45); chair.add(stripe);
+        const post = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 0.4, 6), K.lam(0x2a2a2a)); post.position.y = 0.2; chair.add(post);
+        E.seats.push({ x: cx, z: cz - 4.5, r: Math.PI / 2, y: 0.3, kind: 'chair', ox: cx + 1.4, oz: cz - 4.5, ex: 'anim' });
+        // les canapés des invités en velours, table basse et plante
+        for (const s of [-1, 1]) {
+          const g = new T.Group(); g.position.set(cx + s * 5.2, 0.12, cz - 2.4); g.rotation.y = s * -0.35; sc.add(g);
+          const b = new T.Mesh(new T.BoxGeometry(3.2, 0.45, 1.1), K.lam(0x7a3aff)); b.position.y = 0.23; g.add(b);
+          const bk = new T.Mesh(new T.BoxGeometry(3.2, 0.8, 0.3), K.lam(0x7a3aff)); bk.position.set(0, 0.65, -0.45); g.add(bk);
+          for (const t of [-1, 1]) { const arm = new T.Mesh(new T.BoxGeometry(0.3, 0.6, 1.1), K.lam(0x5a2ad8)); arm.position.set(t * 1.6, 0.4, 0); g.add(arm); }
+          for (const k of [-1, 1]) E.seats.push({ x: cx + s * 5.2 + k * 0.8 * Math.cos(s * 0.35), z: cz - 2.4 + k * 0.8 * Math.sin(s * 0.35), r: Math.PI / 2 + s * -0.35, y: 0.3, kind: 'chair', ox: cx + s * 5.2, oz: cz - 1.0, ex: 'invite' });
+        }
+        E.B(0xffffff).put(new T.CylinderGeometry(0.7, 0.7, 0.08, 20), cx + 2.9, 0.62, cz - 1.6); E.B(0xd8a838).put(new T.CylinderGeometry(0.08, 0.08, 0.5, 8), cx + 2.9, 0.37, cz - 1.6);
+        // la grue caméra et les caméras de plateau
+        for (const [dx, dz] of [[-4, 4], [4, 4]]) { const g = new T.Group(); g.position.set(cx + dx, 0, cz + dz); sc.add(g); for (let k = 0; k < 3; k++) { const l = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 1.6), K.lam(0x1a1a1a)); const a = k / 3 * TAU; l.position.set(Math.cos(a) * 0.3, 0.75, Math.sin(a) * 0.3); l.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3); g.add(l); } const cam = new T.Mesh(new T.BoxGeometry(0.5, 0.45, 0.9), K.lam(0x2a2a2a)); cam.position.y = 1.7; g.add(cam); const lens = new T.Mesh(new T.CylinderGeometry(0.15, 0.18, 0.3, 10), K.lam(0x0a0a0a)); lens.rotation.x = Math.PI / 2; lens.position.set(0, 1.7, -0.55); g.add(lens); const rec = new T.Mesh(new T.SphereGeometry(0.05, 6, 4), new T.MeshBasicMaterial({ color: 0xff2020 })); rec.position.set(0.2, 1.95, -0.3); g.add(rec); g.lookAt(cx, 0, cz - 3); K.wallC(cx + dx - 0.4, cz + dz - 0.4, cx + dx + 0.4, cz + dz + 0.4); }
+        { const g = new T.Group(); g.position.set(cx + 9, 0, cz + 2); sc.add(g); const base = new T.Mesh(new T.CylinderGeometry(0.6, 0.7, 0.4, 12), K.lam(0x2a2a2a)); base.position.y = 0.2; g.add(base); const mast = new T.Mesh(new T.CylinderGeometry(0.12, 0.12, 2.6, 8), K.lam(0x3a3a3a)); mast.position.y = 1.5; g.add(mast); const arm = new T.Group(); arm.position.y = 2.8; g.add(arm); const boom = new T.Mesh(new T.BoxGeometry(6, 0.15, 0.15), K.lam(0x3a3a3a)); boom.position.x = -2; arm.add(boom); const cam = new T.Mesh(new T.BoxGeometry(0.6, 0.45, 0.8), K.lam(0x1a1a1a)); cam.position.set(-4.8, -0.2, 0); arm.add(cam); BX.crane = arm; K.wallC(cx + 8.4, cz + 1.4, cx + 9.6, cz + 2.6); }
+        // le portique de projecteurs et les faisceaux qui balaient la scène
+        E.B(0x2a2a32).put(new T.BoxGeometry(20, 0.25, 0.25), cx, 5.6, cz - 6); E.B(0x2a2a32).put(new T.BoxGeometry(20, 0.25, 0.25), cx, 5.6, cz + 2);
+        const beams = [], beamM = (c) => new T.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.13, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide });
+        for (let i = 0; i < 6; i++) {
+          const bx2 = cx - 8 + i * 3.2, bz2 = i % 2 ? cz + 2 : cz - 6, col = [0xff3ad8, 0x3ad8ff, 0xffd23a][i % 3];
+          const head = new T.Mesh(new T.CylinderGeometry(0.22, 0.28, 0.5, 10), K.lam(0x1a1a1a)); head.position.set(bx2, 5.3, bz2); sc.add(head);
+          const piv = new T.Group(); piv.position.set(bx2, 5.2, bz2); sc.add(piv);
+          const cone = new T.Mesh(new T.ConeGeometry(1.1, 5.4, 16, 1, true), beamM(col)); cone.position.y = -2.7; piv.add(cone);
+          const spot = new T.Mesh(new T.CircleGeometry(1.1, 16), beamM(col)); spot.rotation.x = -Math.PI / 2; spot.material.opacity = 0.35; sc.add(spot);
+          beams.push({ piv, spot, ph: i * 1.3 });
+        }
+        BX.beams = beams;
+        // les écrans de retour sur pied, les gradins rouges et leur rampe lumineuse
+        for (const s of [-1, 1]) { E.B(0x1a1a1a).put(new T.BoxGeometry(0.1, 1.6, 0.1), cx + s * 11, 0.8, cz + 0.5); const tv2 = K.plane(2.2, 1.3, new T.MeshBasicMaterial({ map: lt2 }), cx + s * 11, 2.2, cz + 0.55, 0); void tv2; }
+        for (let k = 0; k < 3; k++) { E.B(0x8a1020).put(new T.BoxGeometry(14, 0.4 + k * 0.4, 1.2), cx, (0.4 + k * 0.4) / 2, cz + 8 + k * 1.2); }
+        for (let k = 0; k < 3; k++) for (let i = 0; i < 6; i++) E.seats.push({ x: cx - 5 + i * 2, z: cz + 8 + k * 1.2, r: -Math.PI / 2, y: 0.05 + k * 0.4, kind: 'chair', ox: cx - 5 + i * 2, oz: cz + 6.6, ex: 'public' });
+        const rp = []; for (let k = 0; k < 3; k++) for (let i = 0; i <= 40; i++) rp.push(new T.Vector3(cx - 7 + i * 14 / 40, 0.42 + k * 0.4, cz + 7.38 + k * 1.2)); const rb = bxBulbs(rp, 0.05); sc.add(rb); BX.chase.push({ m: rb, n: rp.length });
+        // le panneau ON AIR
+        const onM = new T.MeshBasicMaterial({ color: 0x3a0a0a }); K.plane(2.6, 0.8, onM, X(-30), 5.4, -133.6, 0);
+        K.plane(2.4, 0.6, E.label('● ON AIR', { col: '#fff', bg: 'rgba(0,0,0,0)', w: 512, h: 140 }), X(-30), 5.4, -133.58, 0);
+        E.onAirM = onM;
+        for (const [c, x, z] of [[0xff3ad8, cx - 6, cz - 4], [0x3ad8ff, cx + 6, cz - 4], [0xfff0e0, cx, cz + 4]]) { const l = new T.PointLight(c, 1.4, 18, 1.3); l.position.set(x, 4.5, z); this.lightGroup('street').add(l); }
+      });
+    },
+    // ------------------------------------------------------------------ animations
+    bxStep() {
+      const E = this.ex, BX = E && E.bx; if (!BX) return;
+      const t = E.fr, m = this.me, inS = m.z > 74, inN = m.z < -74, c = new T.Color();
+      // ampoules en chenillard
+      if (inS && t % 6 === 0) {
+        for (const C of BX.chase) { const step = Math.floor(t / (C.fast ? 3 : 6)); for (let i = 0; i < C.n; i++) { const on = (i + step) % 4 !== 0; c.setHex(on ? BX_COLS[(i + Math.floor(step / 4)) % BX_COLS.length] : 0x2a2420); C.m.setColorAt(i, c); } C.m.instanceColor.needsUpdate = true; }
+        const W = BX.wheelBulbs; if (W) { const ph = t * 0.02; for (let i = 0; i < W.n; i++) { const k = (Math.sin(i * 0.35 - ph * 3) + 1) / 2; c.setHSL(((i * 0.004 + ph * 0.1) % 1), 1, 0.35 + k * 0.4); W.m.setColorAt(i, c); } W.m.instanceColor.needsUpdate = true; }
+      }
+      if (BX.carousel && inS) { const C = BX.carousel; C.rot.rotation.y += 0.008; for (const h of C.horses) h.h.position.y = 1.5 + Math.sin(t * 0.06 + h.ph) * 0.35; }
+      if (inN) {
+        if (BX.beams) for (const b of BX.beams) { const ax = Math.sin(t * 0.017 + b.ph) * 0.45, az = Math.cos(t * 0.013 + b.ph) * 0.35; b.piv.rotation.set(az, 0, ax); const p = b.piv.position; b.spot.position.set(p.x + Math.sin(ax) * 5.2, 0.15, p.z - Math.sin(az) * 5.2); }
+        if (BX.crane) BX.crane.rotation.y = Math.sin(t * 0.006) * 0.8;
+        const L = BX.led; if (L && t % 4 === 0) {
+          const h = this.exHallAt && this.exHallAt(m.x, m.z); if (h && h.id === 'studio') {
+            const g = L.c.getContext('2d'), w = 1024, hh = 384, ph = t * 0.01;
+            const gr = g.createLinearGradient(0, 0, w, hh); gr.addColorStop(0, `hsl(${(ph * 40) % 360},90%,30%)`); gr.addColorStop(0.5, `hsl(${(ph * 40 + 90) % 360},90%,22%)`); gr.addColorStop(1, `hsl(${(ph * 40 + 180) % 360},90%,30%)`); g.fillStyle = gr; g.fillRect(0, 0, w, hh);
+            for (let i = 0; i < 14; i++) { g.strokeStyle = `rgba(255,255,255,${0.05 + (i % 3) * 0.03})`; g.lineWidth = 6; g.beginPath(); g.arc(w / 2, hh / 2, 60 + i * 40 + (t % 40), 0, TAU); g.stroke(); }
+            if (L.img.complete && L.img.naturalWidth) { const s = hh * 0.86, x0 = w / 2 - s / 2 - 260; g.save(); g.beginPath(); g.arc(x0 + s / 2, hh / 2, s / 2, 0, TAU); g.clip(); g.drawImage(L.img, x0, hh / 2 - s / 2, s, s); g.restore(); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.beginPath(); g.arc(x0 + s / 2, hh / 2, s / 2, 0, TAU); g.stroke(); }
+            g.fillStyle = '#ffd23a'; g.font = '900 96px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#000'; g.shadowBlur = 16; g.fillText('KOROCHIKU', w / 2 + 170, hh / 2 - 50);
+            g.fillStyle = '#fff'; g.font = '900 54px "SSK Rodin","Arial Black",sans-serif'; g.fillText(E.onAir ? '● EN DIRECT' : '★ LE LIVE ★', w / 2 + 170, hh / 2 + 50); g.shadowBlur = 0;
+            for (let x = 0; x < w; x += 4) { g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x, 0, 1, hh); }
+            L.t.needsUpdate = true;
           }
         }
       }

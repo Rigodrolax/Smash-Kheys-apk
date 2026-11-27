@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.2
+// @version      0.99.3
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.2';
+  const SSK_VER = '0.99.3';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -20309,7 +20309,7 @@
         belt.forEach((r, i) => bldg(r, beltSt[i % beltSt.length], 18 + ((i * 37) % 30)));
         // horizon : tours lointaines, sans collision
         for (let i = 0; i < 56; i++) {
-          const a = i / 56 * TAU, R = 130 + (i * 53) % 60, x = WX + Math.cos(a) * R * 1.15, z = Math.sin(a) * R, w = 12 + (i * 7) % 14, d = 12 + (i * 11) % 12, h = 25 + (i * 29) % 70; if (x > WX + 80 && x < WX + 200 && Math.abs(z) < 62) continue;
+          const a = i / 56 * TAU, R = 130 + (i * 53) % 60, x = WX + Math.cos(a) * R * 1.15, z = Math.sin(a) * R, w = 12 + (i * 7) % 14, d = 12 + (i * 11) % 12, h = 25 + (i * 29) % 70; if (x > WX + 80 && x < WX + 200 && Math.abs(z) < 62) continue; if (x < WX - 80 && x > WX - 215 && Math.abs(z) < 58) continue;
           bldg({ x1: x - w / 2, x2: x + w / 2, z1: z - d / 2, z2: z + d / 2 }, ['glass', 'resi', 'glass2', 'resi2', 'neon'][i % 5], h, { noSolid: true, shop: false });
         }
 
@@ -20568,7 +20568,7 @@
         };
         paifang(WX - 28.5, 46, 0, 5.2, 5, 'HUTONG DES KHEYS');
         paifang(WX - 85, 0, Math.PI / 2, 14, 8.5, 'PORTE DU NNN'); paifang(WX + 85, 0, -Math.PI / 2, 14, 8.5, 'PORTE DES KHEYS');
-        for (const s of [-1]) { box(1.2, 5, 16, lam(0x6a6a70), WX + s * 90, 2.5, 0); solid(WX + s * 89.4, -8, WX + s * 95, 8); }
+        
         // lanternes rouges au-dessus de la ruelle
         for (let v = 23.5; v < 44; v += 2.6) { this.lantern(B, WX - 28.5, 4.4, v); B('dark').put(new T.BoxGeometry(3.2, 0.03, 0.03), WX - 28.5, 4.75, v); }
         // le rond-point : obélisque doré du NNN et fontaines
@@ -20709,7 +20709,7 @@
         g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 2, 0, TAU); g.clip();
         g.fillStyle = '#121018'; g.fillRect(0, 0, W, H);
         g.translate(W / 2, H / 2); g.rotate(this.camYaw); g.scale(zoom, zoom);
-        g.drawImage(this.miniBase, -(m.x - WX - GEO_U0) * k, -(m.z - GEO_V0) * k);
+        g.drawImage(this.miniBase, -(m.x - WX - (this.miniU0 ?? GEO_U0)) * k, -(m.z - GEO_V0) * k);
         const P = (x, z) => [(x - m.x) * k, (z - m.z) * k];
         for (const C of this.npcCars || []) { const [px, pz] = P(C.mesh.position.x, C.mesh.position.z); g.fillStyle = '#c8c8d0'; g.fillRect(px - 2, pz - 2, 4, 4); }
         for (const a of this.remote.values()) { if (cityArea(a.x, a.z) !== 'street') continue; const [px, pz] = P(a.x, a.z); g.fillStyle = mapCol(a.name); g.strokeStyle = '#000'; g.lineWidth = 1.5; g.beginPath(); g.arc(px, pz, 4.5, 0, TAU); g.fill(); g.stroke(); }
@@ -31713,7 +31713,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         <button data-e="gong">🔔 Gong</button><button data-e="conf">🎊 Confettis</button>
         <button data-e="gather">🏯 Rassemblement au temple</button><button data-e="hymn">🎺 Hymne pour tous</button>
         <button data-e="fw">🎆 Feu d'artifice</button><button data-e="parade">🚩 Défilé des régiments</button>
-        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button><button data-e="lant">🏮 Lâcher les lanternes</button><button data-e="dawn">🌅 L'aube rouge</button></div>
+        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button><button data-e="lant">🏮 Lâcher les lanternes</button><button data-e="dawn">🌅 L'aube rouge</button><button data-e="grace">⚖️ Gracier Isssoufle</button><button data-e="beer">🍺 Tournée générale</button></div>
         <input maxlength="140" placeholder="Un discours pour le peuple…"><button data-e="speech" style="width:100%">🎙️ PROCLAMER</button>
         <button data-e="close" style="width:100%;margin-top:8px;background:#333">FERMER</button>`;
       p.querySelectorAll('button').forEach(b => feTap(b, () => {
@@ -31729,6 +31729,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     feEvent(key, v, t0) {
       const F = this.fe; if (!F || !v || F.seen.has(key)) return; F.seen.add(key);
       const now = NET.now ? NET.now() : Date.now(), age = now - (+v.t || 0);
+      if (v.e === 'grace') { if (age < 3 * 3600e3 && this.vcGrace) this.vcGrace(+v.t || now); return; }
       if (age > 25000 || age < -60000) return;                                        // trop vieux : ignoré
       const by = String(v.by || 'Le Leader').slice(0, 20);
       if (v.e === 'gong') { SFX.gong && SFX.gong(); this.feBanner('LE LEADER SUPRÊME', `${by} frappe le gong !`, 3500); }
@@ -31738,6 +31739,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       else if (v.e === 'fw') this.feFireworks(40);
       else if (v.e === 'parade') { F.parade = { t0: +v.t || now }; this.feBanner('DÉFILÉ DES RÉGIMENTS', 'Rendez-vous sur l\'avenue du Quartier du Peuple !', 5000); }
       else if (v.e === 'lant') this.feLanterns();
+      else if (v.e === 'beer') { if (this.vc) { this.vc.gl = 1; this.vc.dirty = true; } this.feBanner('🍺 TOURNÉE GÉNÉRALE', `${by} offre une bière à tout le monde ! Rendez-vous à la Place de la Victoire pour trinquer.`, 7000); SFX.cash && SFX.cash(); }
       else if (v.e === 'dawn') { F.dawnT0 = performance.now(); }
       else if (v.e === 'candles') { this.feBanner('LEVEZ VOS BOUGIES', 'Une bougie gratuite vous attend devant le temple.', 6000); }
       else if (v.e === 'photo') this.fePhoto(Math.max(0, 5000 - age));
@@ -31990,11 +31992,403 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   });
 
   // =====================================================================
+  //  LA PLACE DE LA VICTOIRE (v0.99.3) : un nouveau quartier à l'ouest (par la Porte du NNN),
+  //  le Grand Comptoir (bière gratuite), la grande table du Peuple où l'on s'assoit et où l'on trinque,
+  //  le sapin de la Victoire (il s'allume à minuit pile le 1er décembre), la neige à 00:01,
+  //  la ville décorée pour le 30 et l'amnistie d'Isssoufle (lancée depuis le pupitre du Leader).
+  // =====================================================================
+  const VC_U0 = -176, VC_V = 34;                                                  // le quartier : u de -176 à -92, v de -34 à 34
+  const VC_DECO_ON = Date.UTC(2026, 10, 29, 23, 0, 0), VC_DECO_OFF = Date.UTC(2026, 11, 31, 23, 0, 0);
+  const VC_SNOW = FETE_END + 60000;                                               // 00:01 le 1er décembre
+  const VC_TREE = { u: -112, v: 0 };
+  const VC_PATH = [[150, 33.2], [148.6, 30.5], [148.6, 9], [148.6, -2], [148, -6.4]];   // de la porte du pénitencier au parvis du temple
+  const VC_GRACE_LINES = [
+    'Peuple du NNN… je… je reconnais mes torts.',
+    'J\'ai abandonné le topic pour jouer à GTA VI. C\'était une erreur.',
+    'Le Leader Suprême Korochiku est grand, juste et généreux.',
+    'Je promets de ne plus jamais toucher une manette avant le 1er décembre.',
+    'Merci, Grand Timonier, pour cette nuit de liberté.',
+    '…Du coup, je peux récupérer ma console ?',
+  ];
+  const VC_BARMAN = ['Une pression ? C\'est la maison qui régale ce soir.', 'Trente jours sans craquer… ça s\'arrose, mon khey.', 'Assieds-toi à la grande table, tout le monde trinque ensemble.', 'Le Leader a dit : la bière est gratuite jusqu\'à l\'aube.', 'Isssoufle ? Il a une ardoise de 400 R$ ici. On efface tout ce soir.'];
+  const vcNow = () => (NET.now ? NET.now() : Date.now());
+
+  {
+    const HP = Hub.prototype;
+    const wrap = (name, fn) => { const o = HP[name] || function () {}; HP[name] = function (...a) { return fn.call(this, o, ...a); }; };
+    wrap('buildWorld', function (o) { o.call(this); try { this.vcBuild(); } catch (e) { console.warn('[SSK] victoire', e); } });
+    wrap('clampArea', function (o, m) {
+      if (cityArea(m.x, m.z) === 'street' && m.x < WX - 88 && this.vc) { m.x = clamp(m.x, WX + VC_U0 + 1.2, WX - 88); m.z = m.x > WX - 96 ? clamp(m.z, -7.4, 7.4) : clamp(m.z, -VC_V + 1.5, VC_V - 1.5); return; }
+      return o.call(this, m);
+    });
+    wrap('update', function (o, ...a) { const r = o.apply(this, a); try { this.vcStep(); } catch (e) { if (!this._vcErr) { this._vcErr = 1; console.warn('[SSK] victoire', e); } } return r; });
+    wrap('zoneMore', function (o, ar) { return this.vcZone(ar) || o.call(this, ar); });
+    wrap('interactMore', function (o, zn) { return this.vcInteract(zn) || o.call(this, zn); });
+    wrap('zone', function (o) {
+      const m = this.me;
+      if (m.a === 'sit' && this.seat && this.seat.vc) return this.vc.gl ? { id: 'vc-toast', label: 'Trinquer ! 🍻', sub: 'lève ton verre avec la tablée', alt: { id: 'stand', label: 'Se lever' } } : { id: 'stand', label: 'Se lever', sub: 'va chercher une bière au comptoir pour trinquer' };
+      return o.call(this);
+    });
+    wrap('upsert', function (o, uid, v) {
+      o.call(this, uid, v); const a = this.remote && this.remote.get(uid); if (!a || !v) return;
+      a.vcGl = +v.gl || 0;
+      if (v.ck && v.ck !== a.vcCkT) { const fresh = a.vcCkT != null || vcNow() - v.ck < 8000; a.vcCkT = v.ck; if (fresh) { a.vcCkL = performance.now(); this.vcCheersIn(a); } }
+    });
+    wrap('dxPrison', function (o, t, here) {
+      const D = this.dx; if (!D || !this.vcGr || !D.isss) return o.call(this, t, here);
+      const I = D.isss; D.isss = null; try { o.call(this, t, here); } finally { D.isss = I; }
+    });
+    const _pose = HubAvatar.prototype.pose;
+    HubAvatar.prototype.pose = function (dtk) {
+      _pose.call(this, dtk);
+      if (this.vcCk && performance.now() - this.vcCk < 1700) { const k = Math.min(1, (performance.now() - this.vcCk) / 250); this.m.armL.rotation.z = 0.3 + 2.3 * k; this.m.armL.rotation.x = -0.3 * k; }
+    };
+  }
+
+  Object.assign(Hub.prototype, {
+    vcBuild() {
+      const K = cityKit(this), sc = this.scene, { lam, std, box, cyl, plane, wallC } = K, X = (u) => WX + u;
+      const V = this.vc = { seats: [], gl: 0, ck: 0, anim: [] };
+      const label = (t, o = {}) => K.txt(o.w || 1024, o.h || 160, (g, w, h) => { if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, w, h); } if (o.border) { g.strokeStyle = o.border; g.lineWidth = 10; g.strokeRect(6, 6, w - 12, h - 12); } let fs = o.fs || 90; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; while (g.measureText(t).width > w - 40 && fs > 18) { fs -= 4; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = o.col || '#fff'; g.fillText(t, w / 2, h / 2 + 4); });
+      const W0 = VC_U0, W1 = -92, D0 = -VC_V, D1 = VC_V;
+      // --- le sol : la route qui continue, puis une grande place pavée
+      const groundT = hubCanvas(2048, 1660, (g, w, h) => {
+        const su = w / (W1 - W0), sv = h / (D1 - D0), gx = (u) => (u - W0) * su, gy = (v) => (v - D0) * sv;
+        g.fillStyle = '#7a7068'; g.fillRect(0, 0, w, h);
+        for (let y = 0; y < h; y += 14) for (let x = (y / 14) % 2 * 9; x < w; x += 18) { const c = 105 + Math.random() * 30; g.fillStyle = `rgb(${c},${c - 8},${c - 16})`; g.fillRect(x + 1, y + 1, 16, 12); }
+        g.strokeStyle = 'rgba(200,170,90,.55)'; g.lineWidth = 6; for (let r = 4; r < 34; r += 6) { g.beginPath(); g.arc(gx(VC_TREE.u), gy(VC_TREE.v), r * su, 0, TAU); g.stroke(); }
+        g.fillStyle = '#2a2a31'; g.fillRect(gx(-100), gy(-5), (W1 - -100) * su, 10 * sv); g.fillStyle = '#a8a6ae'; g.fillRect(gx(-100), gy(-5.4), 1.2 * su, 10.8 * sv);
+        g.fillStyle = 'rgba(140,20,20,.55)'; g.fillRect(gx(-152), gy(-3.6), 30 * su, 7.2 * sv);                  // le tapis rouge sous la grande table
+      });
+      groundT.anisotropy = 8;
+      plane(W1 - W0, D1 - D0, lam(0xffffff, { map: groundT }), X((W0 + W1) / 2), 0.004, 0, 0, -Math.PI / 2);
+      // --- les limites : murets, immeubles du fond, portique d'entrée
+      const bm = lam(0x4a4650), farM = lam(0x2a2836);
+      for (const sv of [-1, 1]) { box(W1 - W0 - 4, 2.2, 0.6, bm, X((W0 + W1 - 4) / 2), 1.1, sv * D1); wallC(X(W0), sv * D1 - 0.3, X(W1 - 4), sv * D1 + 0.3); }
+      box(0.6, 2.2, D1 * 2, bm, X(W0), 1.1, 0); wallC(X(W0) - 0.3, D0, X(W0) + 0.3, D1);
+      for (const sv of [-1, 1]) { box(0.6, 2.2, D1 - 8, bm, X(-96), 1.1, sv * (D1 + 8) / 2); wallC(X(-96) - 0.3, sv > 0 ? 8 : D0, X(-96) + 0.3, sv > 0 ? D1 : -8); }
+      for (let i = 0; i < 13; i++) { const u = -100 - i * 6.2, h = 14 + (i * 41) % 24; for (const sv of [-1, 1]) box(5.4, h, 5, farM, X(u), h / 2, sv * (D1 + 5)); }
+      box(6, 34, D1 * 2 + 10, farM, X(W0 - 5), 17, 0);
+      {
+        const g = new T.Group(); g.position.set(X(-93.5), 0, 0); g.rotation.y = Math.PI / 2; sc.add(g);
+        const red = lam(0xa81c14), gold = lam(0xd8a020, { emissive: 0x2a1a00 });
+        for (const px of [-7, 7]) { const c = new T.Mesh(new T.CylinderGeometry(0.32, 0.36, 7, 10), red); c.position.set(px, 3.5, 0); g.add(c); wallC(X(-93.5) - 0.4, px - 0.4, X(-93.5) + 0.4, px + 0.4); }
+        const be = new T.Mesh(new T.BoxGeometry(15.4, 0.9, 0.6), lam(0x1a5a2a)); be.position.y = 6.8; g.add(be);
+        const rf = new T.Mesh(new T.CylinderGeometry(0.5, 0.72, 1, 4), gold); rf.rotation.y = Math.PI / 4; rf.scale.set(17, 1, 2.6); rf.position.y = 7.7; g.add(rf);
+        const lb = new T.Mesh(new T.PlaneGeometry(9, 1.3), label('PLACE DE LA VICTOIRE', { bg: '#1a5a2a', col: '#ffd23a', border: '#d8a020' })); lb.position.set(0, 5.7, 0.32); g.add(lb);
+        const lb2 = lb.clone(); lb2.rotation.y = Math.PI; lb2.position.z = -0.32; g.add(lb2);
+      }
+      for (const [u, v] of [[-110, -20], [-110, 20], [-140, -20], [-140, 20], [-165, 0]]) K.pl('street', 0xffc890, 0.9, 26, X(u), 7, v);
+      // --- le Grand Comptoir : un grand bar ouvert sur la place
+      {
+        const bx0 = -176, bx1 = -158, bz = 14, H = 6.4, wood = lam(0x5a3420), dark = lam(0x2a1a12), brass = std(0xd8a838, { metalness: 0.8, roughness: 0.3 });
+        box(0.5, H, bz * 2, lam(0x6a3a2a), X(bx0 + 0.25), H / 2, 0);
+        for (const sv of [-1, 1]) { box(bx1 - bx0, H, 0.5, lam(0x6a3a2a), X((bx0 + bx1) / 2), H / 2, sv * bz); wallC(X(bx0), sv * bz - 0.25, X(bx1), sv * bz + 0.25); }
+        for (const sv of [-1, 1]) { box(0.6, H, 3, lam(0x6a3a2a), X(bx1), H / 2, sv * (bz - 1.5)); wallC(X(bx1) - 0.3, sv > 0 ? bz - 3 : -bz, X(bx1) + 0.3, sv > 0 ? bz : -bz + 3); }
+        box(bx1 - bx0 + 1, 0.4, bz * 2 + 1, dark, X((bx0 + bx1) / 2), H + 0.2, 0);
+        box(2.6, 0.2, bz * 2 + 1, lam(0x1a5a2a), X(bx1 + 1.2), H - 0.6, 0).rotation.z = -0.3;                  // l'auvent vert
+        plane(bz * 2 - 2, H, lam(0x4a2a1c), X(bx0 + 0.55), H / 2, 0, Math.PI / 2);
+        plane(bx1 - bx0, bz * 2, lam(0x3a2418), X((bx0 + bx1) / 2), 0.01, 0, 0, -Math.PI / 2);
+        plane(bx1 - bx0, bz * 2, lam(0x2a1a12), X((bx0 + bx1) / 2), H - 0.02, 0, 0, Math.PI / 2);
+        // l'enseigne
+        plane(12, 1.8, K.txt(1024, 160, (g, w, h) => { g.fillStyle = '#120806'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12); g.font = '900 92px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#ffb040'; g.shadowBlur = 24; g.fillStyle = '#ffd86a'; g.fillText('🍺 LE GRAND COMPTOIR 🍺', w / 2, h / 2 + 4); }), X(bx1 + 0.35), H + 1.2, 0, Math.PI / 2);
+        box(0.3, 2.2, 12.4, dark, X(bx1 + 0.2), H + 1.2, 0);
+        // le comptoir, ses pompes, les étagères de bouteilles
+        const cu = -161;
+        box(1.1, 1.15, 18, wood, X(cu), 0.58, 0); box(1.3, 0.1, 18.2, lam(0x8a5a30), X(cu), 1.2, 0); wallC(X(cu) - 0.6, -9.1, X(cu) + 0.6, 9.1);
+        box(0.06, 0.06, 18, brass, X(cu + 0.62), 0.25, 0);
+        for (let v = -8; v <= 8; v += 4) { cyl(0.05, 0.05, 0.6, brass, X(cu), 1.55, v, sc, 8); const hd = cyl(0.09, 0.09, 0.2, lam(0x1a1a1a), X(cu), 1.95, v, sc, 8); void hd; }
+        const shelfM = lam(0x4a2a18), bottleC = [0x2a7a3a, 0x8a3a1a, 0xd8c070, 0x3a5a9a, 0x7a1a3a, 0xe0e0d0];
+        for (let r = 0; r < 3; r++) { box(0.5, 0.08, 20, shelfM, X(bx0 + 0.8), 1.6 + r * 1.0, 0); for (let i = 0; i < 26; i++) { const b = cyl(0.07, 0.07, 0.38, new T.MeshStandardMaterial({ color: bottleC[(i + r) % 6], roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.85 }), X(bx0 + 0.8), 1.84 + r * 1.0, -9.4 + i * 0.75, sc, 8); void b; } }
+        plane(6, 1.2, label('BIÈRE GRATUITE CE SOIR', { bg: '#c8102e', col: '#ffd23a' }), X(bx0 + 0.6), 5.4, 0, Math.PI / 2);
+        // le barman
+        const bm2 = npcMan({ skin: 0xe8b48e, shirt: 0xf0f0f0, pants: 0x1a1a1a, hair: 0x3a2010 }); bm2.root.position.set(X(-163.5), 0, 0); bm2.body.rotation.y = 0; sc.add(bm2.root);
+        const apron = new T.Mesh(new T.BoxGeometry(0.06, 0.6, 0.42), lam(0x1a5a2a)); apron.position.set(0.17, -0.1, 0); bm2.torso.add(apron);
+        V.barman = bm2;
+        // les tabourets du comptoir (on peut s'y asseoir)
+        for (let v = -7; v <= 7; v += 2.8) { cyl(0.28, 0.28, 0.1, lam(0xc8102e), X(cu + 1.5), 0.75, v, sc, 12); cyl(0.05, 0.05, 0.75, brass, X(cu + 1.5), 0.37, v, sc, 8); V.seats.push({ x: X(cu + 1.5), z: v, r: Math.PI, y: 0.4, kind: 'wc', vc: true, ox: X(cu + 2.6), oz: v }); }
+        // guirlandes chaudes sous le plafond
+        for (let v = -12; v <= 12; v += 3) for (let u = bx0 + 2; u < bx1; u += 2) { const b = new T.Mesh(new T.SphereGeometry(0.1, 6, 4), new T.MeshBasicMaterial({ color: 0xffc860 })); b.position.set(X(u), H - 0.35 - Math.sin((u - bx0) / (bx1 - bx0) * Math.PI) * 0.4, v); sc.add(b); }
+        K.pl('street', 0xffb060, 1.6, 18, X(-167), 4.6, -6); K.pl('street', 0xffb060, 1.6, 18, X(-167), 4.6, 6);
+        V.counter = { u: cu };
+      }
+      // --- la grande table du Peuple
+      {
+        const t0 = -151, t1 = -123, wood = lam(0x6a4024), cloth = lam(0xf2ece0), red = lam(0xa81c14);
+        box(t1 - t0, 0.12, 1.7, wood, X((t0 + t1) / 2), 0.86, 0); box(t1 - t0 - 0.2, 0.02, 1.9, cloth, X((t0 + t1) / 2), 0.93, 0); box(t1 - t0 - 0.2, 0.021, 0.5, red, X((t0 + t1) / 2), 0.935, 0);
+        for (const u of [t0 + 0.5, (t0 + t1) / 2, t1 - 0.5]) for (const s of [-1, 1]) box(0.14, 0.86, 0.14, wood, X(u), 0.43, s * 0.7);
+        wallC(X(t0), -0.95, X(t1), 0.95);
+        for (const sv of [-1, 1]) { box(t1 - t0, 0.1, 0.5, wood, X((t0 + t1) / 2), 0.45, sv * 1.55); for (let u = t0 + 0.5; u < t1; u += 3) box(0.12, 0.45, 0.4, wood, X(u), 0.22, sv * 1.55); }
+        // les places : 13 de chaque côté, plus les deux bouts
+        for (let i = 0; i < 13; i++) { const u = t0 + 1.1 + i * ((t1 - t0 - 2.2) / 12); for (const sv of [-1, 1]) V.seats.push({ x: X(u), z: sv * 1.5, r: sv < 0 ? Math.PI / 2 : -Math.PI / 2, y: 0.12, kind: 'sofa', area: 'vc', vc: true, ox: X(u), oz: sv * 2.7 }); }
+        for (const [u, r, ou] of [[t0 - 0.9, 0, t0 - 2], [t1 + 0.9, Math.PI, t1 + 2]]) { box(0.5, 0.45, 0.9, red, X(u), 0.23, 0); V.seats.push({ x: X(u), z: 0, r, y: 0.12, kind: 'sofa', area: 'vc', vc: true, ox: X(ou), oz: 0 }); }
+        // la vaisselle, les chopes, les bougies, les plats
+        const mugM = new T.MeshStandardMaterial({ color: 0xf2a900, transparent: true, opacity: 0.85, roughness: 0.2 }), foamM = lam(0xfffbf0), plateM = lam(0xffffff), candleM = lam(0xf6f0dc);
+        for (let i = 0; i < 13; i++) { const u = t0 + 1.1 + i * ((t1 - t0 - 2.2) / 12); for (const sv of [-1, 1]) { cyl(0.22, 0.22, 0.02, plateM, X(u), 0.95, sv * 0.5, sc, 14); cyl(0.07, 0.07, 0.2, mugM, X(u + 0.35), 1.04, sv * 0.42, sc, 8); cyl(0.072, 0.072, 0.04, foamM, X(u + 0.35), 1.15, sv * 0.42, sc, 8); } }
+        for (let u = t0 + 2.6; u < t1 - 1; u += 4.2) { cyl(0.04, 0.04, 0.25, candleM, X(u), 1.06, 0, sc, 8); const f = new T.Mesh(new T.SphereGeometry(0.04, 6, 4), new T.MeshBasicMaterial({ color: 0xffb040 })); f.scale.y = 1.8; f.position.set(X(u), 1.22, 0); sc.add(f); const dish = new T.Mesh(new T.SphereGeometry(0.32, 12, 6, 0, TAU, 0, Math.PI / 2), lam(0xc88a3a)); dish.position.set(X(u + 1.6), 0.95, 0); dish.scale.y = 0.6; sc.add(dish); }
+        // les guirlandes guinguette au-dessus de la table
+        for (const u of [t0 - 1.5, t1 + 1.5]) for (const sv of [-1, 1]) { cyl(0.07, 0.07, 5.4, lam(0x2a2a2a), X(u), 2.7, sv * 3.2, sc, 6); wallC(X(u) - 0.15, sv * 3.2 - 0.15, X(u) + 0.15, sv * 3.2 + 0.15); }
+        const bulbG = new T.SphereGeometry(0.11, 6, 4), cols = [0xffd86a, 0xff6a5a, 0x7ad8ff, 0x9aff7a, 0xffa0e0];
+        for (const sv of [-1, 1, 0]) { const n = 34; for (let i = 0; i <= n; i++) { const k = i / n, u = t0 - 1.5 + (t1 - t0 + 3) * k, v = sv * 3.2 * (sv ? 1 : 0), y = 5.2 - Math.sin(k * Math.PI) * 0.9; const b = new T.Mesh(bulbG, new T.MeshBasicMaterial({ color: cols[i % 5] })); b.position.set(X(u), sv === 0 ? 5.4 - Math.sin(k * Math.PI) * 0.5 : y, sv === 0 ? 0 : v); sc.add(b); } }
+        V.table = { t0, t1 };
+      }
+      // --- le sapin de la Victoire
+      this.vcTree(X(VC_TREE.u), VC_TREE.v);
+      // --- un panneau d'accueil
+      plane(5.2, 1.0, label('ICI ON TRINQUE ENSEMBLE 🍻', { bg: '#1a5a2a', col: '#fff', border: '#ffd23a' }), X(-100), 3.2, -7.6, Math.PI / 2);
+      cyl(0.08, 0.08, 3.2, lam(0x2a2a2a), X(-100), 1.6, -7.6, sc, 6);
+      // --- la ville décorée pour le 30 (allumée du 30 novembre au 31 décembre)
+      this.vcDeco();
+      // --- la neige
+      {
+        const N = 3200, pos = new Float32Array(N * 3), sp = new Float32Array(N);
+        for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 70; pos[i * 3 + 1] = Math.random() * 30; pos[i * 3 + 2] = (Math.random() - 0.5) * 70; sp[i] = 0.5 + Math.random() * 0.8; }
+        const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+        const pts = new T.Points(geo, new T.PointsMaterial({ color: 0xffffff, size: 0.4, map: modoGlowTex(), transparent: true, opacity: 0, depthWrite: false }));
+        pts.frustumCulled = false; pts.visible = false; sc.add(pts); V.snow = { pts, sp, k: 0 };
+      }
+      if (this.miniIcons) this.miniIcons.push(['🎄', X(VC_TREE.u), VC_TREE.v], ['🍻', X(-164), 0]);
+      if (typeof MAP_NAMES !== 'undefined') Object.assign(MAP_NAMES, { '🎄': 'Sapin de la Victoire', '🍻': 'Le Grand Comptoir' });
+      if (typeof MAP_HALLS !== 'undefined') MAP_HALLS.comptoir = 'Le Grand Comptoir';
+    },
+    // ------------------------------------------------------------------ le sapin
+    vcTree(x, z) {
+      const sc = this.scene, V = this.vc, K = cityKit(this);
+      const g = new T.Group(); g.position.set(x, 0, z); g.scale.setScalar(1.35); sc.add(g);
+      const stone = K.lam(0x8a8478), gold = new T.MeshStandardMaterial({ color: 0xe2b43a, metalness: 0.85, roughness: 0.3 });
+      const base = new T.Mesh(new T.CylinderGeometry(3.6, 3.9, 0.7, 28), stone); base.position.y = 0.35; g.add(base);
+      const rim = new T.Mesh(new T.TorusGeometry(3.65, 0.08, 6, 40), gold); rim.rotation.x = Math.PI / 2; rim.position.y = 0.72; g.add(rim);
+      K.wallC(x - 4.6, z - 4.6, x + 4.6, z + 4.6);
+      const trunk = new T.Mesh(new T.CylinderGeometry(0.45, 0.6, 2.4, 10), K.lam(0x5a3a22)); trunk.position.y = 1.6; g.add(trunk);
+      const green = new T.MeshLambertMaterial({ color: 0x1f5a2e, flatShading: true }), snowM = new T.MeshLambertMaterial({ color: 0xf4f8ff, transparent: true, opacity: 0 });
+      const layers = [[3.4, 3.6, 2.4], [2.9, 3.2, 4.4], [2.4, 3.0, 6.2], [1.9, 2.7, 7.8], [1.4, 2.4, 9.3], [0.9, 2.1, 10.6]];
+      V.snowCaps = snowM;
+      for (const [r, h, y] of layers) {
+        const c = new T.Mesh(new T.ConeGeometry(r, h, 16, 1), green); c.position.y = y + h / 2; c.rotation.y = y; g.add(c);
+        const s2 = new T.Mesh(new T.ConeGeometry(r * 0.62, h * 0.4, 16, 1), snowM); s2.position.y = y + h * 0.82; s2.rotation.y = y; g.add(s2);
+      }
+      const H = 12.8;
+      // la guirlande lumineuse en spirale (éteinte jusqu'à minuit)
+      const N = 260, bulbs = new T.InstancedMesh(new T.SphereGeometry(0.1, 6, 4), new T.MeshBasicMaterial({ color: 0xffffff }), N), dummy = new T.Object3D(), offC = new T.Color(0x2a2620);
+      const radAt = (y) => { for (const [r, h, y0] of layers) if (y >= y0 && y <= y0 + h) return r * (1 - (y - y0) / h) + 0.08; return 0.3; };
+      V.bulbCols = [];
+      for (let i = 0; i < N; i++) { const k = i / N, y = 2.5 + k * (H - 2.6), a = k * TAU * 9, r = radAt(y) * 0.92; dummy.position.set(Math.cos(a) * r, y, Math.sin(a) * r); dummy.updateMatrix(); bulbs.setMatrixAt(i, dummy.matrix); bulbs.setColorAt(i, offC); V.bulbCols.push(new T.Color([0xff3a3a, 0xffd23a, 0x3ad8ff, 0x7aff6a, 0xff6ae0, 0xffffff][i % 6])); }
+      g.add(bulbs);
+      // la guirlande dorée et les boules
+      const pts = []; for (let i = 0; i <= 160; i++) { const k = i / 160, y = 2.6 + k * (H - 3), a = k * TAU * 5 + 1.3; const r = radAt(y) * 0.98; pts.push(new T.Vector3(Math.cos(a) * r, y, Math.sin(a) * r)); }
+      const tins = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 320, 0.06, 5, false), new T.MeshStandardMaterial({ color: 0xffd23a, metalness: 0.9, roughness: 0.25, emissive: 0x2a1a00 })); g.add(tins);
+      const ballC = [0xc8102e, 0xffd23a, 0x2a6ad8, 0xd8d8e8, 0x8a1ad8];
+      V.balls = [];
+      for (let i = 0; i < 70; i++) { const y = 2.6 + Math.random() * (H - 3.5), a = Math.random() * TAU, r = radAt(y) * 0.95; const m = new T.MeshStandardMaterial({ color: ballC[i % 5], metalness: 0.7, roughness: 0.2, emissive: 0x000000 }); const b = new T.Mesh(new T.SphereGeometry(0.2 + (i % 3) * 0.05, 10, 8), m); b.position.set(Math.cos(a) * r, y, Math.sin(a) * r); g.add(b); V.balls.push(m); }
+      // l'étoile
+      const sh = new T.Shape(); for (let k = 0; k < 10; k++) { const a = Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 0.42 : 1.0; const px = Math.cos(a) * rr, py = Math.sin(a) * rr; if (k) sh.lineTo(px, py); else sh.moveTo(px, py); }
+      const starM = new T.MeshStandardMaterial({ color: 0xffd23a, metalness: 0.6, roughness: 0.3, emissive: 0x000000 });
+      const star = new T.Mesh(new T.ExtrudeGeometry(sh, { depth: 0.25, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05, bevelSegments: 1 }), starM); star.position.set(0, H + 0.4, -0.12); g.add(star);
+      const halo = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xffe080, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false })); halo.scale.set(6, 6, 1); halo.position.set(0, H + 0.5, 0); g.add(halo);
+      // les cadeaux au pied
+      const giftC = [[0xc8102e, 0xffd23a], [0x1a5a2a, 0xffffff], [0x2a6ad8, 0xffd23a], [0xffd23a, 0xc8102e], [0x8a1ad8, 0xffffff]];
+      for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + 0.3, r = 2.4 + (i % 2) * 0.5, s = 0.5 + (i % 3) * 0.2, [c1, c2] = giftC[i % 5]; const b = new T.Mesh(new T.BoxGeometry(s, s * 0.8, s), K.lam(c1)); b.position.set(Math.cos(a) * r, 0.7 + s * 0.4, Math.sin(a) * r); b.rotation.y = a; g.add(b); const rb = new T.Mesh(new T.BoxGeometry(s + 0.02, s * 0.8 + 0.02, 0.1), K.lam(c2)); rb.position.copy(b.position); rb.rotation.y = a; g.add(rb); const rb2 = rb.clone(); rb2.rotation.y = a + Math.PI / 2; g.add(rb2); }
+      const lights = [];
+      for (const [lx, ly, lz] of [[0, H + 0.5, 0], [3, 5, 3], [-3, 5, -3], [3, 5, -3], [-3, 5, 3]]) { const l = new T.PointLight(0xffd8a0, 0, 16, 1.4); l.position.set(x + lx * 1.35, ly * 1.35, z + lz * 1.35); this.lightGroup('street').add(l); lights.push(l); }
+      V.tree = { g, bulbs, star: starM, halo, lights, on: -1, N, offC };
+    },
+    // ------------------------------------------------------------------ la ville décorée (guirlandes en travers des avenues, bannières, lanternes)
+    vcDeco() {
+      const sc = this.scene, V = this.vc, K = cityKit(this), grp = new T.Group(); grp.visible = false; sc.add(grp);
+      const spans = [];
+      for (let u = -86; u <= 86; u += 8) if (Math.abs(u) > 16) spans.push([u, 'u']);
+      for (let u = 98; u <= 160; u += 8) spans.push([u, 'u']);
+      for (let u = -150; u <= -98; u += 8) spans.push([u, 'u']);
+      for (let v = -48; v <= 48; v += 8) if (Math.abs(v) > 16) spans.push([v, 'v']);
+      const NB = spans.length * 15, bulbs = new T.InstancedMesh(new T.SphereGeometry(0.12, 6, 4), new T.MeshBasicMaterial({ color: 0xffffff }), NB), dm = new T.Object3D();
+      const cols = [0xff3a3a, 0xffd23a, 0x3ad8ff, 0x7aff6a, 0xff6ae0, 0xffffff];
+      let n = 0;
+      const lanternM = new T.MeshLambertMaterial({ color: 0xe8201a, emissive: 0xb01010, emissiveIntensity: 0.8 }), lanternG = new T.SphereGeometry(0.42, 10, 8), wireM = new T.LineBasicMaterial({ color: 0x1a1a1a });
+      for (const [c, ax] of spans) {
+        const pts = [];
+        for (let i = 0; i <= 14; i++) { const k = i / 14, s = -7.4 + 14.8 * k, y = 7.6 - Math.sin(k * Math.PI) * 1.1; const p = ax === 'u' ? new T.Vector3(WX + c, y, s) : new T.Vector3(WX + s * 0.62, y, c); pts.push(p); if (i < 14) { dm.position.copy(p); dm.position.y -= 0.12; dm.updateMatrix(); bulbs.setMatrixAt(n, dm.matrix); bulbs.setColorAt(n, new T.Color(cols[(n + Math.floor(c)) % 6])); n++; } }
+        grp.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), wireM));
+        const lt = new T.Mesh(lanternG, lanternM); lt.scale.y = 1.25; const mid = pts[7]; lt.position.set(mid.x, mid.y - 0.7, mid.z); grp.add(lt);
+      }
+      bulbs.count = n; grp.add(bulbs);
+      // les bannières « 30 JOURS TENUS »
+      const banM = K.txt(1024, 140, (g, w, h) => { g.fillStyle = '#c8102e'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffd23a'; g.lineWidth = 10; g.strokeRect(6, 6, w - 12, h - 12); g.font = '900 84px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffd23a'; g.fillText('★ 30 JOURS TENUS ★', w / 2, h / 2 + 4); });
+      banM.side = T.DoubleSide;
+      for (const u of [-70, -40, 40, 70, 112, 136, -120]) { const b = new T.Mesh(new T.PlaneGeometry(11, 1.5), banM); b.position.set(WX + u, 8.8, 0); b.rotation.y = Math.PI / 2; grp.add(b); }
+      for (const v of [-30, 30]) { const b = new T.Mesh(new T.PlaneGeometry(11, 1.5), banM); b.position.set(WX, 8.8, v); grp.add(b); }
+      V.deco = { grp, bulbs, n, cols };
+    },
+    // ------------------------------------------------------------------ chaque image
+    vcStep() {
+      const V = this.vc; if (!V) return;
+      const t = (V.fr = (V.fr || 0) + 1), now = vcNow(), m = this.me;
+      // décorations (on vérifie l'heure de temps en temps)
+      if (t % 60 === 1) V.deco.grp.visible = now >= VC_DECO_ON && now < VC_DECO_OFF;
+      if (V.deco.grp.visible && t % 14 === 0) { const D = V.deco, c = new T.Color(); for (let i = (t / 14) % 3; i < D.n; i += 3) { c.setHex(D.cols[(i + Math.floor(t / 14)) % 6]); D.bulbs.setColorAt(i, c); } D.bulbs.instanceColor.needsUpdate = true; }
+      // le sapin : il s'allume à minuit pile, de bas en haut
+      const T0 = this.vcTreeAt || FETE_END, tk = now - T0, on = tk >= 0 && now < VC_DECO_OFF + 86400e3 * 7;
+      const TR = V.tree;
+      if (on) {
+        const lit = Math.min(TR.N, Math.floor(tk / 2500 * TR.N));
+        if (lit !== TR.on || t % 12 === 0) {
+          const c = new T.Color();
+          for (let i = 0; i < TR.N; i++) { if (i < lit) c.copy(V.bulbCols[(i + Math.floor(t / 24)) % V.bulbCols.length]); else c.copy(TR.offC); TR.bulbs.setColorAt(i, c); }
+          TR.bulbs.instanceColor.needsUpdate = true;
+          if (TR.on < TR.N && lit >= TR.N) { TR.star.emissive.setHex(0xffb020); for (const b of V.balls) b.emissive.setHex(0x1a1208); }
+          if (TR.on < 0 && this.area === 'street' && Math.abs(m.x - WX - VC_TREE.u) < 80 && tk < 20000) { SFX.fanfare && SFX.fanfare(); this.cityToast('🎄 Le sapin de la Victoire s\'illumine !'); }
+          TR.on = lit;
+        }
+        const k = Math.min(1, tk / 3000);
+        TR.halo.material.opacity = k * (0.75 + Math.sin(t * 0.08) * 0.15); for (const l of TR.lights) l.intensity = k * 1.4;
+      } else if (TR.on !== -1) { TR.on = -1; const c = TR.offC; for (let i = 0; i < TR.N; i++) TR.bulbs.setColorAt(i, c); TR.bulbs.instanceColor.needsUpdate = true; TR.star.emissive.setHex(0); TR.halo.material.opacity = 0; for (const l of TR.lights) l.intensity = 0; }
+      // la neige (à partir de 00:01), autour de la caméra
+      const S = V.snow, snowing = now >= (this.vcSnowAt || VC_SNOW) && now < VC_DECO_OFF, want = snowing && this.area === 'street' ? Math.min(1, (now - (this.vcSnowAt || VC_SNOW)) / 40000 + 0.15) : 0;
+      S.k += (want - S.k) * 0.02; S.pts.visible = S.k > 0.01; S.pts.material.opacity = S.k * 0.9;
+      if (S.pts.visible) {
+        const cam = this.camera.position, p = S.pts.geometry.attributes.position.array, N = S.sp.length;
+        S.pts.position.set(cam.x, 0, cam.z);
+        for (let i = 0; i < N; i++) { const j = i * 3; p[j + 1] -= 0.045 * S.sp[i]; p[j] += Math.sin(t * 0.01 + i) * 0.01; if (p[j + 1] < 0) { p[j + 1] = 28 + Math.random() * 2; p[j] = (Math.random() - 0.5) * 70; p[j + 2] = (Math.random() - 0.5) * 70; } }
+        S.pts.geometry.attributes.position.needsUpdate = true;
+      }
+      if (V.snowCaps) V.snowCaps.opacity = snowing ? Math.min(1, (now - (this.vcSnowAt || VC_SNOW)) / 120000) : 0;
+      // le barman essuie un verre
+      if (V.barman) { V.barman.armR.rotation.z = 1.2 + Math.sin(t * 0.12) * 0.25; V.barman.armL.rotation.z = 1.1 + Math.cos(t * 0.12) * 0.2; V.barman.body.rotation.y = Math.sin(t * 0.004) * 0.6; }
+      // les chopes : la mienne et celles des autres
+      if (t % 10 === 0) { if (this.avatar) this.vcDress(this.avatar, V.gl); if (this.remote) for (const a of this.remote.values()) this.vcDress(a, a.vcGl); }
+      const nowR = performance.now();
+      if (V.dirty && NET.uid && NET.isKept && NET.isKept('hub/' + NET.uid) && nowR - (V.lastPatch || 0) > 300) { V.dirty = false; V.lastPatch = nowR; NET.patch('hub/' + NET.uid, { gl: V.gl, ck: V.ck }); }
+      // l'amnistie d'Isssoufle
+      if (this.vcGr) this.vcGraceStep(now, t);
+    },
+    vcDress(a, gl) {
+      const m = a.m; if (!m) return;
+      if (a.vcM !== m) { a.vcM = m; a.vcMug = null; }
+      if (gl && !a.vcMug) {
+        const arm = m.armL, piv = (m.elbows && m.elbows[1]) || arm, y = -(arm.userData.reach || 0.6) - (piv === arm ? 0 : piv.position.y);
+        const g = new T.Group(); g.position.set(0.08, y, 0); piv.add(g);
+        const mug = new T.Mesh(new T.CylinderGeometry(0.11, 0.1, 0.28, 12), new T.MeshStandardMaterial({ color: 0xf2a900, transparent: true, opacity: 0.88, roughness: 0.2 })); mug.position.y = 0.1; g.add(mug);
+        const foam = new T.Mesh(new T.CylinderGeometry(0.115, 0.115, 0.07, 12), new T.MeshLambertMaterial({ color: 0xfffbf0 })); foam.position.y = 0.27; g.add(foam);
+        const hd = new T.Mesh(new T.TorusGeometry(0.07, 0.02, 6, 10, Math.PI), new T.MeshLambertMaterial({ color: 0xf2e8c0 })); hd.position.set(0, 0.1, 0.12); hd.rotation.y = Math.PI / 2; hd.rotation.z = -Math.PI / 2; g.add(hd);
+        a.vcMug = g;
+      } else if (!gl && a.vcMug) { a.vcMug.parent && a.vcMug.parent.remove(a.vcMug); a.vcMug = null; }
+    },
+    inVictoire(x, z) { return x < WX - 92 && x > WX + VC_U0 && Math.abs(z) < VC_V; },
+    // ------------------------------------------------------------------ zones
+    vcZone(ar) {
+      const V = this.vc; if (!V || ar !== 'street') return null;
+      const m = this.me; if (!this.inVictoire(m.x, m.z)) return null;
+      if (m.x < WX + V.counter.u + 2.6 && m.x > WX + V.counter.u + 0.4 && Math.abs(m.z) < 9.4) {
+        let best = null, bd = 0.9; for (const s of V.seats) { if (s.kind !== 'wc') continue; const d = Math.hypot(m.x - s.x, m.z - s.z); if (d < bd) { bd = d; best = s; } }
+        return { id: 'vc-beer', label: V.gl ? 'Une autre pression ! 🍺' : 'Prendre une bière (gratuite) 🍺', sub: 'au Grand Comptoir', alt: best ? { id: 'vc-sit', label: 'S\'asseoir au comptoir', seat: best } : { id: 'vc-barman', label: 'Parler au barman' } };
+      }
+      let best = null, bd = 1.3;
+      for (const s of V.seats) { if (s.kind === 'wc') continue; const d = Math.hypot(m.x - s.x, m.z - s.z); if (d < bd && ![...this.remote.values()].some(a => a.a === 'sit' && Math.hypot(a.x - s.x, a.z - s.z) < 0.5)) { bd = d; best = s; } }
+      if (best) return { id: 'vc-sit', label: 'S\'asseoir à la grande table', sub: V.gl ? 'et trinquer avec tout le monde' : 'prends d\'abord une bière au comptoir', seat: best, alt: V.gl ? { id: 'vc-toast', label: 'Trinquer debout 🍻' } : null };
+      if (V.gl) return { id: 'vc-toast', label: 'Trinquer ! 🍻', sub: 'avec les kheys autour de toi' };
+      return null;
+    },
+    vcInteract(zn) {
+      if (!zn || !String(zn.id).startsWith('vc-')) return false;
+      const V = this.vc, m = this.me;
+      if (zn.id === 'vc-beer') { V.gl = 1; V.dirty = true; SFX.pickup && SFX.pickup(); this.cityToast('Le barman : « ' + VC_BARMAN[Math.floor(Math.random() * VC_BARMAN.length)] + ' »'); return true; }
+      if (zn.id === 'vc-barman') { this.cityToast('Le barman : « ' + VC_BARMAN[Math.floor(Math.random() * VC_BARMAN.length)] + ' »'); return true; }
+      if (zn.id === 'vc-sit') { this.sitAt(zn.seat); this.send && this.send(true); return true; }
+      if (zn.id === 'vc-toast') { this.vcCheers(); return true; }
+      return false;
+    },
+    // ------------------------------------------------------------------ trinquer
+    vcCheers() {
+      const V = this.vc, now = vcNow(); if (performance.now() - (V.lastCk || 0) < 1800) return;
+      V.lastCk = performance.now(); V.ck = now; V.dirty = true;
+      if (this.avatar) this.avatar.vcCk = performance.now();
+      SFX.ding && SFX.ding();
+      setTimeout(() => { SFX.gulp && SFX.gulp(); }, 700); setTimeout(() => { SFX.ahh && SFX.ahh(); const mm = this.me; mm.d = Math.min(6, (mm.d || 0) + 0.5); this.drunkT = 0; }, 1500);
+      const with_ = []; if (this.remote) for (const a of this.remote.values()) if (a.vcCkL && performance.now() - a.vcCkL < 8000 && Math.hypot(a.x - this.me.x, a.z - this.me.z) < 16) with_.push(a.name);
+      this.avatar && this.avatar.say && this.avatar.say(['Santé !', 'Tchin !', 'À nos 30 jours !', 'Au Leader Suprême !', 'Au NNN !', 'Kampaï !'][Math.floor(Math.random() * 6)]);
+      if (with_.length) this.vcTchin(with_);
+    },
+    vcCheersIn(a) {
+      a.vcCk = performance.now();
+      if (Math.hypot(a.x - this.me.x, a.z - this.me.z) < 30) setTimeout(() => SFX.ding && SFX.ding(), 120);
+      const V = this.vc; if (V && V.lastCk && performance.now() - V.lastCk < 8000 && Math.hypot(a.x - this.me.x, a.z - this.me.z) < 16) this.vcTchin([a.name]);
+    },
+    vcTchin(names) {
+      const V = this.vc; V.tchin = (V.tchin || 0) + 1;
+      this.bigText ? this.bigText('TCHIN ! 🍻', 'avec ' + names.slice(0, 4).join(', ') + (names.length > 4 ? '…' : '')) : this.cityToast('🍻 TCHIN avec ' + names.join(', '));
+      for (let i = 0; i < 6; i++) this.puff(this.me.x + (Math.random() - 0.5) * 0.6, 2.3 + Math.random() * 0.4, this.me.z + (Math.random() - 0.5) * 0.6, 0xfffbf0, 0.18, 0.02);
+    },
+    // ------------------------------------------------------------------ l'amnistie d'Isssoufle
+    vcGrace(t0) {
+      const D = this.dx; if (!D || !D.isss) return;
+      const L = []; let tot = 0; for (let i = 1; i < VC_PATH.length; i++) { const d = Math.hypot(VC_PATH[i][0] - VC_PATH[i - 1][0], VC_PATH[i][1] - VC_PATH[i - 1][1]); L.push(d); tot += d; }
+      const walk = tot / 2.0 * 1000, arrive = t0 + walk, speechEnd = arrive + 2000 + VC_GRACE_LINES.length * 4800;
+      const back = t0 < FETE_END + 60000 ? Math.max(FETE_END + 60000, speechEnd + 8000) : speechEnd + 120000;
+      this.vcGr = { t0, L, tot, walk, arrive, back, end: back + walk, said: -1, guards: this.vcGr && this.vcGr.guards };
+      if (!this.vcGr.guards) {
+        this.vcGr.guards = [0, 1].map(() => { const n = npcMan({ skin: 0xd8a888, shirt: 0x3a4a3a, pants: 0x2a2a2a, hair: 0x2a2a2a }); const cap = new T.Mesh(new T.CylinderGeometry(0.2, 0.22, 0.12, 12), new T.MeshLambertMaterial({ color: 0x2a3a2a })); cap.position.y = 0.32; n.head.add(cap); this.scene.add(n.root); return n; });
+        const c = document.createElement('canvas'); c.width = 512; c.height = 128; const tx = new T.CanvasTexture(c);
+        const sp = new T.Sprite(new T.SpriteMaterial({ map: tx, transparent: true, depthTest: false })); sp.scale.set(5.2, 1.3, 1); sp.renderOrder = 40; sp.visible = false; this.scene.add(sp);
+        this.vcGr.bub = { c, tx, sp };
+      } else this.vcGr.bub = this.vcGr.bub || null;
+      for (const g of this.vcGr.guards) g.root.visible = true;
+      if (vcNow() - t0 < 30000 && this.fe) this.feBanner('⚖️ AMNISTIE', 'Le Leader Suprême gracie Isssoufle pour une nuit. Il arrive devant le temple !', 7000);
+    },
+    vcBubble(txt) {
+      const G = this.vcGr, B = G.bub; if (!B) return;
+      const g = B.c.getContext('2d'), w = 512, h = 128; g.clearRect(0, 0, w, h);
+      g.fillStyle = 'rgba(255,255,255,.95)'; g.strokeStyle = '#000'; g.lineWidth = 5; g.beginPath(); g.roundRect ? g.roundRect(6, 6, w - 12, h - 30, 22) : g.rect(6, 6, w - 12, h - 30); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(w / 2 - 14, h - 25); g.lineTo(w / 2, h - 4); g.lineTo(w / 2 + 14, h - 25); g.fill();
+      g.fillStyle = '#111'; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = 30; g.font = `900 ${fs}px "SSK Rodin",Arial,sans-serif`;
+      const words = txt.split(' '), lines = ['']; for (const wd of words) { const tt = (lines[lines.length - 1] + ' ' + wd).trim(); if (g.measureText(tt).width > w - 50 && lines[lines.length - 1]) lines.push(wd); else lines[lines.length - 1] = tt; }
+      if (lines.length > 2) { fs = 24; g.font = `900 ${fs}px "SSK Rodin",Arial,sans-serif`; }
+      lines.slice(0, 3).forEach((l, i, a) => g.fillText(l, w / 2, (h - 24) / 2 + (i - (a.length - 1) / 2) * (fs + 4)));
+      B.tx.needsUpdate = true; B.sp.visible = true; B.until = performance.now() + 4400;
+      if (Math.hypot(this.me.x - (WX + 148), this.me.z + 6) < 30) this.cityToast('Isssoufle : « ' + txt + ' »');
+    },
+    vcGraceStep(now, t) {
+      const G = this.vcGr, D = this.dx, I = D && D.isss; if (!I) return;
+      const M = I.m, P = VC_PATH;
+      const at = (dist) => { let d = Math.max(0, Math.min(G.tot, dist)); for (let i = 0; i < G.L.length; i++) { if (d <= G.L[i]) { const k = d / G.L[i]; return [P[i][0] + (P[i + 1][0] - P[i][0]) * k, P[i][1] + (P[i + 1][1] - P[i][1]) * k, i]; } d -= G.L[i]; } const q = P[P.length - 1]; return [q[0], q[1], G.L.length - 1]; };
+      let u, v, moving = false, dir = 1;
+      if (now >= G.end) {                                                          // retour en cellule
+        I.x = I.tx = WX + I.cell.uc; I.z = I.tz = 44; M.root.position.set(I.x, 0, I.z); I.ball.position.set(I.x + 0.8, 0.28, 44.6);
+        for (const g of G.guards) g.root.visible = false; if (G.bub) G.bub.sp.visible = false;
+        if (now - G.end < 20000 && Math.hypot(this.me.x - (WX + 150), this.me.z - 30) < 40) this.cityToast('Les gardes ramènent Isssoufle dans sa cellule. « À l\'année prochaine, détenu 001. »');
+        this.vcGr = null; return;
+      }
+      if (now < G.t0) return;
+      if (now < G.arrive) { [u, v] = at((now - G.t0) / 1000 * 2.0); moving = true; }
+      else if (now < G.back) { [u, v] = at(G.tot); }
+      else { [u, v] = at(G.tot - (now - G.back) / 1000 * 2.0); moving = true; dir = -1; }
+      const x = WX + u, z = v, px = I.x, pz = I.z; I.x = x; I.z = z;
+      const dx = x - px, dz = z - pz;
+      if (moving && Math.hypot(dx, dz) > 0.001) { M.body.rotation.y = Math.atan2(-dz, dx); M.legL.rotation.z = Math.sin(t * 0.25) * 0.45; M.legR.rotation.z = -Math.sin(t * 0.25) * 0.45; M.armR.rotation.z = Math.sin(t * 0.25) * 0.3; M.armL.rotation.z = -Math.sin(t * 0.25) * 0.3; }
+      else if (!moving) {
+        M.legL.rotation.z = M.legR.rotation.z = 0; M.body.rotation.y += wrap(-Math.PI / 2 - M.body.rotation.y) * 0.1;
+        const sp = now - G.arrive - 2000, li = Math.floor(sp / 4800);
+        if (sp >= 0 && li < VC_GRACE_LINES.length && li !== G.said) { G.said = li; this.vcBubble(VC_GRACE_LINES[li]); }
+        if (li >= VC_GRACE_LINES.length) { const b = Math.max(0, Math.sin(t * 0.05)); M.torso.rotation.z = -0.5 * b; M.armR.rotation.z = 2.4 + Math.sin(t * 0.2) * 0.3; M.armL.rotation.z = 0.2; }
+        else { M.torso.rotation.z = 0; M.armR.rotation.z = 0.6 + Math.sin(t * 0.1) * 0.5; M.armL.rotation.z = 0.3; }
+        if (G.said >= VC_GRACE_LINES.length - 1 && !G.midSaid && now >= FETE_END && now < FETE_END + 30000 && now > G.arrive) { G.midSaid = true; this.vcBubble('C\'est le 1er décembre… ma console… s\'il vous plaît…'); }
+        if (!G.backSaid && now > G.back - 4000) { G.backSaid = true; this.vcBubble('Non ! Pas déjà ! Encore une bière, s\'il vous plaît !'); }
+      }
+      M.root.position.set(x, 0, z);
+      const bx = I.ball.position.x - x, bz = I.ball.position.z - z, bd = Math.hypot(bx, bz) || 1; if (bd > 1.0) { I.ball.position.x = x + bx / bd; I.ball.position.z = z + bz / bd; }
+      const cl = Math.hypot(I.ball.position.x - x, I.ball.position.z - z); I.chain.position.set((x + I.ball.position.x) / 2, 0.18, (z + I.ball.position.z) / 2); I.chain.scale.y = Math.max(0.1, cl); I.chain.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(I.ball.position.x - x, 0, I.ball.position.z - z).normalize());
+      // les gardes, de chaque côté
+      const fx = Math.cos(M.body.rotation.y), fz = -Math.sin(M.body.rotation.y);
+      G.guards.forEach((g2, i) => { const s = i ? 1 : -1; g2.root.position.set(x - fz * s * 1.3 * -1, 0, z + fx * s * 1.3 * -1); g2.body.rotation.y = M.body.rotation.y; if (moving) { g2.legL.rotation.z = Math.sin(t * 0.25 + i) * 0.45; g2.legR.rotation.z = -Math.sin(t * 0.25 + i) * 0.45; } else { g2.legL.rotation.z = g2.legR.rotation.z = 0; g2.armR.rotation.z = 0.15; } });
+      if (G.bub) { G.bub.sp.position.set(x, 3.6, z); if (G.bub.until && performance.now() > G.bub.until) G.bub.sp.visible = false; }
+      void dir;
+    },
+  });
+
+  // =====================================================================
   //  LA CARTE (v0.99.2) : la mini-carte couvre maintenant toute la ville (Quartier du Peuple compris),
   //  et elle s'ouvre en plein écran (touche C, bouton CARTE ou tap sur la mini-carte) avec la position
   //  et le nom de tous les kheys connectés, zoom, déplacement, liste des joueurs.
   // =====================================================================
-  const MAP_U1 = 182;                                                             // la carte va de u -95 à 182
+  const MAP_U1 = 182, MAP_U0 = -178;                                              // la carte va de u -178 à 182
   const MAP_NAMES = { '🏦': 'Risibank', '🏙️': 'Khey Tower', '💋': 'NNN Paradise', '💻': 'Cyber Kheys', '🔧': 'Garage', '🍔': "McKhey's", '💪': 'Muscle Khey', '⛩️': 'Temple du NNN', '🚕': 'Taxis', '🏠': 'Résidence des Kheys', '🛒': 'Kiosque', '🏪': 'Khey Mart', '🏛️': 'Musée des Kheys', '🧪': 'Site-19', '🏯': 'Temple de Korochiku', '⚙️': 'QG du Régiment 0', '🚐': 'Le van', '🎬': 'Cinéma du Peuple', '⛓️': 'Pénitencier du Peuple' };
   const MAP_HALLS = { palais: 'Temple de Korochiku', cinema: 'Cinéma du Peuple', musee: 'Musée des Kheys', scp: 'Site-19', reg0: 'QG du Régiment 0', prison: 'Pénitencier du Peuple' };
   const MAP_INT = { strip: 'NNN Paradise', cyber: 'Cyber Kheys', lobby: 'Khey Tower', tapt: 'Khey Tower (appart)', mck: "McKhey's", gym: 'Muscle Khey', bank: 'Risibank', temple: 'Temple du NNN' };
@@ -32034,11 +32428,18 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     mapBuild() {
       if (!this.miniBase || this.mapBig) return;
       if (!document.getElementById('sk-map-css')) { const s = document.createElement('style'); s.id = 'sk-map-css'; s.textContent = SKMAP_CSS; document.head.appendChild(s); }
-      const k = 2, base = this.miniBase, W = Math.round((MAP_U1 - GEO_U0) * k), H = base.height;
+      const k = 2, base = this.miniBase, W = Math.round((MAP_U1 - MAP_U0) * k), H = base.height;
       // la carte étendue : la ville d'origine + le Quartier du Peuple
       const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
-      g.fillStyle = '#3a3842'; g.fillRect(0, 0, W, H); g.drawImage(base, 0, 0);
-      const U = (u) => (u - GEO_U0) * k, V = (v) => (v - GEO_V0) * k;
+      g.fillStyle = '#3a3842'; g.fillRect(0, 0, W, H); g.drawImage(base, (GEO_U0 - MAP_U0) * k, 0);
+      const U = (u) => (u - MAP_U0) * k, V = (v) => (v - GEO_V0) * k;
+      if (this.vc) {
+        g.fillStyle = '#6a625a'; g.fillRect(U(-176), V(-34), 84 * k, 68 * k);
+        g.fillStyle = '#76747e'; g.fillRect(U(-100), V(-5), 12 * k, 10 * k);
+        g.fillStyle = '#1f5a2e'; g.beginPath(); g.arc(U(-112), V(0), 3.6 * k, 0, TAU); g.fill();
+        g.fillStyle = '#8a1a1a'; g.fillRect(U(-152), V(-3.6), 30 * k, 7.2 * k); g.fillStyle = '#c89a5a'; g.fillRect(U(-151), V(-0.85), 28 * k, 1.7 * k);
+        g.fillStyle = '#5a3a2a'; g.fillRect(U(-176), V(-14), 18 * k, 28 * k); g.strokeStyle = '#ffd979'; g.lineWidth = 1; g.strokeRect(U(-176) + 0.5, V(-14) + 0.5, 18 * k - 1, 28 * k - 1);
+      }
       if (this.dx) {
         g.fillStyle = '#4a4652'; g.fillRect(U(90), V(-48), (MAP_U1 - 90) * k, 96 * k);               // trottoirs du quartier
         g.fillStyle = '#76747e'; g.fillRect(U(88), V(-5), (MAP_U1 - 88) * k, 10 * k);                   // l'avenue
@@ -32049,14 +32450,14 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       // les bâtiments et les murs (les blocs de collision de la ville)
       g.fillStyle = '#5c5668'; g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1;
       for (const r of this.solids || []) {
-        const u1 = r.x1 - WX, u2 = r.x2 - WX; if (u2 < GEO_U0 || u1 > MAP_U1 || r.z2 < GEO_V0 || r.z1 > -GEO_V0) continue;
+        const u1 = r.x1 - WX, u2 = r.x2 - WX; if (u2 < MAP_U0 || u1 > MAP_U1 || r.z2 < GEO_V0 || r.z1 > -GEO_V0) continue;
         if (cityArea((r.x1 + r.x2) / 2, (r.z1 + r.z2) / 2) !== 'street') continue;
-        if ((u2 - u1) * (r.z2 - r.z1) < 0.6 && u1 < 88) continue;                                        // petits objets de la ville d'origine (déjà dessinée)
-        if (u1 < 88 && (u2 - u1) * (r.z2 - r.z1) < 30) continue;
+        const inOld = u1 < 88 && u1 > -92; if ((u2 - u1) * (r.z2 - r.z1) < 0.6 && inOld) continue;                                        // petits objets de la ville d'origine (déjà dessinée)
+        if (inOld && (u2 - u1) * (r.z2 - r.z1) < 30) continue;
         g.fillRect(U(u1), V(r.z1), Math.max(1, (u2 - u1) * k), Math.max(1, (r.z2 - r.z1) * k));
       }
       if (this.dx) for (const h of this.dx.halls || []) { g.fillStyle = h.id === 'palais' ? '#8a2024' : '#5c5668'; g.fillRect(U(h.x1 - WX), V(h.z1), (h.x2 - h.x1) * k, (h.z2 - h.z1) * k); g.strokeStyle = '#ffd979'; g.lineWidth = 1; g.strokeRect(U(h.x1 - WX) + 0.5, V(h.z1) + 0.5, (h.x2 - h.x1) * k - 1, (h.z2 - h.z1) * k - 1); }
-      this.mapBig = c; this.miniBase = c;
+      this.mapBig = c; this.miniBase = c; this.miniU0 = MAP_U0;
       if (this.miniIcons && this.dx && !this.miniIcons.some(i => i[0] === '🎬')) this.miniIcons.push(['🎬', WX + 174.75, -12], ['⛓️', WX + 153, 33]);
       // l'interface
       const ov = this.game.ov;
@@ -32086,7 +32487,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     mapShow(on) {
       if (!this.mapEl) return;
       this.mapOpen = on; this.mapEl.style.display = on ? 'block' : 'none';
-      if (on) { this.mapPrevFreeze = this.freeze; this.freeze = true; const M = this.mapV; M.zoom = 1; M.follow = false; M.cu = (GEO_U0 + (this.dx ? MAP_U1 : 95)) / 2; M.cv = 0; SFX.ui && SFX.ui('move'); this.mapDraw(); }
+      if (on) { this.mapPrevFreeze = this.freeze; this.freeze = true; const M = this.mapV; M.zoom = 1; M.follow = false; M.cu = ((this.vc ? MAP_U0 : GEO_U0) + (this.dx ? MAP_U1 : 95)) / 2; M.cv = 0; SFX.ui && SFX.ui('move'); this.mapDraw(); }
       else { this.freeze = !!this.mapPrevFreeze; SFX.ui && SFX.ui('back'); }
     },
     mapZoom(f) { const M = this.mapV; M.zoom = clamp(M.zoom * f, 0.8, 8); },
@@ -32104,6 +32505,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       let best = null, bd = 18;
       for (const [ic, x, z] of this.miniIcons || []) { const d = Math.hypot(x - WX - u, z - v); if (d < bd && MAP_NAMES[ic]) { bd = d; best = MAP_NAMES[ic]; } }
       if (best) return 'près de ' + best;
+      if (u < -92) return Math.abs(v) < 2.5 && u > -152 && u < -122 ? 'à la grande table' : u < -158 ? 'au Grand Comptoir' : 'Place de la Victoire';
       return u > 88 ? 'Quartier du Peuple' : 'En ville';
     },
     mapStep() {
@@ -32115,12 +32517,12 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       const el = this.mapEl, cv = el.querySelector('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
       const CW = el.clientWidth, CH = el.clientHeight; if (!CW) return;
       if (cv.width !== Math.round(CW * dpr) || cv.height !== Math.round(CH * dpr)) { cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); }
-      const g = cv.getContext('2d'), M = this.mapV, U0 = GEO_U0, U1 = this.dx ? MAP_U1 : 95;
+      const g = cv.getContext('2d'), M = this.mapV, U0 = this.vc ? MAP_U0 : GEO_U0, U1 = this.dx ? MAP_U1 : 95;
       const fit = Math.min(CW / (U1 - U0), CH / 150) * 0.94; M.ppu = fit * M.zoom;
       const ppu = M.ppu, sx = (u) => CW / 2 + (u - M.cu) * ppu, sy = (v) => CH / 2 + (v - M.cv) * ppu;
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = '#0c0a14'; g.fillRect(0, 0, CW, CH);
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      const B = this.mapBig || this.miniBase; g.drawImage(B, sx(U0), sy(GEO_V0), B.width / 2 * ppu, B.height / 2 * ppu);
+      const B = this.mapBig || this.miniBase; g.drawImage(B, sx(this.miniU0 ?? GEO_U0), sy(GEO_V0), B.width / 2 * ppu, B.height / 2 * ppu);
       // les lieux
       const fs = clamp(ppu * 4, 18, 34); g.textAlign = 'center'; g.textBaseline = 'middle';
       const boxes = [], free = (x1, y1, x2, y2) => { for (const b of boxes) if (x1 < b[2] && x2 > b[0] && y1 < b[3] && y2 > b[1]) return false; boxes.push([x1, y1, x2, y2]); return true; };
@@ -32131,6 +32533,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
           if (free(px - w / 2 - 2, ly - lf / 2, px + w / 2 + 2, ly + lf / 2)) { g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(MAP_NAMES[ic], px, ly); g.fillStyle = '#fff2c8'; g.fillText(MAP_NAMES[ic], px, ly); }
         }
       }
+      if (this.vc && ppu > 2) { g.font = `italic 900 ${clamp(ppu * 2.4, 12, 30)}px "SSK Rodin","Arial Black",sans-serif`; g.fillStyle = 'rgba(140,255,160,.5)'; g.fillText('PLACE DE LA VICTOIRE', sx(-134), sy(-38)); }
       if (this.dx && ppu > 2) { g.font = `italic 900 ${clamp(ppu * 2.4, 12, 30)}px "SSK Rodin","Arial Black",sans-serif`; g.fillStyle = 'rgba(255,210,58,.55)'; g.fillText('QUARTIER DU PEUPLE', sx(135), sy(-52)); }
       // la cible de mission
       const tg = this.missionTarget && this.missionTarget();

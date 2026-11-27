@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.98.2
+// @version      0.99.0
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.98.2';
+  const SSK_VER = '0.99.0';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -25606,7 +25606,7 @@
   };
   const V93_TITLES = {
     khey: { n: 'Le khey', p: 100 }, golem: { n: 'Le golem', p: 150 }, sang: { n: 'Le sang de la veine', p: 200 }, famoso: { n: 'El famoso', p: 250 }, nuit: { n: 'Khey de la nuit', p: 300 },
-    appart: { n: 'Roi de l\'appart', p: 400 }, modo: { n: 'Modo en civil', p: 500 }, repenti: { n: 'Branleur repenti', p: 600 }, zero: { n: 'Zéro craquage', p: 800 }, maitre: { n: 'Légende du NNN', p: 1500 },
+    survivant: { n: 'Survivant du NNN 2026', p: 999999, hide: true }, appart: { n: 'Roi de l\'appart', p: 400 }, modo: { n: 'Modo en civil', p: 500 }, repenti: { n: 'Branleur repenti', p: 600 }, zero: { n: 'Zéro craquage', p: 800 }, maitre: { n: 'Légende du NNN', p: 1500 },
   };
   const V93_CAT = { h: V93_HATS, t: V93_TAUNTS, ti: V93_TITLES };
   const v93Owns = (kind, id) => (V93_CAT[kind][id] && V93_CAT[kind][id].p === 0) || !!V93.cos.o[kind + ':' + id];
@@ -26003,7 +26003,7 @@
         const k = this.sub, cat = V93_CAT[k];
         h = `<div class="sub"><b data-s="h" class="${k === 'h' ? 'on' : ''}">TENUES</b><b data-s="t" class="${k === 't' ? 'on' : ''}">PROVOCATIONS</b><b data-s="ti" class="${k === 'ti' ? 'on' : ''}">TITRES</b></div>
           <h4>${k === 'h' ? 'UN ACCESSOIRE PORTÉ PAR TON KHEY EN COMBAT, VISIBLE PAR TES ADVERSAIRES EN LIGNE' : k === 't' ? 'EN COMBAT : TOUCHE T (J1), U (J2) OU LE BOUTON 😜 AU TACTILE' : 'AFFICHÉ À CÔTÉ DE TON PSEUDO EN LIGNE ET EN COMBAT'}</h4><div class="grid">`
-          + Object.entries(cat).map(([id, it]) => {
+          + Object.entries(cat).filter(([id, it]) => !it.hide || v93Owns(k, id)).map(([id, it]) => {
             const own = v93Owns(k, id), eq = V93.cos[k] === id || (k === 't' && id === 'base' && !V93.cos.t);
             const vis = k === 'h' ? `<img src="${v93HatIcon(id)}">` : k === 't' ? `<div class="ic">${it.ic}</div>` : `<div class="tt">« ${esc(it.n)} »</div>`;
             const btn = !own ? `<button class="act" data-a="buy" data-k="${k}" data-id="${id}">ACHETER · ${it.p} R$</button>` : (k === 't' && id === 'base') ? `<button class="act" disabled>${eq ? 'ÉQUIPÉ ✓' : 'DE BASE'}</button>` : `<button class="act ${eq ? 'grn' : 'blu'}" data-a="eq" data-k="${k}" data-id="${id}">${eq ? 'ÉQUIPÉ ✓' : 'ÉQUIPER'}</button>`;
@@ -29732,6 +29732,7 @@
           wet = Math.max(0, 1 - d / 24) * 0.7; dry = Math.max(0, 1 - dp / 9) * 0.35;
         }
       }
+      if (D.forceHymn && this.game.mode === 'hub' && !(this.fe && this.fe.watch)) dry = Math.max(dry, 0.75);
       const vol = (this.game.musicVol || 0) / 10 * 0.8;
       const H = D.hymn || (D.hymn = { dry: 0, wet: 0 });
       H.dry += (dry * vol - H.dry) * 0.05; H.wet += (wet * vol - H.wet) * 0.05;
@@ -31442,6 +31443,407 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       }));
     };
   }
+
+  // =====================================================================
+  //  LA FÊTE DE FIN DU NNN (30 novembre) : le Cinéma du Peuple (le live Twitch de Korochiku en direct),
+  //  le pupitre du Leader (événements lancés chez tout le monde), le compte à rebours de minuit et le feu
+  //  d'artifice, la médaille « Survivant du NNN 2026 », la photo de groupe, le défilé des régiments
+  //  et les bougies (gratuites) à tenir et à déposer au pied de la statue.
+  // =====================================================================
+  const FETE_END = Date.UTC(2026, 10, 30, 23, 0, 0);                               // 1er décembre 2026, minuit à Paris
+  const FETE_ADMINS = ['korochiku', 'rigodrolax'];
+  const FETE_TWITCH = 'korochiku';
+  const FETE_REGS = [{ n: 'Régiment 0', c: 0x8a8e96, s: '#8a8e96' }, { n: 'R1 — Les Jaunes', c: 0xf2c81a, s: '#f2c81a' }, { n: 'R2 — Les Verts', c: 0x2fa84a, s: '#2fa84a' }, { n: 'R3 — Les Rouges', c: 0xd8202e, s: '#d8202e' }, { n: 'R4 — Les Bleus', c: 0x2f6ad8, s: '#2f6ad8' }];
+  const FETE_CSS = `
+  .fe-live{position:absolute;z-index:2147483050;background:#000;border:0;display:none}
+  .fe-livebar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483060;display:none;gap:8px}
+  .fe-livebar button,.fe-pan button{background:#9146ff;color:#fff;border:2px solid #000;border-radius:10px;padding:8px 14px;font:italic 900 14px "SSK Rodin","Arial Black",sans-serif;cursor:pointer;touch-action:manipulation}
+  .fe-count{position:absolute;left:50%;top:58px;transform:translateX(-50%);z-index:40;padding:5px 16px;border-radius:12px;background:rgba(120,6,14,.85);border:2px solid #ffd23a;color:#ffd23a;font:italic 900 16px "SSK Rodin","Arial Black",sans-serif;letter-spacing:1px;display:none;pointer-events:none;white-space:nowrap}
+  .fe-speech{position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:2147483040;max-width:84%;padding:14px 26px;border-radius:14px;background:linear-gradient(#c8102e,#7a0a10);border:3px solid #ffd23a;color:#fff;font:italic 900 24px/1.3 "SSK Rodin","Arial Black",sans-serif;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6);display:none;pointer-events:none}
+  .fe-speech small{display:block;color:#ffd23a;font-size:13px;letter-spacing:2px;margin-bottom:4px}
+  .fe-leadbtn{position:absolute;right:236px;top:16px;z-index:2147483030;background:linear-gradient(#ffd23a,#e2a020);color:#7a0a10;border:2px solid #000;border-radius:10px;padding:7px 12px;font:italic 900 13px "SSK Rodin","Arial Black",sans-serif;cursor:pointer;display:none;touch-action:manipulation}
+  .fe-pan{position:absolute;right:14px;top:60px;z-index:2147483030;width:min(330px,80vw);max-height:70vh;overflow:auto;background:rgba(20,4,8,.95);border:3px solid #ffd23a;border-radius:14px;padding:12px;display:none;color:#fff;font:13px "SSK Rodin",sans-serif}
+  .fe-pan h3{margin:0 0 8px;color:#ffd23a;font:italic 900 16px "SSK Rodin","Arial Black",sans-serif}
+  .fe-pan .g{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .fe-pan button{background:#c8102e;width:100%;font-size:12px;padding:8px 6px}
+  .fe-pan input{width:100%;box-sizing:border-box;margin:8px 0 4px;padding:8px;border-radius:8px;border:2px solid #ffd23a;background:#1a0a0c;color:#fff;font:13px Arial,sans-serif}
+  .fe-photo{position:absolute;inset:0;z-index:2147483070;background:rgba(0,0,0,.86);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+  .fe-photo img{max-width:92%;max-height:72%;border:8px solid #fff;box-shadow:0 0 0 3px #ffd23a,0 20px 50px rgba(0,0,0,.7)}
+  .fe-photo .r{display:flex;gap:10px}.fe-photo a,.fe-photo button{background:#ffd23a;color:#111;border:2px solid #000;border-radius:10px;padding:8px 16px;font:italic 900 14px "SSK Rodin",sans-serif;text-decoration:none;cursor:pointer}
+  .fe-photo small{color:#ccc;font:12px Arial,sans-serif}
+  .fe-watching .sk-hub-help,.fe-watching .sk-hub-prompt,.fe-watching .sk-hub-phr,.fe-watching .sk-hub-meters,.fe-watching .sk-hub-m,.fe-watching .sk-hub-who,.fe-watching .fe-leadbtn{display:none!important}
+  .fe-cd{position:absolute;inset:0;z-index:2147483065;display:none;align-items:center;justify-content:center;pointer-events:none;color:#fff;font:italic 900 140px "SSK Rodin","Arial Black",sans-serif;text-shadow:6px 6px 0 #000}
+  `;
+  const feAdmin = () => { const n = String((NET.name && NET.name()) || '').trim().toLowerCase(); return FETE_ADMINS.includes(n); };
+  const feTap = (el, fn) => { let last = 0; const go = (e) => { const now = Date.now(); if (now - last < 400) return; last = now; if (e && e.cancelable) e.preventDefault(); if (e) e.stopPropagation(); fn(e); }; el.addEventListener('pointerup', go); el.addEventListener('click', go); };
+  const feMedalOwned = () => { try { return localStorage.getItem('ssk-medal-nnn2026') === '1'; } catch (e) { return false; } };
+
+  {
+    const HP = Hub.prototype;
+    const wrap = (name, fn) => { const o = HP[name] || function () {}; HP[name] = function (...a) { return fn.call(this, o, ...a); }; };
+    wrap('buildWorld', function (o) { o.call(this); try { this.feBuild(); } catch (e) { console.warn('[SSK] fête', e); } });
+    wrap('update', function (o, ...a) { const r = o.apply(this, a); try { this.feStep(); } catch (e) { if (!this._feErr) { this._feErr = 1; console.warn('[SSK] fête', e); } } return r; });
+    wrap('zoneMore', function (o, ar) { return this.feZone(ar) || o.call(this, ar); });
+    wrap('interactMore', function (o, zn) { return this.feInteract(zn) || o.call(this, zn); });
+    wrap('leaveMore', function (o) { o.call(this); this.feLeave(); });
+    wrap('upsert', function (o, uid, v) { o.call(this, uid, v); const a = this.remote && this.remote.get(uid); if (a && v) a.fx = { cd: +v.cd || 0, rg: v.rg != null ? +v.rg : -1, md: +v.md || 0 }; });
+    wrap('keyMore', function (o, code) { if (code === 'Escape' && this.fe && this.fe.watch) { this.feWatch(false); return true; } return o.call(this, code); });
+  }
+
+  Object.assign(Hub.prototype, {
+    feBuild() {
+      const D = this.dx; if (!D) return;
+      const K = cityKit(this), sc = this.scene, { lam, box, cyl, plane, wallC } = K, X = (u) => WX + u;
+      const F = this.fe = { cand: new Map(), fw: [], conf: [], parade: null, watch: false, hymnUntil: 0, seen: new Set(), mine: { cd: 0, rg: -1, md: feMedalOwned() ? 1 : 0 }, lastPatch: 0 };
+      try { const r = JSON.parse(localStorage.getItem('ssk-fete-v1') || '{}'); if (r.rg != null) F.mine.rg = r.rg; } catch (e) {}
+      if (!document.getElementById('fe-css')) { const s = document.createElement('style'); s.id = 'fe-css'; s.textContent = FETE_CSS; document.head.appendChild(s); }
+      const label = (t, o = {}) => K.txt(o.w || 1024, o.h || 160, (g, w, h) => { if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, w, h); } if (o.border) { g.strokeStyle = o.border; g.lineWidth = 10; g.strokeRect(6, 6, w - 12, h - 12); } let fs = o.fs || 90; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; while (g.measureText(t).width > w - 40 && fs > 18) { fs -= 4; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = o.col || '#fff'; g.fillText(t, w / 2, h / 2 + 4); });
+      // ---------------- le Cinéma du Peuple (u 170..179.5, v -40..-14), porte vers la rue
+      this.dxHall('cinema', 170, 179.5, -40, -14, 7, 's', 174.75, 3.0, lam(0x2a1a3a), lam(0x1a1022), () => {
+        const cx = X(174.75);
+        plane(8.6, 1.6, K.txt(1024, 190, (g, w, h) => { g.fillStyle = '#12061a'; g.fillRect(0, 0, w, h); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.strokeRect(8, 8, w - 16, h - 16); for (let x = 30; x < w; x += 46) { g.fillStyle = (x / 46) % 2 < 1 ? '#fff6c0' : '#ffd23a'; g.beginPath(); g.arc(x, 22, 7, 0, TAU); g.fill(); g.beginPath(); g.arc(x, h - 22, 7, 0, TAU); g.fill(); } g.fillStyle = '#ffd23a'; g.font = '900 76px "SSK Rodin","Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('CINÉMA DU PEUPLE', w / 2, h / 2 + 4); }), cx, 5.6, -13.75);
+        plane(5.2, 0.9, label('EN DIRECT : twitch.tv/' + FETE_TWITCH, { bg: '#9146ff', col: '#fff' }), cx, 4.2, -13.76);
+        // l'écran, les rideaux rouges, les fauteuils en gradins
+        const scrM = new T.MeshBasicMaterial({ color: 0xffffff });
+        try { if (typeof TW_LIVE_IMG !== 'undefined') { const t = new T.Texture(TW_LIVE_IMG); t.colorSpace = T.SRGBColorSpace || t.colorSpace; const up = () => { t.needsUpdate = true; }; if (TW_LIVE_IMG.complete) up(); else TW_LIVE_IMG.addEventListener('load', up); scrM.map = t; } } catch (e) {}
+        const scr = plane(8.2, 4.6, scrM, cx, 3.6, -39.7); F.screen = { x: cx, y: 3.6, z: -39.7, w: 8.2, h: 4.6, mesh: scr };
+        box(8.8, 0.25, 0.2, lam(0x111111), cx, 6.0, -39.75); box(8.8, 0.25, 0.2, lam(0x111111), cx, 1.2, -39.75);
+        for (const s of [-1, 1]) { const cur = new T.Mesh(new T.CylinderGeometry(0.5, 0.65, 6.6, 12, 1, true, 0, Math.PI), lam(0xa8101a, { side: T.DoubleSide })); cur.position.set(cx + s * 4.4, 3.3, -39.4); cur.rotation.y = s > 0 ? Math.PI : 0; sc.add(cur); }
+        plane(9.4, 26, lam(0x3a1a2a), cx, 0.02, -27, 0, -Math.PI / 2);
+        const seatM = lam(0xb0101a), seatD = lam(0x6a0a10);
+        for (let r = 0; r < 6; r++) for (let k = 0; k < 6; k++) { if (k === 2 || k === 3) { if (r % 2) continue; } const x = cx - 3.6 + k * 1.44 + (k > 2 ? 0.3 : -0.3), z = -32 + r * 2.4, y = r * 0.18; if (r) box(1.4, y, 2.4, lam(0x2a1422), x, y / 2, z); box(0.9, 0.45, 0.8, seatM, x, y + 0.42, z); box(0.9, 0.9, 0.18, seatD, x, y + 0.85, z + 0.4); }
+        for (const s of [-1, 1]) { const l = new T.PointLight(0xff6aa8, 0.6, 12, 1.6); l.position.set(cx + s * 4, 5.5, -22); this.lightGroup('street').add(l); }
+        const pl = new T.PointLight(0xa89aff, 0.9, 16, 1.4); pl.position.set(cx, 4, -34); this.lightGroup('street').add(pl);
+      });
+      // ---------------- le compte à rebours au-dessus du temple
+      const cdC = document.createElement('canvas'); cdC.width = 1024; cdC.height = 256;
+      const cdT = new T.CanvasTexture(cdC);
+      const cdM = new T.Mesh(new T.PlaneGeometry(17, 4.25), new T.MeshBasicMaterial({ map: cdT, transparent: true, fog: false }));
+      cdM.position.set(X(148), 23.5, -10.2); sc.add(cdM); F.cd = { c: cdC, t: cdT, m: cdM, last: '' };
+      // ---------------- la table aux bougies gratuites, devant le temple
+      const cx2 = X(155.8), cz2 = -9.4;
+      box(1.8, 0.85, 0.8, lam(0x7a0a10), cx2, 0.42, cz2); box(1.9, 0.06, 0.9, K.lam(0xe2b43a), cx2, 0.88, cz2);
+      for (let i = 0; i < 6; i++) { const x = cx2 - 0.6 + i * 0.24; cyl(0.04, 0.04, 0.22, lam(0xf6f0dc), x, 1.02, cz2, sc, 8); const fl = new T.Mesh(new T.SphereGeometry(0.035, 8, 6), new T.MeshBasicMaterial({ color: 0xffb040 })); fl.scale.y = 1.8; fl.position.set(x, 1.18, cz2); sc.add(fl); }
+      plane(2.2, 0.42, label('BOUGIES GRATUITES', { bg: '#c8102e', col: '#ffd23a', border: '#e2b43a' }), cx2, 1.6, cz2 + 0.42);
+      wallC(cx2 - 0.95, cz2 - 0.45, cx2 + 0.95, cz2 + 0.45); F.candleTable = { x: cx2, z: cz2 };
+      // ---------------- le pupitre du Leader (sur le parvis) et le bouton dans l'interface
+      F.podium = { x: X(140), z: -9.0 };
+      box(1.2, 1.2, 0.8, K.lam(0x7a0a10), F.podium.x, 0.6, F.podium.z); box(1.3, 0.1, 0.9, K.lam(0xe2b43a), F.podium.x, 1.22, F.podium.z);
+      plane(1.1, 0.5, label('★', { bg: '#c8102e', col: '#ffd23a', fs: 120 }), F.podium.x, 0.75, F.podium.z + 0.41);
+      wallC(F.podium.x - 0.65, F.podium.z - 0.45, F.podium.x + 0.65, F.podium.z + 0.45);
+      // ---------------- le bureau du défilé : cinq drapeaux, on choisit son régiment
+      F.regDesk = { x: X(161.8), z: -9.2 };
+      box(1.8, 0.85, 0.8, lam(0x3a4a2a), F.regDesk.x, 0.42, F.regDesk.z);
+      plane(2.2, 0.42, label('DÉFILÉ : CHOISIS TON RÉGIMENT', { bg: '#3a4a2a', col: '#ffd23a', border: '#e2b43a' }), F.regDesk.x, 1.25, F.regDesk.z + 0.42);
+      FETE_REGS.forEach((R, i) => { const x = F.regDesk.x - 0.8 + i * 0.4; cyl(0.015, 0.015, 1.3, lam(0x9a9aa2), x, 1.5, F.regDesk.z - 0.2, sc, 6); plane(0.34, 0.24, lam(R.c, { side: T.DoubleSide }), x + 0.17, 2.0, F.regDesk.z - 0.2); });
+      wallC(F.regDesk.x - 0.95, F.regDesk.z - 0.45, F.regDesk.x + 0.95, F.regDesk.z + 0.45);
+      // ---------------- interface
+      const ov = this.game.ov;
+      const mk = (cls, html = '') => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; ov.appendChild(e); return e; };
+      F.el = {
+        count: mk('fe-count'), speech: mk('fe-speech'), cd: mk('fe-cd'),
+        photo: mk('fe-photo', '<img alt="photo"><div class="r"><a download="photo-NNN-2026.jpg">TÉLÉCHARGER</a><button>FERMER</button></div><small>Sur téléphone : appui long sur la photo pour l\'enregistrer</small>'),
+        lead: mk('fe-leadbtn', '👑 PUPITRE DU LEADER'), pan: mk('fe-pan'),
+        live: (() => { const f = document.createElement('iframe'); f.className = 'fe-live'; f.setAttribute('allow', 'autoplay; fullscreen'); f.setAttribute('allowfullscreen', ''); ov.appendChild(f); return f; })(),
+        livebar: mk('fe-livebar', '<button data-k="out">◀ QUITTER LA SÉANCE</button><button data-k="full">⛶ PLEIN ÉCRAN</button>'),
+      };
+      feTap(F.el.photo.querySelector('button'), () => { F.el.photo.style.display = 'none'; });
+      feTap(F.el.lead, () => { const p = F.el.pan; p.style.display = p.style.display === 'block' ? 'none' : 'block'; this.fePanel(); });
+      F.el.livebar.querySelectorAll('button').forEach(b => feTap(b, () => { if (b.dataset.k === 'out') this.feWatch(false); else { const f = F.el.live; (f.requestFullscreen || f.webkitRequestFullscreen || (() => {})).call(f); } }));
+      // les événements du Leader et les bougies déposées
+      if (NET.uid && NET.ref) {
+        const t0 = NET.now();
+        F.evRef = NET.ref('amg/fete_ev'); F.evCb = F.evRef.limitToLast ? F.evRef.limitToLast(20).on('child_added', (s) => this.feEvent(s.key, s.val(), t0)) : F.evRef.on('child_added', (s) => this.feEvent(s.key, s.val(), t0));
+        F.cRef = NET.ref('amg/fete_bougies'); F.cCb = (F.cRef.limitToLast ? F.cRef.limitToLast(200) : F.cRef).on('child_added', (s) => this.feCandleAdd(s.key, s.val()));
+      }
+    },
+    // ---------------------------------------------------------------- chaque image
+    feStep() {
+      const F = this.fe; if (!F) return;
+      const t = F.fr = (F.fr || 0) + 1, m = this.me, now = NET.now ? NET.now() : Date.now(), inCity = this.area === 'street';
+      // compte à rebours (texture au-dessus du temple + bandeau dans le quartier)
+      const left = FETE_END - now;
+      if (t % 15 === 0) {
+        const txt = left > 0 ? (() => { const s = Math.floor(left / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), mi = Math.floor(s % 3600 / 60), se = s % 60; return (d ? d + ' J  ' : '') + String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0') + ':' + String(se).padStart(2, '0'); })() : 'LE NNN 2026 EST TERMINÉ !';
+        if (txt !== F.cd.last) {
+          F.cd.last = txt; const g = F.cd.c.getContext('2d'), w = F.cd.c.width, h = F.cd.c.height;
+          g.clearRect(0, 0, w, h); g.fillStyle = 'rgba(120,6,14,.88)'; g.fillRect(0, 30, w, h - 60); g.strokeStyle = '#ffd23a'; g.lineWidth = 10; g.strokeRect(5, 35, w - 10, h - 70);
+          g.fillStyle = '#ffd23a'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 30px "SSK Rodin","Arial Black",sans-serif'; g.fillText(left > 0 ? 'FIN DU NNN 2026 DANS' : 'VOUS AVEZ TENU', w / 2, 72);
+          let fs = 100; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; while (g.measureText(txt).width > w - 60) { fs -= 6; g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`; } g.fillStyle = '#fff'; g.fillText(txt, w / 2, 150);
+          F.cd.t.needsUpdate = true;
+          const showChip = inCity && this.dx && inDistrict(m.x, m.z) && left > 0 && left < 3 * 86400e3;
+          F.el.count.style.display = showChip ? 'block' : 'none'; if (showChip) F.el.count.textContent = '⏳ FIN DU NNN · ' + txt;
+        }
+        if (left <= 0 && left > -3 * 3600e3) this.feMidnight();
+      }
+      if (left <= 0 && left > -10e3 && !F.boomStarted) { F.boomStarted = true; this.feFireworks(180); this.feBanner('MINUIT', 'LE NNN 2026 EST TERMINÉ ! VOUS AVEZ TENU. LEVEZ VOS BOUGIES !', 12000); SFX.gong && SFX.gong(); }
+      if (left > 0 && left < 10500 && Math.floor(left / 1000) !== F.lastSec) { F.lastSec = Math.floor(left / 1000); const el = F.el.cd; el.style.display = 'flex'; el.textContent = Math.max(1, Math.ceil(left / 1000)); SFX.ui && SFX.ui('move'); setTimeout(() => { if (FETE_END - NET.now() <= 0) el.style.display = 'none'; }, 1100); }
+      if (left <= 0 && F.el.cd.style.display === 'flex') F.el.cd.style.display = 'none';
+      // bouton du pupitre pour le Leader
+      const adm = feAdmin(); if (F.isAdm !== adm) { F.isAdm = adm; F.el.lead.style.display = adm ? 'block' : 'none'; }
+      // accessoires : la mienne et celles des autres (bougie, médaille, drapeau du régiment)
+      if (t % 10 === 0) {
+        if (this.avatar) this.feDress(this.avatar, F.mine);
+        if (this.remote) for (const a of this.remote.values()) this.feDress(a, a.fx || {});
+        const nowR = performance.now();
+        if (NET.uid && NET.isKept && NET.isKept('hub/' + NET.uid) && (nowR - F.lastPatch > 10000 || F.dirty)) { F.lastPatch = nowR; F.dirty = false; NET.patch('hub/' + NET.uid, { cd: F.mine.cd, rg: F.mine.rg, md: F.mine.md }); }
+      }
+      for (const a of [this.avatar, ...(this.remote ? this.remote.values() : [])]) if (a && a.feFlame) { a.feFlame.scale.y = 1.6 + Math.sin(t * 0.5 + a.x) * 0.3; }
+      // l'hymne pour tous (lancé par le Leader)
+      if (this.dx) this.dx.forceHymn = now < F.hymnUntil;
+      // feu d'artifice, confettis, défilé
+      this.feFwStep(t); this.feConfStep(); this.feParadeStep(now);
+      // le cinéma : le lecteur suit l'écran
+      if (F.watch) this.feLivePos();
+    },
+    feDress(a, s) {
+      const m = a.m; if (!m) return;
+      if (a.feM !== m) { a.feM = m; a.feCandle = a.feMedal = a.feFlag = null; }
+      const want = { cd: !!s.cd, md: !!s.md, rg: s.rg != null ? s.rg : -1 };
+      if (want.cd && !a.feCandle) {
+        const arm = m.armR, piv = (m.elbows && m.elbows[0]) || arm, y = -(arm.userData.reach || 0.6) - (piv === arm ? 0 : piv.position.y);
+        const g = new T.Group(); g.position.set(0.05, y - 0.02, 0); piv.add(g);
+        const c = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 0.42, 10), new T.MeshLambertMaterial({ color: 0xf6f0dc, emissive: 0x3a2a10 })); c.position.y = 0.17; g.add(c);
+        const dish = new T.Mesh(new T.CylinderGeometry(0.13, 0.09, 0.03, 12), new T.MeshLambertMaterial({ color: 0xe2b43a })); dish.position.y = -0.02; g.add(dish);
+        const fl = new T.Mesh(new T.SphereGeometry(0.055, 8, 6), new T.MeshBasicMaterial({ color: 0xffc050 })); fl.position.y = 0.44; g.add(fl); a.feFlame = fl;
+        const glow = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xffa040, transparent: true, opacity: 0.7, blending: T.AdditiveBlending, depthWrite: false })); glow.scale.set(0.7, 0.7, 1); glow.position.y = 0.45; g.add(glow);
+        a.feCandle = g;
+      } else if (!want.cd && a.feCandle) { a.feCandle.parent && a.feCandle.parent.remove(a.feCandle); a.feCandle = null; a.feFlame = null; }
+      if (want.md && !a.feMedal && m.torso) {
+        const g = new T.Group(); g.position.set(0.27, 0.42, 0.06); m.torso.add(g);
+        const rib = new T.Mesh(new T.BoxGeometry(0.02, 0.14, 0.07), new T.MeshLambertMaterial({ color: 0xc8102e })); rib.position.y = 0.06; g.add(rib);
+        const d = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, 0.02, 18), new T.MeshStandardMaterial({ color: 0xffd23a, metalness: 0.8, roughness: 0.25, emissive: 0x3a2400 })); d.rotation.z = Math.PI / 2; d.position.y = -0.04; g.add(d);
+        a.feMedal = g;
+      } else if (!want.md && a.feMedal) { a.feMedal.parent && a.feMedal.parent.remove(a.feMedal); a.feMedal = null; }
+      if ((a.feFlagRg ?? -1) !== want.rg) {
+        if (a.feFlag) { a.feFlag.parent && a.feFlag.parent.remove(a.feFlag); a.feFlag = null; }
+        a.feFlagRg = want.rg;
+        if (want.rg >= 0 && m.torso) {
+          const R = FETE_REGS[want.rg], g = new T.Group(); g.position.set(-0.28, 0.5, 0); m.torso.add(g);
+          const pole = new T.Mesh(new T.CylinderGeometry(0.015, 0.015, 1.5, 6), new T.MeshLambertMaterial({ color: 0x9a9aa2 })); pole.position.y = 0.6; g.add(pole);
+          const fm = new T.MeshBasicMaterial({ map: hubCanvas(128, 88, (c, w, h) => { c.fillStyle = R.s; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '900 52px "SSK Rodin","Arial Black",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(want.rg), w / 2, h / 2 + 3); }) });
+          for (const sd of [0, 1]) { const fl = new T.Mesh(new T.PlaneGeometry(0.42, 0.28), fm); fl.position.set(sd ? -0.002 : 0.002, 1.2, 0.22); fl.rotation.y = sd ? -Math.PI / 2 : Math.PI / 2; g.add(fl); }
+          a.feFlag = g;
+        }
+      }
+    },
+    // ---------------------------------------------------------------- zones
+    feZone(ar) {
+      const F = this.fe; if (!F || ar !== 'street' || F.watch) return null;
+      const m = this.me, near = (x, z, r) => Math.hypot(m.x - x, m.z - z) < r;
+      if (F.candleTable && near(F.candleTable.x, F.candleTable.z + 0.9, 1.6)) return { id: 'fe-candle', label: F.mine.cd ? 'Reposer ta bougie' : 'Prendre une bougie (gratuite)', sub: 'pour tenir jusqu\'au bout' };
+      if (this.dx && this.dx.hall === 'palais' && F.mine.cd && near(WX + 148, -38.9, 3.2)) return { id: 'fe-depose', label: 'Déposer ta bougie au pied de la statue', sub: 'elle restera allumée pour tout le monde' };
+      if (this.dx && this.dx.hall === 'cinema' && F.screen && m.z < -15) return { id: 'fe-watch', label: 'Regarder le live de Korochiku', sub: 'twitch.tv/' + FETE_TWITCH + ' · en direct' };
+      if (F.regDesk && near(F.regDesk.x, F.regDesk.z + 0.9, 1.5)) return { id: 'fe-reg', label: F.mine.rg >= 0 ? `Changer de régiment (${FETE_REGS[F.mine.rg].n})` : 'Rejoindre un régiment pour le défilé', sub: 'ton drapeau dans le dos' };
+      if (F.podium && near(F.podium.x, F.podium.z + 0.9, 1.4)) return feAdmin() ? { id: 'fe-pupitre', label: 'Pupitre du Leader', sub: 'lancer un événement pour tout le monde' } : { id: 'fe-photo', label: 'Prendre la photo de groupe', sub: 'devant le temple' };
+      return null;
+    },
+    feInteract(zn) {
+      if (!zn || !String(zn.id).startsWith('fe-')) return false;
+      const F = this.fe;
+      if (zn.id === 'fe-candle') { F.mine.cd = F.mine.cd ? 0 : 1; F.dirty = true; SFX.pickup && SFX.pickup(); this.cityToast(F.mine.cd ? 'Tu tiens une bougie. Tiens bon, le NNN touche à sa fin.' : 'Bougie reposée.'); return true; }
+      if (zn.id === 'fe-depose') {
+        F.mine.cd = 0; F.dirty = true; SFX.pickup && SFX.pickup();
+        const x = 148 + (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 5.6), z = -39.1 + Math.random() * 1.6;
+        if (NET.uid && NET.ref) NET.ref('amg/fete_bougies').push({ u: x, v: +z.toFixed(2), y: 0, n: String(NET.name()).slice(0, 20), t: NET.TS() }).catch(() => {});
+        else this.feCandleAdd('l' + Date.now(), { u: x, v: z, y: 0 });
+        this.cityToast('Ta bougie brille au pied du Grand Timonier.'); return true;
+      }
+      if (zn.id === 'fe-watch') { this.feWatch(true); return true; }
+      if (zn.id === 'fe-reg') { F.mine.rg = (F.mine.rg + 2) % 6 - 1; F.dirty = true; try { localStorage.setItem('ssk-fete-v1', JSON.stringify({ rg: F.mine.rg })); } catch (e) {} SFX.ui && SFX.ui('pick'); this.cityToast(F.mine.rg >= 0 ? `Tu défiles avec le ${FETE_REGS[F.mine.rg].n}.` : 'Tu ne défiles plus.'); return true; }
+      if (zn.id === 'fe-pupitre') { F.el.pan.style.display = 'block'; this.fePanel(); return true; }
+      if (zn.id === 'fe-photo') { this.fePhoto(0); return true; }
+      return false;
+    },
+    // ---------------------------------------------------------------- le cinéma : le lecteur Twitch posé sur l'écran
+    feWatch(on) {
+      const F = this.fe; if (!F) return;
+      F.watch = on;
+      const f = F.el.live;
+      if (on) {
+        const par = ['www.jeuxvideo.com', 'jeuxvideo.com', 'appassets.androidplatform.net', location.hostname].filter((v, i, a) => v && a.indexOf(v) === i).map(p => 'parent=' + encodeURIComponent(p)).join('&');
+        const src = `https://player.twitch.tv/?channel=${FETE_TWITCH}&${par}&autoplay=true&muted=false`;
+        if (f.src !== src) f.src = src;
+        f.style.display = 'block'; F.el.livebar.style.display = 'flex'; this.game.ov.classList.add('fe-watching');
+        this.freeze = true; this.feSeat = { x: this.me.x, z: this.me.z };
+        this.me.x = F.screen.x; this.me.z = -26; this.me.r = Math.PI / 2; this.camPos = null;
+        this.cityToast('Séance en cours. Échap ou « Quitter la séance » pour sortir.');
+        if (this.dx && this.dx.hymn && this.dx.hymn.el) this.dx.hymn.el.pause();
+      } else {
+        f.style.display = 'none'; F.el.livebar.style.display = 'none'; f.src = 'about:blank'; this.game.ov.classList.remove('fe-watching');
+        this.freeze = false; this.camFree = false; this.camPos = null;
+      }
+    },
+    feLivePos() {
+      const F = this.fe, S = F.screen, cam = this.camera, ov = this.game.ov, W = ov.clientWidth, H = ov.clientHeight;
+      // la caméra se place dans la salle, face à l'écran
+      this.camPos = null; cam.position.set(S.x, 2.9, -33.2); cam.lookAt(S.x, S.y, S.z); cam.updateMatrixWorld();
+      const p = (x, y) => { const v = new T.Vector3(x, y, S.z + 0.02).project(cam); return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H]; };
+      const [x0, y0] = p(S.x - S.w / 2, S.y + S.h / 2), [x1, y1] = p(S.x + S.w / 2, S.y - S.h / 2);
+      const f = F.el.live; f.style.left = x0 + 'px'; f.style.top = y0 + 'px'; f.style.width = (x1 - x0) + 'px'; f.style.height = (y1 - y0) + 'px';
+    },
+    // ---------------------------------------------------------------- le pupitre du Leader
+    fePanel() {
+      const F = this.fe, p = F.el.pan;
+      if (p._built) return; p._built = true;
+      p.innerHTML = `<h3>👑 PUPITRE DU LEADER</h3><div class="g">
+        <button data-e="gong">🔔 Gong</button><button data-e="conf">🎊 Confettis</button>
+        <button data-e="gather">🏯 Rassemblement au temple</button><button data-e="hymn">🎺 Hymne pour tous</button>
+        <button data-e="fw">🎆 Feu d'artifice</button><button data-e="parade">🚩 Défilé des régiments</button>
+        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button></div>
+        <input maxlength="140" placeholder="Un discours pour le peuple…"><button data-e="speech" style="width:100%">🎙️ PROCLAMER</button>
+        <button data-e="close" style="width:100%;margin-top:8px;background:#333">FERMER</button>`;
+      p.querySelectorAll('button').forEach(b => feTap(b, () => {
+        const e = b.dataset.e;
+        if (e === 'close') { p.style.display = 'none'; return; }
+        const d = { e, t: NET.TS ? NET.TS() : Date.now(), by: String(NET.name()).slice(0, 20) };
+        if (e === 'speech') { const inp = p.querySelector('input'); const v = inp.value.trim(); if (!v) return; d.txt = v.slice(0, 140); inp.value = ''; }
+        if (NET.uid && NET.ref) NET.ref('amg/fete_ev').push(d).catch(() => this.cityToast('Événement non envoyé (réessaie).'));
+        else this.feEvent('local' + Date.now(), { ...d, t: Date.now() }, 0);
+        SFX.ui && SFX.ui('click');
+      }));
+    },
+    feEvent(key, v, t0) {
+      const F = this.fe; if (!F || !v || F.seen.has(key)) return; F.seen.add(key);
+      const now = NET.now ? NET.now() : Date.now(), age = now - (+v.t || 0);
+      if (age > 25000 || age < -60000) return;                                        // trop vieux : ignoré
+      const by = String(v.by || 'Le Leader').slice(0, 20);
+      if (v.e === 'gong') { SFX.gong && SFX.gong(); this.feBanner('LE LEADER SUPRÊME', `${by} frappe le gong !`, 3500); }
+      else if (v.e === 'conf') { this.feConfetti(); SFX.fanfare && SFX.fanfare(); }
+      else if (v.e === 'speech') { SFX.gong && SFX.gong(); this.feBanner('🎙️ ' + by.toUpperCase() + ' PROCLAME', v.txt || '', 9000); }
+      else if (v.e === 'hymn') { F.hymnUntil = (+v.t || now) + 190000; this.feBanner('LE LEADER SUPRÊME', 'L\'hymne résonne dans toute la ville.', 4000); }
+      else if (v.e === 'fw') this.feFireworks(40);
+      else if (v.e === 'parade') { F.parade = { t0: +v.t || now }; this.feBanner('DÉFILÉ DES RÉGIMENTS', 'Rendez-vous sur l\'avenue du Quartier du Peuple !', 5000); }
+      else if (v.e === 'candles') { this.feBanner('LEVEZ VOS BOUGIES', 'Une bougie gratuite vous attend devant le temple.', 6000); }
+      else if (v.e === 'photo') this.fePhoto(Math.max(0, 5000 - age));
+      else if (v.e === 'gather') {
+        this.feBanner('RASSEMBLEMENT', 'Le Leader Suprême convoque le peuple devant le temple !', 5000);
+        if (this.area === 'street' && !this.drive && !(this.fe && this.fe.watch) && this.game.mode === 'hub') {
+          this.fade && this.fade(1, 'RASSEMBLEMENT', 'Devant le temple du Grand Timonier');
+          setTimeout(() => { const m = this.me; m.x = WX + 148 + (Math.random() - 0.5) * 10; m.z = -3 + (Math.random() - 0.5) * 4; m.r = -Math.PI / 2; m.a = 'idle'; this.camYaw = m.r - Math.PI / 2; this.camPos = null; if (this.avatar) { this.avatar.x = m.x; this.avatar.z = m.z; } this.send && this.send(true); this.fade && this.fade(0); }, 900);
+        }
+      }
+    },
+    feBanner(title, txt, ms) {
+      const el = this.fe.el.speech; el.innerHTML = `<small>${esc(title)}</small>${esc(txt)}`; el.style.display = 'block';
+      clearTimeout(this.fe.bT); this.fe.bT = setTimeout(() => { el.style.display = 'none'; }, ms || 6000);
+    },
+    // ---------------------------------------------------------------- minuit : médaille « Survivant du NNN 2026 »
+    feMidnight() {
+      const F = this.fe; if (F.mine.md && feMedalOwned()) return;
+      F.mine.md = 1; F.dirty = true;
+      try { localStorage.setItem('ssk-medal-nnn2026', '1'); } catch (e) {}
+      try { if (typeof V93 !== 'undefined' && V93.cos) { V93.cos.o['ti:survivant'] = 1; V93.cos.ti = 'survivant'; v93Push(); } } catch (e) {}
+      setTimeout(() => this.bigText && this.bigText('SURVIVANT DU NNN 2026', 'Tu étais là jusqu\'au bout. Médaille et titre débloqués.'), FETE_END - (NET.now ? NET.now() : Date.now()) > -20000 ? 13000 : 1500);
+      SFX.fanfare && SFX.fanfare();
+    },
+    // ---------------------------------------------------------------- bougies déposées au pied de la statue
+    feCandleAdd(key, v) {
+      const F = this.fe; if (!F || !v || F.cand.has(key) || F.cand.size > 220) return;
+      const x = WX + (+v.u || 148), z = +v.v || -38.5, y = +v.y || 0;
+      const g = new T.Group(); g.position.set(x, y, z);
+      const c = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 0.22, 8), new T.MeshLambertMaterial({ color: 0xf6f0dc })); c.position.y = 0.11; g.add(c);
+      const fl = new T.Mesh(new T.SphereGeometry(0.04, 8, 6), new T.MeshBasicMaterial({ color: 0xffb040 })); fl.scale.y = 1.8; fl.position.y = 0.27; g.add(fl);
+      const glow = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xffa040, transparent: true, opacity: 0.55, blending: T.AdditiveBlending, depthWrite: false })); glow.scale.set(0.45, 0.45, 1); glow.position.y = 0.28; g.add(glow);
+      this.scene.add(g); F.cand.set(key, g);
+    },
+    // ---------------------------------------------------------------- feu d'artifice au-dessus du temple
+    feFireworks(sec) { const F = this.fe; F.fwUntil = Math.max(F.fwUntil || 0, performance.now() + sec * 1000); },
+    feFwStep(t) {
+      const F = this.fe, sc = this.scene;
+      if (F.fwUntil > performance.now() && this.area === 'street' && t % 18 === 0) {
+        const cols = [0xff3a3a, 0xffd23a, 0x3aff8a, 0x5ab8ff, 0xff5ad8, 0xffffff];
+        const x = WX + 148 + (Math.random() - 0.5) * 44, z = -24 + (Math.random() - 0.5) * 22, y = 22 + Math.random() * 12, col = cols[Math.floor(Math.random() * cols.length)];
+        const n = 90, geo = new T.BufferGeometry(), pos = new Float32Array(n * 3), vel = [];
+        for (let i = 0; i < n; i++) { pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; const u = Math.random() * 2 - 1, a = Math.random() * TAU, r = Math.sqrt(1 - u * u), sp = 0.32 + Math.random() * 0.08; vel.push([r * Math.cos(a) * sp, u * sp, r * Math.sin(a) * sp]); }
+        geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+        const pts = new T.Points(geo, new T.PointsMaterial({ color: col, size: 1.4, map: modoGlowTex(), transparent: true, opacity: 1, blending: T.AdditiveBlending, depthWrite: false, fog: false }));
+        sc.add(pts); F.fw.push({ pts, vel, life: 80 });
+        const fl = new T.PointLight(col, 3, 90, 1.2); fl.position.set(x, y, z); sc.add(fl); F.fw.push({ light: fl, life: 14 });
+        if (Math.random() < 0.6) setTimeout(() => SFX.boom ? SFX.boom() : 0, 200);
+      }
+      for (const f of F.fw) {
+        f.life--;
+        if (f.pts) { const p = f.pts.geometry.attributes.position; for (let i = 0; i < f.vel.length; i++) { const v = f.vel[i]; v[1] -= 0.006; v[0] *= 0.975; v[1] *= 0.975; v[2] *= 0.975; p.array[i * 3] += v[0]; p.array[i * 3 + 1] += v[1]; p.array[i * 3 + 2] += v[2]; } p.needsUpdate = true; f.pts.material.opacity = Math.min(1, f.life / 30); }
+        if (f.light) f.light.intensity *= 0.8;
+        if (f.life <= 0) { if (f.pts) { sc.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); } if (f.light) sc.remove(f.light); }
+      }
+      F.fw = F.fw.filter(f => f.life > 0);
+    },
+    // ---------------------------------------------------------------- confettis rouges et dorés autour de soi
+    feConfetti() {
+      const F = this.fe, m = this.me, geo = new T.PlaneGeometry(0.12, 0.08);
+      for (let i = 0; i < 160; i++) { const mesh = new T.Mesh(geo, new T.MeshBasicMaterial({ color: [0xc8102e, 0xffd23a, 0xffffff, 0xff5ad8][i % 4], side: T.DoubleSide })); mesh.position.set(m.x + (Math.random() - 0.5) * 14, 8 + Math.random() * 6, m.z + (Math.random() - 0.5) * 14); this.scene.add(mesh); F.conf.push({ mesh, vy: -0.03 - Math.random() * 0.03, sp: Math.random() * 0.2, ph: Math.random() * 6, life: 420 }); }
+    },
+    feConfStep() {
+      const F = this.fe;
+      for (const c of F.conf) { c.life--; c.mesh.position.y += c.vy; c.mesh.position.x += Math.sin(c.life * 0.05 + c.ph) * 0.02; c.mesh.rotation.x += c.sp; c.mesh.rotation.y += c.sp * 0.7; if (c.life <= 0 || c.mesh.position.y < 0) { this.scene.remove(c.mesh); c.mesh.material.dispose(); c.life = 0; } }
+      F.conf = F.conf.filter(c => c.life > 0);
+    },
+    // ---------------------------------------------------------------- défilé : le tank et les cinq régiments descendent l'avenue
+    feParadeStep(now) {
+      const F = this.fe, P = F.parade; if (!P) return;
+      const el = (now - P.t0) / 1000, DUR = 110;
+      if (el > DUR || el < -5) { if (P.g) { this.scene.remove(P.g); } F.parade = null; return; }
+      if (!P.g) {
+        const g = P.g = new T.Group(); this.scene.add(g); P.mem = [];
+        const M = (c) => new T.MeshLambertMaterial({ color: c });
+        const tank = new T.Group(); g.add(tank);
+        const hull = new T.Mesh(new T.BoxGeometry(3.6, 0.9, 2.0), M(0x4a5a3a)); hull.position.y = 0.9; tank.add(hull);
+        const tr = new T.Mesh(new T.BoxGeometry(3.8, 0.6, 2.3), M(0x1a1a1e)); tr.position.y = 0.35; tank.add(tr);
+        const tur = new T.Mesh(new T.CylinderGeometry(0.8, 0.95, 0.55, 14), M(0x4a5a3a)); tur.position.y = 1.6; tank.add(tur);
+        const gun = new T.Mesh(new T.CylinderGeometry(0.12, 0.14, 2.4, 8), M(0x34402a)); gun.rotation.z = Math.PI / 2; gun.position.set(1.5, 1.65, 0); tank.add(gun);
+        const star = new T.Mesh(new T.CircleGeometry(0.4, 5), new T.MeshBasicMaterial({ color: 0xe8101e })); star.position.set(0, 1.0, 1.01); tank.add(star);
+        const kd = findDef('korochiku'); if (kd) { const km = kd.build(palFor(kd, 0, 2)); km.root.position.set(-0.2, 1.85, 0); km.armR.rotation.z = 2.6; tank.add(km.root); }
+        P.mem.push({ o: tank, off: 0, z: 0, tank: true });
+        FETE_REGS.forEach((R, ri) => {
+          for (let k = 0; k < 6; k++) {
+            const n = npcMan({ skin: [0xe8c09a, 0xc8946a, 0xf0c8a8][k % 3], shirt: R.c, pants: 0x2a2a30, hair: 0x1a1a1a }); g.add(n.root);
+            if (k === 0) { const pole = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 2.6, 6), M(0x9a9aa2)); pole.position.set(0.3, 1.3, 0); n.root.add(pole); const fl = new T.Mesh(new T.PlaneGeometry(1.0, 0.65), new T.MeshBasicMaterial({ color: R.c, side: T.DoubleSide })); fl.position.set(0.3, 2.3, 0.5); fl.rotation.y = Math.PI / 2; n.root.add(fl); }
+            P.mem.push({ o: n.root, n, off: 4.5 + ri * 4.2 + Math.floor(k / 3) * 1.4, z: (k % 3 - 1) * 1.3 });
+          }
+        });
+        F.paradeSnd = 0;
+      }
+      // le cortège avance de u 92 vers u 176 puis revient
+      const half = DUR / 2, k = el < half ? el / half : 1 - (el - half) / half, dir = el < half ? 1 : -1;
+      const head = 92 + k * 70;
+      for (const q of P.mem) {
+        const u = head - dir * q.off; q.o.position.set(WX + u, 0, q.z); q.o.rotation.y = dir > 0 ? 0 : Math.PI;
+        if (q.n) { const s = Math.sin(el * 7 + q.off); q.n.legL.rotation.z = s * 0.5; q.n.legR.rotation.z = -s * 0.5; q.n.armL.rotation.z = -s * 0.4; q.n.armR.rotation.z = s * 0.4; }
+      }
+      if (Math.floor(el * 2) !== F.paradeSnd && this.area === 'street' && Math.abs(this.me.x - (WX + head)) < 30) { F.paradeSnd = Math.floor(el * 2); SFX.step && SFX.step(); }
+    },
+    // ---------------------------------------------------------------- photo de groupe devant le temple
+    fePhoto(delay) {
+      const F = this.fe; if (F.photoBusy) return; F.photoBusy = true;
+      const n0 = Math.ceil(delay / 1000), el = F.el.cd;
+      const tickDown = (n) => { if (n > 0) { el.style.display = 'flex'; el.textContent = '📸 ' + n; SFX.ui && SFX.ui('move'); setTimeout(() => tickDown(n - 1), 1000); } else { el.style.display = 'none'; shoot(); } };
+      const shoot = () => {
+        try {
+          const g = this.game, r = g.renderer, cam = this.camera, keep = { p: cam.position.clone(), q: cam.quaternion.clone(), fov: cam.fov };
+          if (this.area === 'street') { cam.position.set(WX + 148, 3.6, 4.6); cam.fov = 64; cam.updateProjectionMatrix(); cam.lookAt(WX + 148, 3.4, -10); }
+          this.render ? this.render() : r.render(this.scene, cam);
+          const src = r.domElement, W = 1280, H = Math.round(W * src.height / src.width);
+          const c = document.createElement('canvas'); c.width = W; c.height = H + 90; const x = c.getContext('2d');
+          x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, 0, 0, W, H);
+          x.fillStyle = '#c8102e'; x.fillRect(0, H, W, 90); x.fillStyle = '#ffd23a'; x.font = '900 34px "SSK Rodin","Arial Black",sans-serif'; x.textAlign = 'center'; x.fillText('NNN 2026 · LES SURVIVANTS · ' + new Date().toLocaleDateString('fr-FR'), W / 2, H + 55);
+          cam.position.copy(keep.p); cam.quaternion.copy(keep.q); cam.fov = keep.fov; cam.updateProjectionMatrix();
+          const url = c.toDataURL('image/jpeg', 0.9);
+          F.el.photo.querySelector('img').src = url; F.el.photo.querySelector('a').href = url; F.el.photo.style.display = 'flex';
+          SFX.clap ? SFX.clap() : SFX.pop && SFX.pop();
+        } catch (e) { console.warn('[SSK] photo', e); }
+        F.photoBusy = false;
+      };
+      if (n0 > 0) tickDown(n0); else tickDown(3);
+    },
+    feLeave() {
+      const F = this.fe; if (!F) return;
+      if (F.watch) this.feWatch(false);
+      for (const k of ['count', 'speech', 'cd', 'lead', 'pan']) if (F.el[k]) F.el[k].style.display = 'none';
+      F.isAdm = null;
+    },
+  });
 
   function hurtTest(b, hx, hy, r) {
     if (b.giant && b.giant.hurt) { const g = b.giant.hurt, gy = clamp(hy, b.y + g.y0, b.y + g.y1); return Math.hypot(hx - b.x, hy - gy) < r + g.r; }

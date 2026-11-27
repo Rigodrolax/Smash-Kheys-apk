@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.1
+// @version      0.99.2
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.1';
+  const SSK_VER = '0.99.2';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -20712,7 +20712,7 @@
         g.drawImage(this.miniBase, -(m.x - WX - GEO_U0) * k, -(m.z - GEO_V0) * k);
         const P = (x, z) => [(x - m.x) * k, (z - m.z) * k];
         for (const C of this.npcCars || []) { const [px, pz] = P(C.mesh.position.x, C.mesh.position.z); g.fillStyle = '#c8c8d0'; g.fillRect(px - 2, pz - 2, 4, 4); }
-        for (const a of this.remote.values()) { if (cityArea(a.x, a.z) !== 'street') continue; const [px, pz] = P(a.x, a.z); g.fillStyle = '#5ad1ff'; g.beginPath(); g.arc(px, pz, 4, 0, TAU); g.fill(); }
+        for (const a of this.remote.values()) { if (cityArea(a.x, a.z) !== 'street') continue; const [px, pz] = P(a.x, a.z); g.fillStyle = mapCol(a.name); g.strokeStyle = '#000'; g.lineWidth = 1.5; g.beginPath(); g.arc(px, pz, 4.5, 0, TAU); g.fill(); g.stroke(); }
         g.restore();
         // icônes (restent droites), cible de mission
         g.save(); g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 2, 0, TAU); g.clip();
@@ -31986,6 +31986,180 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       if (F.watch) this.feWatch(false);
       for (const k of ['count', 'speech', 'cd', 'lead', 'pan']) if (F.el[k]) F.el[k].style.display = 'none';
       F.isAdm = null;
+    },
+  });
+
+  // =====================================================================
+  //  LA CARTE (v0.99.2) : la mini-carte couvre maintenant toute la ville (Quartier du Peuple compris),
+  //  et elle s'ouvre en plein écran (touche C, bouton CARTE ou tap sur la mini-carte) avec la position
+  //  et le nom de tous les kheys connectés, zoom, déplacement, liste des joueurs.
+  // =====================================================================
+  const MAP_U1 = 182;                                                             // la carte va de u -95 à 182
+  const MAP_NAMES = { '🏦': 'Risibank', '🏙️': 'Khey Tower', '💋': 'NNN Paradise', '💻': 'Cyber Kheys', '🔧': 'Garage', '🍔': "McKhey's", '💪': 'Muscle Khey', '⛩️': 'Temple du NNN', '🚕': 'Taxis', '🏠': 'Résidence des Kheys', '🛒': 'Kiosque', '🏪': 'Khey Mart', '🏛️': 'Musée des Kheys', '🧪': 'Site-19', '🏯': 'Temple de Korochiku', '⚙️': 'QG du Régiment 0', '🚐': 'Le van', '🎬': 'Cinéma du Peuple', '⛓️': 'Pénitencier du Peuple' };
+  const MAP_HALLS = { palais: 'Temple de Korochiku', cinema: 'Cinéma du Peuple', musee: 'Musée des Kheys', scp: 'Site-19', reg0: 'QG du Régiment 0', prison: 'Pénitencier du Peuple' };
+  const MAP_INT = { strip: 'NNN Paradise', cyber: 'Cyber Kheys', lobby: 'Khey Tower', tapt: 'Khey Tower (appart)', mck: "McKhey's", gym: 'Muscle Khey', bank: 'Risibank', temple: 'Temple du NNN' };
+  const MAP_COLS = ['#5ad1ff', '#ff6a8a', '#7aff8a', '#ffb84a', '#c88aff', '#ff8a3a', '#4affe0', '#fff06a', '#ff5ad8', '#8ab4ff'];
+  const mapCol = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return MAP_COLS[Math.abs(h) % MAP_COLS.length]; };
+  const SKMAP_CSS = `
+  #sk-overlay canvas.sk-mini{pointer-events:auto!important;cursor:pointer}
+  .sk-mapbtn{position:absolute;right:16px;top:474px;z-index:30;display:none;background:rgba(20,16,28,.88);color:#ffd979;border:2px solid #ffd979;border-radius:10px;padding:5px 12px;font:italic 900 13px "SSK Rodin","Arial Black",sans-serif;cursor:pointer;touch-action:manipulation}
+  .sk-map{position:absolute;inset:0;z-index:2147483045;background:rgba(8,6,14,.96);display:none;touch-action:none;user-select:none}
+  .sk-map canvas{position:absolute;inset:0;width:100%;height:100%}
+  .sk-map .hd{position:absolute;left:16px;top:12px;color:#ffd979;font:italic 900 22px "SSK Rodin","Arial Black",sans-serif;text-shadow:2px 2px 0 #000;pointer-events:none}
+  .sk-map .hd small{display:block;color:#cfc8e0;font:700 12px Arial,sans-serif;font-style:normal;text-shadow:none;margin-top:2px}
+  .sk-map .bt{position:absolute;right:14px;top:12px;display:flex;gap:6px}
+  .sk-map button{background:#2a2238;color:#fff;border:2px solid #ffd979;border-radius:10px;min-width:40px;height:40px;padding:0 10px;font:900 18px "SSK Rodin","Arial Black",sans-serif;cursor:pointer;touch-action:manipulation}
+  .sk-map button.x{background:#c8102e}
+  .sk-map .pl{position:absolute;left:12px;bottom:12px;max-height:42%;width:min(270px,46vw);overflow:auto;background:rgba(20,16,28,.9);border:2px solid #ffd979;border-radius:12px;padding:8px 10px;color:#fff;font:12px Arial,sans-serif}
+  .sk-map .pl b{display:block;color:#ffd979;font:italic 900 13px "SSK Rodin",sans-serif;margin-bottom:4px}
+  .sk-map .pl div{display:flex;align-items:center;gap:6px;padding:4px 2px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}
+  .sk-map .pl i{width:10px;height:10px;border-radius:50%;flex:none;border:1px solid #000}
+  .sk-map .pl span{font-weight:700}.sk-map .pl em{margin-left:auto;color:#a8a0c0;font-style:normal;font-size:11px;text-align:right}
+  @media (max-height:520px){.sk-mapbtn{top:178px;right:auto;left:196px}.sk-map .pl{max-height:34%}}
+  `;
+  {
+    const HP = Hub.prototype;
+    const wrap = (name, fn) => { const o = HP[name] || function () {}; HP[name] = function (...a) { return fn.call(this, o, ...a); }; };
+    wrap('buildWorld', function (o) { o.call(this); try { this.mapBuild(); } catch (e) { console.warn('[SSK] carte', e); } });
+    wrap('update', function (o, ...a) { const r = o.apply(this, a); try { this.mapStep(); } catch (e) { if (!this._mapErr) { this._mapErr = 1; console.warn('[SSK] carte', e); } } return r; });
+    wrap('keyMore', function (o, code) {
+      if (this.mapOpen) { if (code === 'Escape' || code === 'KeyC' || code === 'Backspace') this.mapShow(false); else if (code === 'Equal' || code === 'NumpadAdd') this.mapZoom(1.25); else if (code === 'Minus' || code === 'NumpadSubtract') this.mapZoom(0.8); return true; }
+      if (code === 'KeyC' && !this.shop && this.game.mode === 'hub') { this.mapShow(true); return true; }
+      return o.call(this, code);
+    });
+    wrap('leaveMore', function (o) { o.call(this); if (this.mapOpen) this.mapShow(false); if (this.mapBtn) this.mapBtn.style.display = 'none'; });
+  }
+
+  Object.assign(Hub.prototype, {
+    mapBuild() {
+      if (!this.miniBase || this.mapBig) return;
+      if (!document.getElementById('sk-map-css')) { const s = document.createElement('style'); s.id = 'sk-map-css'; s.textContent = SKMAP_CSS; document.head.appendChild(s); }
+      const k = 2, base = this.miniBase, W = Math.round((MAP_U1 - GEO_U0) * k), H = base.height;
+      // la carte étendue : la ville d'origine + le Quartier du Peuple
+      const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+      g.fillStyle = '#3a3842'; g.fillRect(0, 0, W, H); g.drawImage(base, 0, 0);
+      const U = (u) => (u - GEO_U0) * k, V = (v) => (v - GEO_V0) * k;
+      if (this.dx) {
+        g.fillStyle = '#4a4652'; g.fillRect(U(90), V(-48), (MAP_U1 - 90) * k, 96 * k);               // trottoirs du quartier
+        g.fillStyle = '#76747e'; g.fillRect(U(88), V(-5), (MAP_U1 - 88) * k, 10 * k);                   // l'avenue
+        g.beginPath(); g.arc(U(170), V(0), 14 * k, 0, TAU); g.fill();
+        g.fillStyle = '#2c4a26'; g.beginPath(); g.arc(U(170), V(0), 7 * k, 0, TAU); g.fill();
+        g.fillStyle = '#7a1a1e'; g.fillRect(U(128), V(-12), 40 * k, 6 * k);                              // le parvis rouge du temple
+      }
+      // les bâtiments et les murs (les blocs de collision de la ville)
+      g.fillStyle = '#5c5668'; g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1;
+      for (const r of this.solids || []) {
+        const u1 = r.x1 - WX, u2 = r.x2 - WX; if (u2 < GEO_U0 || u1 > MAP_U1 || r.z2 < GEO_V0 || r.z1 > -GEO_V0) continue;
+        if (cityArea((r.x1 + r.x2) / 2, (r.z1 + r.z2) / 2) !== 'street') continue;
+        if ((u2 - u1) * (r.z2 - r.z1) < 0.6 && u1 < 88) continue;                                        // petits objets de la ville d'origine (déjà dessinée)
+        if (u1 < 88 && (u2 - u1) * (r.z2 - r.z1) < 30) continue;
+        g.fillRect(U(u1), V(r.z1), Math.max(1, (u2 - u1) * k), Math.max(1, (r.z2 - r.z1) * k));
+      }
+      if (this.dx) for (const h of this.dx.halls || []) { g.fillStyle = h.id === 'palais' ? '#8a2024' : '#5c5668'; g.fillRect(U(h.x1 - WX), V(h.z1), (h.x2 - h.x1) * k, (h.z2 - h.z1) * k); g.strokeStyle = '#ffd979'; g.lineWidth = 1; g.strokeRect(U(h.x1 - WX) + 0.5, V(h.z1) + 0.5, (h.x2 - h.x1) * k - 1, (h.z2 - h.z1) * k - 1); }
+      this.mapBig = c; this.miniBase = c;
+      if (this.miniIcons && this.dx && !this.miniIcons.some(i => i[0] === '🎬')) this.miniIcons.push(['🎬', WX + 174.75, -12], ['⛓️', WX + 153, 33]);
+      // l'interface
+      const ov = this.game.ov;
+      const btn = this.mapBtn = document.createElement('div'); btn.className = 'sk-mapbtn'; btn.textContent = '🗺️ CARTE (C)'; ov.appendChild(btn);
+      const el = this.mapEl = document.createElement('div'); el.className = 'sk-map';
+      el.innerHTML = '<canvas></canvas><div class="hd">CARTE DE LA VILLE<small></small></div><div class="bt"><button data-k="in">+</button><button data-k="out">−</button><button data-k="me">⌖</button><button data-k="x" class="x">✕</button></div><div class="pl"></div>';
+      ov.appendChild(el);
+      const tap = (e2, fn) => { let last = 0; const go = (e) => { const n = Date.now(); if (n - last < 350) return; last = n; e.preventDefault(); e.stopPropagation(); fn(e); }; e2.addEventListener('pointerup', go); e2.addEventListener('click', go); };
+      tap(btn, () => this.mapShow(true));
+      if (this.miniCv) tap(this.miniCv, () => this.mapShow(true));
+      el.querySelectorAll('.bt button').forEach(b => tap(b, () => { const kk = b.dataset.k; if (kk === 'x') this.mapShow(false); else if (kk === 'in') this.mapZoom(1.35); else if (kk === 'out') this.mapZoom(0.75); else this.mapCenterMe(); }));
+      const pl = el.querySelector('.pl');
+      pl.addEventListener('click', (e) => { const d = e.target.closest('[data-u]'); if (!d) return; const p = (this.mapPeople || []).find(q => q.uid === d.dataset.u); if (p) { const M = this.mapV; M.cu = p.u; M.cv = p.v; M.zoom = Math.max(M.zoom, 3); M.follow = false; } });
+      // déplacement et zoom (souris, molette, un ou deux doigts)
+      const cv = el.querySelector('canvas'), ptr = new Map();
+      cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); e.preventDefault(); });
+      cv.addEventListener('pointermove', (e) => {
+        const p = ptr.get(e.pointerId); if (!p) return; const M = this.mapV;
+        if (ptr.size === 1) { M.cu -= (e.clientX - p.x) / M.ppu; M.cv -= (e.clientY - p.y) / M.ppu; M.follow = false; }
+        else if (ptr.size === 2) { const o2 = [...ptr.entries()].find(([id]) => id !== e.pointerId)[1], d0 = Math.hypot(p.x - o2.x, p.y - o2.y), d1 = Math.hypot(e.clientX - o2.x, e.clientY - o2.y); if (d0 > 10) this.mapZoom(d1 / d0); }
+        p.x = e.clientX; p.y = e.clientY;
+      });
+      const up = (e) => ptr.delete(e.pointerId); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+      cv.addEventListener('wheel', (e) => { e.preventDefault(); this.mapZoom(e.deltaY < 0 ? 1.15 : 0.87); }, { passive: false });
+      this.mapV = { cu: 40, cv: 0, zoom: 1, ppu: 4, follow: true };
+    },
+    mapShow(on) {
+      if (!this.mapEl) return;
+      this.mapOpen = on; this.mapEl.style.display = on ? 'block' : 'none';
+      if (on) { this.mapPrevFreeze = this.freeze; this.freeze = true; const M = this.mapV; M.zoom = 1; M.follow = false; M.cu = (GEO_U0 + (this.dx ? MAP_U1 : 95)) / 2; M.cv = 0; SFX.ui && SFX.ui('move'); this.mapDraw(); }
+      else { this.freeze = !!this.mapPrevFreeze; SFX.ui && SFX.ui('back'); }
+    },
+    mapZoom(f) { const M = this.mapV; M.zoom = clamp(M.zoom * f, 0.8, 8); },
+    mapCenterMe() { const M = this.mapV, p = this.mapPos(this.me.x, this.me.z); M.cu = p.u; M.cv = p.v; M.zoom = Math.max(M.zoom, 2.5); },
+    // la position d'un khey sur la carte : en ville, sa vraie place ; dans un intérieur, la porte du bâtiment
+    mapPos(x, z) {
+      const ar = cityArea(x, z);
+      if (ar === 'street') { const u = x - WX; return { u, v: z, ar, place: this.mapPlace(u, z) }; }
+      if (ar === 'apt') return { u: DOORS.home.x - WX, v: DOORS.home.z, ar, place: "L'appart des kheys", inside: true };
+      for (const d of Object.values(DOORS)) if (cityArea(d.x, d.z) === 'street' && cityArea(d.to[0], d.to[1]) === ar) return { u: d.x - WX, v: d.z, ar, place: MAP_INT[ar] || ar, inside: true };
+      return { u: 0, v: 0, ar, place: 'Quelque part', inside: true };
+    },
+    mapPlace(u, v) {
+      if (this.dx) for (const h of this.dx.halls || []) if (u + WX >= h.x1 && u + WX <= h.x2 && v >= h.z1 && v <= h.z2) return MAP_HALLS[h.id] || h.id;
+      let best = null, bd = 18;
+      for (const [ic, x, z] of this.miniIcons || []) { const d = Math.hypot(x - WX - u, z - v); if (d < bd && MAP_NAMES[ic]) { bd = d; best = MAP_NAMES[ic]; } }
+      if (best) return 'près de ' + best;
+      return u > 88 ? 'Quartier du Peuple' : 'En ville';
+    },
+    mapStep() {
+      const t = (this._mapF = (this._mapF || 0) + 1);
+      if (this.mapBtn && t % 20 === 0) { const show = this.game.mode === 'hub' && !this.mapOpen && !(this.fe && this.fe.watch); this.mapBtn.style.display = show ? 'block' : 'none'; }
+      if (this.mapOpen && t % 2 === 0) this.mapDraw();
+    },
+    mapDraw() {
+      const el = this.mapEl, cv = el.querySelector('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
+      const CW = el.clientWidth, CH = el.clientHeight; if (!CW) return;
+      if (cv.width !== Math.round(CW * dpr) || cv.height !== Math.round(CH * dpr)) { cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); }
+      const g = cv.getContext('2d'), M = this.mapV, U0 = GEO_U0, U1 = this.dx ? MAP_U1 : 95;
+      const fit = Math.min(CW / (U1 - U0), CH / 150) * 0.94; M.ppu = fit * M.zoom;
+      const ppu = M.ppu, sx = (u) => CW / 2 + (u - M.cu) * ppu, sy = (v) => CH / 2 + (v - M.cv) * ppu;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = '#0c0a14'; g.fillRect(0, 0, CW, CH);
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      const B = this.mapBig || this.miniBase; g.drawImage(B, sx(U0), sy(GEO_V0), B.width / 2 * ppu, B.height / 2 * ppu);
+      // les lieux
+      const fs = clamp(ppu * 4, 18, 34); g.textAlign = 'center'; g.textBaseline = 'middle';
+      const boxes = [], free = (x1, y1, x2, y2) => { for (const b of boxes) if (x1 < b[2] && x2 > b[0] && y1 < b[3] && y2 > b[1]) return false; boxes.push([x1, y1, x2, y2]); return true; };
+      for (const [ic, x, z] of this.miniIcons || []) {
+        const px = sx(x - WX), py = sy(z); g.font = `${fs}px serif`; g.fillText(ic, px, py);
+        if (ppu > 3 && MAP_NAMES[ic]) {
+          const lf = clamp(ppu * 1.5, 11, 16); g.font = `900 ${lf}px "SSK Rodin",Arial,sans-serif`; const w = g.measureText(MAP_NAMES[ic]).width, ly = py + fs * 0.75;
+          if (free(px - w / 2 - 2, ly - lf / 2, px + w / 2 + 2, ly + lf / 2)) { g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(MAP_NAMES[ic], px, ly); g.fillStyle = '#fff2c8'; g.fillText(MAP_NAMES[ic], px, ly); }
+        }
+      }
+      if (this.dx && ppu > 2) { g.font = `italic 900 ${clamp(ppu * 2.4, 12, 30)}px "SSK Rodin","Arial Black",sans-serif`; g.fillStyle = 'rgba(255,210,58,.55)'; g.fillText('QUARTIER DU PEUPLE', sx(135), sy(-52)); }
+      // la cible de mission
+      const tg = this.missionTarget && this.missionTarget();
+      if (tg) { const px = sx(tg.x - WX), py = sy(tg.z); g.fillStyle = '#ffd23a'; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, 8 + Math.sin(this._mapF * 0.2) * 2, 0, TAU); g.fill(); g.stroke(); }
+      // les kheys
+      const ppl = [];
+      const me = this.mapPos(this.me.x, this.me.z);
+      ppl.push({ uid: NET.uid || 'me', n: (this.avatar && this.avatar.name) || 'Moi', me: true, ...me, r: this.me.r });
+      if (this.remote) for (const [uid, a] of this.remote) ppl.push({ uid, n: a.name || '?', ...this.mapPos(a.x, a.z), r: a.r });
+      this.mapPeople = ppl;
+      const seen = {};
+      for (const p of ppl) {
+        let px = sx(p.u), py = sy(p.v);
+        if (p.inside) { const kk = Math.round(p.u) + ',' + Math.round(p.v), i = seen[kk] = (seen[kk] || 0) + 1; px += (i - 1) * 10; py -= 10; }
+        const col = p.me ? '#ffffff' : mapCol(p.n);
+        if (p.me && !p.inside) { const fx = Math.cos(p.r), fz = -Math.sin(p.r); g.save(); g.translate(px, py); g.rotate(Math.atan2(fz, fx)); g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.moveTo(11, 0); g.lineTo(-7, 7); g.lineTo(-3, 0); g.lineTo(-7, -7); g.closePath(); g.fill(); g.stroke(); g.restore(); }
+        else { g.fillStyle = col; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, p.me ? 7 : 6, 0, TAU); g.fill(); g.stroke(); if (p.inside) { g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath(); g.arc(px, py, 10, 0, TAU); g.stroke(); } }
+        g.font = '900 13px "SSK Rodin",Arial,sans-serif'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.9)'; const lab = p.me ? p.n + ' (toi)' : p.n;
+        g.strokeText(lab, px, py - 16); g.fillStyle = col; g.fillText(lab, px, py - 16);
+      }
+      // la boussole
+      g.fillStyle = '#ffd979'; g.font = '900 16px "SSK Rodin",sans-serif'; g.fillText('N ▲', CW - 40, CH - 24);
+      // l'en-tête et la liste
+      el.querySelector('.hd small').textContent = `${ppl.length} khey${ppl.length > 1 ? 's' : ''} connecté${ppl.length > 1 ? 's' : ''} · glisse pour te déplacer, pince ou molette pour zoomer`;
+      if (this._mapF % 10 === 0 || !el._pl) {
+        el._pl = 1;
+        const html = '<b>KHEYS CONNECTÉS</b>' + ppl.map(p => `<div data-u="${esc(p.uid)}"><i style="background:${p.me ? '#fff' : mapCol(p.n)}"></i><span>${esc(p.n)}${p.me ? ' (toi)' : ''}</span><em>${esc(p.place)}</em></div>`).join('');
+        const pl = el.querySelector('.pl'); if (pl._h !== html) { pl._h = html; pl.innerHTML = html; }
+      }
     },
   });
 

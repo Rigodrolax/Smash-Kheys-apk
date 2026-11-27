@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.0
+// @version      0.99.1
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.0';
+  const SSK_VER = '0.99.1';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -31453,6 +31453,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   const FETE_END = Date.UTC(2026, 10, 30, 23, 0, 0);                               // 1er décembre 2026, minuit à Paris
   const FETE_ADMINS = ['korochiku', 'rigodrolax'];
   const FETE_TWITCH = 'korochiku';
+  const FETE_HYMN_AT = 180.0;                                                     // seconde de l'hymne qui tombe pile à minuit (le dernier accord)
   const FETE_REGS = [{ n: 'Régiment 0', c: 0x8a8e96, s: '#8a8e96' }, { n: 'R1 — Les Jaunes', c: 0xf2c81a, s: '#f2c81a' }, { n: 'R2 — Les Verts', c: 0x2fa84a, s: '#2fa84a' }, { n: 'R3 — Les Rouges', c: 0xd8202e, s: '#d8202e' }, { n: 'R4 — Les Bleus', c: 0x2f6ad8, s: '#2f6ad8' }];
   const FETE_CSS = `
   .fe-live{position:absolute;z-index:2147483050;background:#000;border:0;display:none}
@@ -31537,6 +31538,18 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       plane(2.2, 0.42, label('DÉFILÉ : CHOISIS TON RÉGIMENT', { bg: '#3a4a2a', col: '#ffd23a', border: '#e2b43a' }), F.regDesk.x, 1.25, F.regDesk.z + 0.42);
       FETE_REGS.forEach((R, i) => { const x = F.regDesk.x - 0.8 + i * 0.4; cyl(0.015, 0.015, 1.3, lam(0x9a9aa2), x, 1.5, F.regDesk.z - 0.2, sc, 6); plane(0.34, 0.24, lam(R.c, { side: T.DoubleSide }), x + 0.17, 2.0, F.regDesk.z - 0.2); });
       wallC(F.regDesk.x - 0.95, F.regDesk.z - 0.45, F.regDesk.x + 0.95, F.regDesk.z + 0.45);
+      // ---------------- le Mur des Survivants, dans le temple (à gauche de l'entrée, côté intérieur)
+      {
+        const c = document.createElement('canvas'); c.width = 2048; c.height = 860;
+        const t2 = new T.CanvasTexture(c); t2.colorSpace = T.SRGBColorSpace || t2.colorSpace;
+        const g = new T.Group(); g.position.set(X(137), 4.4, -12.42); g.rotation.y = Math.PI; sc.add(g);
+        const gold = new T.MeshStandardMaterial({ color: 0xd8a838, metalness: 0.85, roughness: 0.3, emissive: 0x2a1a00 });
+        const fr = new T.Mesh(new T.BoxGeometry(11.6, 5.2, 0.16), gold); g.add(fr);
+        const pn = new T.Mesh(new T.PlaneGeometry(11, 4.62), new T.MeshBasicMaterial({ map: t2 })); pn.position.z = 0.09; g.add(pn);
+        const sp = new T.PointLight(0xffd890, 0.8, 9, 1.6); sp.position.set(X(137), 6.5, -14.5); this.lightGroup('street').add(sp);
+        F.wall = { c, t: t2, names: [] }; this.feWallDraw();
+      }
+      F.koroImg = new Image(); try { F.koroImg.src = DX_KORO; } catch (e) {}
       // ---------------- interface
       const ov = this.game.ov;
       const mk = (cls, html = '') => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; ov.appendChild(e); return e; };
@@ -31554,6 +31567,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       if (NET.uid && NET.ref) {
         const t0 = NET.now();
         F.evRef = NET.ref('amg/fete_ev'); F.evCb = F.evRef.limitToLast ? F.evRef.limitToLast(20).on('child_added', (s) => this.feEvent(s.key, s.val(), t0)) : F.evRef.on('child_added', (s) => this.feEvent(s.key, s.val(), t0));
+        F.sRef = NET.ref('amg/fete_survivants'); F.sCb = F.sRef.on('value', (s) => { const v = s.val() || {}; F.wall.names = Object.values(v).filter(x => x && x.n).sort((a, b) => (a.t || 0) - (b.t || 0)).map(x => String(x.n).slice(0, 20)).filter((n, i, a) => a.indexOf(n) === i); this.feWallDraw(); });
         F.cRef = NET.ref('amg/fete_bougies'); F.cCb = (F.cRef.limitToLast ? F.cRef.limitToLast(200) : F.cRef).on('child_added', (s) => this.feCandleAdd(s.key, s.val()));
       }
     },
@@ -31576,7 +31590,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         }
         if (left <= 0 && left > -3 * 3600e3) this.feMidnight();
       }
-      if (left <= 0 && left > -10e3 && !F.boomStarted) { F.boomStarted = true; this.feFireworks(180); this.feBanner('MINUIT', 'LE NNN 2026 EST TERMINÉ ! VOUS AVEZ TENU. LEVEZ VOS BOUGIES !', 12000); SFX.gong && SFX.gong(); }
+      if (left <= 0 && left > -10e3 && !F.boomStarted) { F.boomStarted = true; this.feFireworks(180); this.feLanterns(); this.feBanner('MINUIT', 'LE NNN 2026 EST TERMINÉ ! VOUS AVEZ TENU. LEVEZ VOS BOUGIES !', 12000); SFX.gong && SFX.gong(); }
       if (left > 0 && left < 10500 && Math.floor(left / 1000) !== F.lastSec) { F.lastSec = Math.floor(left / 1000); const el = F.el.cd; el.style.display = 'flex'; el.textContent = Math.max(1, Math.ceil(left / 1000)); SFX.ui && SFX.ui('move'); setTimeout(() => { if (FETE_END - NET.now() <= 0) el.style.display = 'none'; }, 1100); }
       if (left <= 0 && F.el.cd.style.display === 'flex') F.el.cd.style.display = 'none';
       // bouton du pupitre pour le Leader
@@ -31589,10 +31603,19 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         if (NET.uid && NET.isKept && NET.isKept('hub/' + NET.uid) && (nowR - F.lastPatch > 10000 || F.dirty)) { F.lastPatch = nowR; F.dirty = false; NET.patch('hub/' + NET.uid, { cd: F.mine.cd, rg: F.mine.rg, md: F.mine.md }); }
       }
       for (const a of [this.avatar, ...(this.remote ? this.remote.values() : [])]) if (a && a.feFlame) { a.feFlame.scale.y = 1.6 + Math.sin(t * 0.5 + a.x) * 0.3; }
+      // l'hymne calé sur minuit : il démarre à 23:57 pour que son dernier accord tombe à 00:00 pile
+      const HS = FETE_END - FETE_HYMN_AT * 1000;
+      if (now >= HS && now < FETE_END + 2500) {
+        F.hymnUntil = Math.max(F.hymnUntil, FETE_END + 2500);
+        const H = this.dx && this.dx.hymn;
+        if (H && H.el && H.el.readyState >= 1 && t % 20 === 0) { const want = (now - HS) / 1000; if (Math.abs(H.el.currentTime - want) > 0.5 && want < (H.el.duration || 999) - 0.3) try { H.el.currentTime = want; } catch (e) {} }
+      }
+      // l'aube rouge après minuit (le ciel, la brume, la lumière, la statue qui s'illumine)
+      if (t % 6 === 0) this.feDawn(now);
       // l'hymne pour tous (lancé par le Leader)
       if (this.dx) this.dx.forceHymn = now < F.hymnUntil;
       // feu d'artifice, confettis, défilé
-      this.feFwStep(t); this.feConfStep(); this.feParadeStep(now);
+      this.feFwStep(t); this.feConfStep(); this.feParadeStep(now); this.feLantStep(); this.feShapeStep();
       // le cinéma : le lecteur suit l'écran
       if (F.watch) this.feLivePos();
     },
@@ -31690,7 +31713,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         <button data-e="gong">🔔 Gong</button><button data-e="conf">🎊 Confettis</button>
         <button data-e="gather">🏯 Rassemblement au temple</button><button data-e="hymn">🎺 Hymne pour tous</button>
         <button data-e="fw">🎆 Feu d'artifice</button><button data-e="parade">🚩 Défilé des régiments</button>
-        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button></div>
+        <button data-e="photo">📸 Photo de groupe</button><button data-e="candles">🕯️ Levez vos bougies</button><button data-e="lant">🏮 Lâcher les lanternes</button><button data-e="dawn">🌅 L'aube rouge</button></div>
         <input maxlength="140" placeholder="Un discours pour le peuple…"><button data-e="speech" style="width:100%">🎙️ PROCLAMER</button>
         <button data-e="close" style="width:100%;margin-top:8px;background:#333">FERMER</button>`;
       p.querySelectorAll('button').forEach(b => feTap(b, () => {
@@ -31714,6 +31737,8 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       else if (v.e === 'hymn') { F.hymnUntil = (+v.t || now) + 190000; this.feBanner('LE LEADER SUPRÊME', 'L\'hymne résonne dans toute la ville.', 4000); }
       else if (v.e === 'fw') this.feFireworks(40);
       else if (v.e === 'parade') { F.parade = { t0: +v.t || now }; this.feBanner('DÉFILÉ DES RÉGIMENTS', 'Rendez-vous sur l\'avenue du Quartier du Peuple !', 5000); }
+      else if (v.e === 'lant') this.feLanterns();
+      else if (v.e === 'dawn') { F.dawnT0 = performance.now(); }
       else if (v.e === 'candles') { this.feBanner('LEVEZ VOS BOUGIES', 'Une bougie gratuite vous attend devant le temple.', 6000); }
       else if (v.e === 'photo') this.fePhoto(Math.max(0, 5000 - age));
       else if (v.e === 'gather') {
@@ -31732,6 +31757,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     feMidnight() {
       const F = this.fe; if (F.mine.md && feMedalOwned()) return;
       F.mine.md = 1; F.dirty = true;
+      try { if (NET.uid && NET.ref) NET.ref('amg/fete_survivants/' + NET.uid).set({ n: String(NET.name()).slice(0, 20), t: NET.TS() }).catch(() => {}); } catch (e) {}
       try { localStorage.setItem('ssk-medal-nnn2026', '1'); } catch (e) {}
       try { if (typeof V93 !== 'undefined' && V93.cos) { V93.cos.o['ti:survivant'] = 1; V93.cos.ti = 'survivant'; v93Push(); } } catch (e) {}
       setTimeout(() => this.bigText && this.bigText('SURVIVANT DU NNN 2026', 'Tu étais là jusqu\'au bout. Médaille et titre débloqués.'), FETE_END - (NET.now ? NET.now() : Date.now()) > -20000 ? 13000 : 1500);
@@ -31740,6 +31766,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
     // ---------------------------------------------------------------- bougies déposées au pied de la statue
     feCandleAdd(key, v) {
       const F = this.fe; if (!F || !v || F.cand.has(key) || F.cand.size > 220) return;
+      if ((NET.now ? NET.now() : Date.now()) > FETE_END + 15000) return;               // après minuit, elles se sont envolées en lanternes
       const x = WX + (+v.u || 148), z = +v.v || -38.5, y = +v.y || 0;
       const g = new T.Group(); g.position.set(x, y, z);
       const c = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 0.22, 8), new T.MeshLambertMaterial({ color: 0xf6f0dc })); c.position.y = 0.11; g.add(c);
@@ -31762,6 +31789,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         const fl = new T.PointLight(col, 3, 90, 1.2); fl.position.set(x, y, z); sc.add(fl); F.fw.push({ light: fl, life: 14 });
         if (Math.random() < 0.6) setTimeout(() => SFX.boom ? SFX.boom() : 0, 200);
       }
+      if (F.fwUntil > performance.now() + 4000 && this.area === 'street' && performance.now() > (F.nextShape || 0)) { F.nextShape = performance.now() + 14000; const k = ['text', 'star', 'face'][(F.shapeI = ((F.shapeI ?? -1) + 1) % 3)]; this.feShape(k); }
       for (const f of F.fw) {
         f.life--;
         if (f.pts) { const p = f.pts.geometry.attributes.position; for (let i = 0; i < f.vel.length; i++) { const v = f.vel[i]; v[1] -= 0.006; v[0] *= 0.975; v[1] *= 0.975; v[2] *= 0.975; p.array[i * 3] += v[0]; p.array[i * 3 + 1] += v[1]; p.array[i * 3 + 2] += v[2]; } p.needsUpdate = true; f.pts.material.opacity = Math.min(1, f.life / 30); }
@@ -31836,6 +31864,122 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         F.photoBusy = false;
       };
       if (n0 > 0) tickDown(n0); else tickDown(3);
+    },
+    // ---------------------------------------------------------------- le Mur des Survivants
+    feWallDraw() {
+      const W = this.fe.wall; if (!W) return; const g = W.c.getContext('2d'), w = W.c.width, h = W.c.height;
+      const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#5a0a10'); bg.addColorStop(1, '#2a0408'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#e2b43a'; g.lineWidth = 10; g.strokeRect(24, 24, w - 48, h - 48); g.lineWidth = 3; g.strokeRect(40, 40, w - 80, h - 80);
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffd23a';
+      g.font = '900 78px "SSK Rodin","Arial Black",sans-serif'; g.fillText('★ MUR DES SURVIVANTS DU NNN 2026 ★', w / 2, 110);
+      g.font = 'italic 700 34px Georgia,serif'; g.fillStyle = '#f0d8a0'; g.fillText('Ils étaient là à minuit, le 1er décembre 2026. Gloire éternelle à eux.', w / 2, 180);
+      const N = W.names;
+      if (!N.length) { g.font = 'italic 700 44px Georgia,serif'; g.fillStyle = 'rgba(255,220,150,.6)'; g.fillText('Les noms des kheys présents à minuit seront gravés ici.', w / 2, h / 2 + 60); }
+      else {
+        const cols = N.length > 48 ? 6 : N.length > 24 ? 5 : 4, rows = Math.ceil(N.length / cols), fs = Math.max(20, Math.min(80, Math.floor(540 / Math.max(rows, 1)) - 14));
+        g.font = `900 ${fs}px "SSK Rodin","Arial Black",sans-serif`;
+        N.forEach((n, i) => { const cx = 100 + (w - 200) * ((i % cols) + 0.5) / cols, cy = 260 + (fs + 18) * Math.floor(i / cols) + fs / 2; g.fillStyle = '#3a1a00'; g.fillText(n, cx + 3, cy + 3); g.fillStyle = '#ffd86a'; g.fillText(n, cx, cy); });
+      }
+      W.t.needsUpdate = true;
+    },
+    // ---------------------------------------------------------------- les lanternes célestes : les bougies s'envolent
+    feLanterns() {
+      const F = this.fe, sc = this.scene; F.lant = F.lant || [];
+      if (!F.lantGeo) { F.lantGeo = new T.CylinderGeometry(0.22, 0.17, 0.42, 10, 1, true); F.lantMat = new T.MeshBasicMaterial({ color: 0xff7a2a, side: T.DoubleSide, transparent: true, opacity: 0.92, fog: false }); }
+      const add = (x, y, z) => {
+        if (F.lant.length > 320) return;
+        const g = new T.Group(); g.position.set(x, y, z);
+        g.add(new T.Mesh(F.lantGeo, F.lantMat));
+        const glow = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xffa040, transparent: true, opacity: 0.8, blending: T.AdditiveBlending, depthWrite: false, fog: false })); glow.scale.set(1.3, 1.3, 1); g.add(glow);
+        sc.add(g); F.lant.push({ g, vy: 0.025 + Math.random() * 0.02, ph: Math.random() * 6, life: 2600 + Math.random() * 600, d: Math.random() * 30 });
+      };
+      for (const c of F.cand.values()) { add(c.position.x, c.position.y + 0.4, c.position.z); c.visible = false; }
+      for (const a of [this.avatar, ...(this.remote ? this.remote.values() : [])]) if (a && a.feCandle) add(a.x, 2.2, a.z);
+      for (let i = 0; i < 70; i++) add(WX + 148 + (Math.random() - 0.5) * 44, 1.5 + Math.random() * 2, -4 + (Math.random() - 0.5) * 14);
+      if (F.mine.cd) { F.mine.cd = 0; F.dirty = true; }
+      this.feBanner('LES LANTERNES', 'Vos bougies s\'envolent vers le ciel du NNN.', 6000);
+    },
+    feLantStep() {
+      const F = this.fe; if (!F.lant || !F.lant.length) return;
+      for (const L of F.lant) {
+        if (L.d > 0) { L.d--; continue; }
+        L.life--; const p = L.g.position; p.y += L.vy; p.x += Math.sin(L.life * 0.01 + L.ph) * 0.012 + 0.006; p.z += Math.cos(L.life * 0.008 + L.ph) * 0.01;
+        L.g.children[1].material.opacity = 0.65 + Math.sin(L.life * 0.15 + L.ph) * 0.2;
+        if (L.life <= 0 || p.y > 95) { this.scene.remove(L.g); L.g.children[1].material.dispose(); L.life = 0; }
+      }
+      F.lant = F.lant.filter(L => L.life > 0);
+    },
+    // ---------------------------------------------------------------- feu d'artifice qui dessine : « NNN 2026 », l'étoile rouge, le visage du Leader
+    feShape(kind) {
+      const F = this.fe, pts = [], cols = [];
+      const cv = document.createElement('canvas'), g = cv.getContext('2d');
+      if (kind === 'text') {
+        cv.width = 300; cv.height = 80; g.fillStyle = '#fff'; g.font = '900 64px "Arial Black",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('NNN 2026', 150, 42);
+        const d = g.getImageData(0, 0, 300, 80).data;
+        for (let y = 0; y < 80; y += 3) for (let x = 0; x < 300; x += 3) if (d[(y * 300 + x) * 4 + 3] > 128) { pts.push((x - 150) / 300 * 46, (40 - y) / 300 * 46); cols.push(1, 0.82, 0.25); }
+      } else if (kind === 'star') {
+        cv.width = cv.height = 120; g.fillStyle = '#fff'; g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 22 : 56; g.lineTo(60 + Math.cos(a) * r, 62 + Math.sin(a) * r); } g.fill();
+        const d = g.getImageData(0, 0, 120, 120).data;
+        for (let y = 0; y < 120; y += 3) for (let x = 0; x < 120; x += 3) if (d[(y * 120 + x) * 4 + 3] > 128) { pts.push((x - 60) / 120 * 26, (60 - y) / 120 * 26); cols.push(1, 0.12, 0.12); }
+      } else {
+        const im = F.koroImg; if (!im || !im.complete || !im.naturalWidth) return this.feShape('star');
+        const W = 64, H = Math.round(W * im.naturalHeight / im.naturalWidth); cv.width = W; cv.height = H; g.drawImage(im, 0, 0, W, H);
+        const d = g.getImageData(0, 0, W, H).data;
+        for (let y = 0; y < H * 0.78; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4, r = d[i] / 255, gg = d[i + 1] / 255, b = d[i + 2] / 255, l = r * 0.3 + gg * 0.59 + b * 0.11; const pink = r > 0.75 && b > 0.55 && gg < 0.6; if (!pink && l > 0.42) continue; pts.push((x - W / 2) / W * 24, (H * 0.39 - y) / W * 24); if (pink) cols.push(1, 0.35, 0.9); else cols.push(1, 0.78, 0.35); }
+      }
+      const n = pts.length / 2, cx = WX + 148, cy = 50, cz = -24, geo = new T.BufferGeometry(), pos = new Float32Array(n * 3), tgt = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { pos[i * 3] = cx; pos[i * 3 + 1] = cy; pos[i * 3 + 2] = cz; tgt[i * 3] = cx + pts[i * 2]; tgt[i * 3 + 1] = cy + pts[i * 2 + 1]; tgt[i * 3 + 2] = cz; }
+      geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('color', new T.BufferAttribute(new Float32Array(cols), 3));
+      const P = new T.Points(geo, new T.PointsMaterial({ size: kind === 'face' ? 1.05 : 1.3, map: modoGlowTex(), vertexColors: true, transparent: true, opacity: 1, blending: T.AdditiveBlending, depthWrite: false, fog: false }));
+      this.scene.add(P); (F.shapes = F.shapes || []).push({ P, tgt, f: 0, vy: new Float32Array(n) });
+      const fl = new T.PointLight(0xffd8a0, 4, 120, 1.2); fl.position.set(cx, cy, cz + 4); this.scene.add(fl); F.fw.push({ light: fl, life: 22 });
+      SFX.boom && SFX.boom();
+    },
+    feShapeStep() {
+      const F = this.fe; if (!F.shapes || !F.shapes.length) return;
+      for (const S of F.shapes) {
+        S.f++; const a = S.P.geometry.attributes.position, p = a.array, n = p.length / 3;
+        if (S.f <= 45) { const k = 1 - Math.pow(1 - S.f / 45, 3); for (let i = 0; i < n; i++) { const j = i * 3; p[j] += (S.tgt[j] - p[j]) * k * 0.35; p[j + 1] += (S.tgt[j + 1] - p[j + 1]) * k * 0.35; } }
+        else if (S.f > 200) { for (let i = 0; i < n; i++) { S.vy[i] -= 0.004 + (i % 7) * 0.0004; p[i * 3 + 1] += S.vy[i]; } S.P.material.opacity = Math.max(0, 1 - (S.f - 200) / 70); }
+        else S.P.material.opacity = 0.85 + Math.sin(S.f * 0.4) * 0.15;
+        a.needsUpdate = true;
+        if (S.f > 270) { this.scene.remove(S.P); S.P.geometry.dispose(); S.P.material.dispose(); S.dead = true; }
+      }
+      F.shapes = F.shapes.filter(S => !S.dead);
+    },
+    // ---------------------------------------------------------------- l'aube rouge
+    feDawn(now) {
+      const F = this.fe;
+      let k = 0;
+      if (now > FETE_END && now < FETE_END + 86400e3) k = Math.min(1, Math.max(0, (now - FETE_END - 20000) / 60000));
+      if (F.dawnT0) k = Math.max(k, Math.min(1, (performance.now() - F.dawnT0) / 20000));
+      if (k <= 0 && !F.dawn) return;
+      if (!F.dawn) {
+        const sc = this.scene, D = F.dawn = {};
+        const skyT = hubCanvas(2048, 512, (g, w, h) => {
+          const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#2a0c3a'); gr.addColorStop(0.35, '#8a1a3a'); gr.addColorStop(0.62, '#e0402a'); gr.addColorStop(0.82, '#ff9a3a'); gr.addColorStop(1, '#ffd27a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+          for (const sx of [0.25, 0.75]) { const rg = g.createRadialGradient(w * sx, h * 0.86, 10, w * sx, h * 0.86, 260); rg.addColorStop(0, 'rgba(255,250,210,1)'); rg.addColorStop(0.18, 'rgba(255,220,120,.9)'); rg.addColorStop(1, 'rgba(255,140,40,0)'); g.fillStyle = rg; g.fillRect(0, 0, w, h); g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(w * sx, h * 0.86, 48, 0, TAU); g.fill(); }
+          for (let i = 0; i < 14; i++) { g.fillStyle = `rgba(255,${120 + Math.random() * 80},${80 + Math.random() * 60},.35)`; g.beginPath(); g.ellipse(Math.random() * w, h * (0.35 + Math.random() * 0.35), 120 + Math.random() * 200, 10 + Math.random() * 14, 0, 0, TAU); g.fill(); }
+          g.fillStyle = '#3a1420'; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 16) g.lineTo(x, h - 40 - Math.abs(Math.sin(x * 0.004) * 60) - Math.sin(x * 0.017) * 14); g.lineTo(w, h); g.fill();
+        });
+        D.sky = new T.Mesh(new T.SphereGeometry(328, 32, 12, 0, TAU, 0, Math.PI / 2), new T.MeshBasicMaterial({ map: skyT, side: T.BackSide, fog: false, transparent: true, opacity: 0, depthWrite: false })); D.sky.position.set(WX, -8, 0); D.sky.renderOrder = -1; sc.add(D.sky);
+        D.hemi = new T.HemisphereLight(0xffb070, 0x6a2a20, 0); this.lightGroup('street').add(D.hemi);
+        D.sun = new T.DirectionalLight(0xff9a50, 0); D.sun.position.set(WX + 120, 30, -160); D.sun.target.position.set(WX + 148, 0, -10); this.lightGroup('street').add(D.sun); this.lightGroup('street').add(D.sun.target);
+        D.fog0 = new T.Color(0x2a1a48); D.fog1 = new T.Color(0x9a3a30);
+        const st = this.dx && this.dx.koroStatue;
+        if (st) {
+          st.root.traverse(o => { if (o.isMesh && o.material && o.material.emissive && !D.gm) D.gm = o.material; });
+          D.halo = new T.Sprite(new T.SpriteMaterial({ map: modoGlowTex(), color: 0xffd060, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false })); D.halo.scale.set(9, 9, 1); D.halo.position.set(WX + 148, 7.4, -43.4); sc.add(D.halo);
+          D.sl = []; for (const s of [-1, 1]) { const l = new T.PointLight(0xffc860, 0, 10, 1.4); l.position.set(WX + 148 + s * 2.6, 3.5, -40.5); this.lightGroup('street').add(l); D.sl.push(l); }
+        }
+      }
+      const D = F.dawn; if (D.k === k) return; D.k = k;
+      D.sky.material.opacity = k; D.sky.visible = k > 0.01;
+      D.hemi.intensity = k * 0.55; D.sun.intensity = k * 1.1;
+      if (this.cityFog) this.cityFog.color.copy(D.fog0).lerp(D.fog1, k);
+      if (D.gm) D.gm.emissive.setRGB(0.16 + k * 0.45, 0.1 + k * 0.28, k * 0.04);
+      if (D.halo) D.halo.material.opacity = k * 0.75;
+      if (D.sl) for (const l of D.sl) l.intensity = k * 2.2;
     },
     feLeave() {
       const F = this.fe; if (!F) return;

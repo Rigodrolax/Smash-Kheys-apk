@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.6
+// @version      0.99.7
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.6';
+  const SSK_VER = '0.99.7';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -31475,6 +31475,16 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
   .fe-watching .sk-hub-help,.fe-watching .sk-hub-prompt,.fe-watching .sk-hub-phr,.fe-watching .sk-hub-meters,.fe-watching .sk-hub-m,.fe-watching .sk-hub-who,.fe-watching .fe-leadbtn{display:none!important}
   .fe-cd{position:absolute;inset:0;z-index:2147483065;display:none;align-items:center;justify-content:center;pointer-events:none;color:#fff;font:italic 900 140px "SSK Rodin","Arial Black",sans-serif;text-shadow:6px 6px 0 #000}
   `;
+  // les vrais drapeaux des régiments (ceux de l'île) : R1 à R4, et l'emblème du régiment 0
+  const FE_REG_T = [];
+  const feRegTex = (rg) => {
+    if (FE_REG_T[rg]) return FE_REG_T[rg];
+    const src = rg === 0 ? (typeof DX_REG0 !== 'undefined' ? DX_REG0 : null) : (typeof REG_FLAGS !== 'undefined' ? REG_FLAGS[rg - 1] : null);
+    const im = new Image(), t = new T.Texture(im); t.colorSpace = T.SRGBColorSpace || t.colorSpace; t.anisotropy = 4;
+    im.onload = () => { t.needsUpdate = true; }; if (src) im.src = src;
+    return (FE_REG_T[rg] = t);
+  };
+  const feRegMat = (rg) => new T.MeshBasicMaterial({ map: feRegTex(rg), side: T.DoubleSide, transparent: rg === 0, alphaTest: rg === 0 ? 0.1 : 0 });
   const feAdmin = () => { const n = String((NET.name && NET.name()) || '').trim().toLowerCase(); return FETE_ADMINS.includes(n); };
   const feTap = (el, fn) => { let last = 0; const go = (e) => { const now = Date.now(); if (now - last < 400) return; last = now; if (e && e.cancelable) e.preventDefault(); if (e) e.stopPropagation(); fn(e); }; el.addEventListener('pointerup', go); el.addEventListener('click', go); };
   const feMedalOwned = () => { try { return localStorage.getItem('ssk-medal-nnn2026') === '1'; } catch (e) { return false; } };
@@ -31536,7 +31546,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
       F.regDesk = { x: X(161.8), z: -9.2 };
       box(1.8, 0.85, 0.8, lam(0x3a4a2a), F.regDesk.x, 0.42, F.regDesk.z);
       plane(2.2, 0.42, label('DÉFILÉ : CHOISIS TON RÉGIMENT', { bg: '#3a4a2a', col: '#ffd23a', border: '#e2b43a' }), F.regDesk.x, 1.25, F.regDesk.z + 0.42);
-      FETE_REGS.forEach((R, i) => { const x = F.regDesk.x - 0.8 + i * 0.4; cyl(0.015, 0.015, 1.3, lam(0x9a9aa2), x, 1.5, F.regDesk.z - 0.2, sc, 6); plane(0.34, 0.24, lam(R.c, { side: T.DoubleSide }), x + 0.17, 2.0, F.regDesk.z - 0.2); });
+      FETE_REGS.forEach((R, i) => { const x = F.regDesk.x - 0.8 + i * 0.4; cyl(0.015, 0.015, 1.3, lam(0x9a9aa2), x, 1.5, F.regDesk.z - 0.2, sc, 6); plane(0.36, i ? 0.26 : 0.32, feRegMat(i), x + 0.18, 2.0, F.regDesk.z - 0.18); });
       wallC(F.regDesk.x - 0.95, F.regDesk.z - 0.45, F.regDesk.x + 0.95, F.regDesk.z + 0.45);
       // ---------------- le Mur des Survivants, dans le temple (à gauche de l'entrée, côté intérieur)
       {
@@ -31644,8 +31654,8 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         if (want.rg >= 0 && m.torso) {
           const R = FETE_REGS[want.rg], g = new T.Group(); g.position.set(-0.28, 0.5, 0); m.torso.add(g);
           const pole = new T.Mesh(new T.CylinderGeometry(0.015, 0.015, 1.5, 6), new T.MeshLambertMaterial({ color: 0x9a9aa2 })); pole.position.y = 0.6; g.add(pole);
-          const fm = new T.MeshBasicMaterial({ map: hubCanvas(128, 88, (c, w, h) => { c.fillStyle = R.s; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '900 52px "SSK Rodin","Arial Black",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(want.rg), w / 2, h / 2 + 3); }) });
-          for (const sd of [0, 1]) { const fl = new T.Mesh(new T.PlaneGeometry(0.42, 0.28), fm); fl.position.set(sd ? -0.002 : 0.002, 1.2, 0.22); fl.rotation.y = sd ? -Math.PI / 2 : Math.PI / 2; g.add(fl); }
+          const fm = feRegMat(want.rg), fw = want.rg === 0 ? 0.42 : 0.56, fh = want.rg === 0 ? 0.42 : 0.4; void R;
+          for (const sd of [0, 1]) { const fl = new T.Mesh(new T.PlaneGeometry(fw, fh), fm); fl.position.set(sd ? -0.003 : 0.003, 1.2 - (fh - 0.28) / 2, fw / 2 + 0.02); fl.rotation.y = sd ? -Math.PI / 2 : Math.PI / 2; if (sd) fl.scale.x = -1; g.add(fl); }
           a.feFlag = g;
         }
       }
@@ -31840,7 +31850,7 @@ Le 11 avril 20${R(2)}, l'agent est entré dans la cellule à 1 h 46. Le contact 
         FETE_REGS.forEach((R, ri) => {
           for (let k = 0; k < 6; k++) {
             const n = npcMan({ skin: [0xe8c09a, 0xc8946a, 0xf0c8a8][k % 3], shirt: R.c, pants: 0x2a2a30, hair: 0x1a1a1a }); g.add(n.root);
-            if (k === 0) { const pole = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 2.6, 6), M(0x9a9aa2)); pole.position.set(0.3, 1.3, 0); n.root.add(pole); const fl = new T.Mesh(new T.PlaneGeometry(1.0, 0.65), new T.MeshBasicMaterial({ color: R.c, side: T.DoubleSide })); fl.position.set(0.3, 2.3, 0.5); fl.rotation.y = Math.PI / 2; n.root.add(fl); }
+            if (k === 0) { const pole = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 2.6, 6), M(0x9a9aa2)); pole.position.set(0.3, 1.3, 0); n.root.add(pole); const fl = new T.Mesh(new T.PlaneGeometry(1.2, ri ? 0.85 : 1.0), feRegMat(ri)); fl.position.set(0.3, 2.2, 0.62); fl.rotation.y = Math.PI / 2; n.root.add(fl); }
             P.mem.push({ o: n.root, n, off: 4.5 + ri * 4.2 + Math.floor(k / 3) * 1.4, z: (k % 3 - 1) * 1.3 });
           }
         });

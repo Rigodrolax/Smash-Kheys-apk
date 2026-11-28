@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Super Smash Kheys (prototype)
 // @namespace    smash-kheys
-// @version      0.99.5
+// @version      0.99.6
 // @description  Jeu de combat de plateforme avec les kheys du forum : versus, histoire, et mode en ligne (1v1, mêlée à 4, tournois, l'appart des kheys).
 // @match        https://www.jeuxvideo.com/forums/*
 // @require      https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js
@@ -18729,7 +18729,7 @@
   //  fond d'écran) sont faites à la demande, puis gardées dans le navigateur (IndexedDB) pour les
   //  lancements suivants. Le cache change avec la version du script.
   // =====================================================================
-  const SSK_VER = '0.99.5';
+  const SSK_VER = '0.99.6';
   const ICACHE = { mem: new Map(), db: null, queue: new Map(), timer: 0, ready: false };
   function idbOpen() {
     return new Promise((res) => {
@@ -29428,8 +29428,8 @@
       this.dxHall('reg0', 128, 146, 10, 30, 6, 'n', 137, 2.6, lam(0x6a6e74), lam(0x5a5e64), () => {
         const grey = lam(0x9aa0aa), dark = lam(0x2a2e34);
         box(19, 1.2, 0.6, dark, X(137), 6.4, 9.6);
-        plane(3.6, 3.6, reg0M, X(137), 4.4, 9.56, Math.PI);
-        plane(9, 1.1, label('QG DU RÉGIMENT 0', { bg: '#3a3e44', col: '#e8eaee' }), X(137), 1.95 + 4.4 - 1.95 - 2.4 + 0.2, 9.55, Math.PI);
+        for (const u of [131.6, 142.4]) plane(3.0, 3.0, reg0M, X(u), 2.5, 9.56, Math.PI);           // les emblèmes de part et d'autre de la porte
+        plane(9, 1.1, label('QG DU RÉGIMENT 0', { bg: '#3a3e44', col: '#e8eaee' }), X(137), 4.6, 9.55, Math.PI);   // au-dessus de la porte
         plane(4.5, 0.55, label('(SECRET)', { col: '#ffd23a' }), X(141.5), 6.4, 9.28, Math.PI);
         // panneau touristique dans la rue
         cyl(0.06, 0.06, 2.6, grey, X(126), 1.3, 7.2, sc, 6); plane(3.4, 0.8, label('QG SECRET DU RÉGIMENT 0 →', { bg: '#1e5a9a', col: '#fff' }), X(126), 2.4, 7.26, Math.PI); wallC(X(126) - 0.12, 7.08, X(126) + 0.12, 7.32);

@@ -4,7 +4,7 @@ plugins {
 
 // Version de l'appli : donnée par GitHub Actions (tag vX.Y.Z et numéro de build), sinon valeurs par défaut
 def appVersionCode = (System.getenv('SSK_VERSION_CODE') ?: '1') as int
-def appVersionName = System.getenv('SSK_VERSION_NAME') ?: '0.99.5'
+def appVersionName = System.getenv('SSK_VERSION_NAME') ?: '0.99.6'
 
 android {
     namespace 'fr.kheys.smash'
